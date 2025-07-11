@@ -25,7 +25,7 @@ if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
 }
 
-// Inicializar base de datos solo si no estamos en modo de solo lectura
+// Inicializar base de datos
 try {
     require('./backend/database/init');
     console.log('✅ Base de datos inicializada');
@@ -48,7 +48,8 @@ app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 3000
     });
 });
 
@@ -66,9 +67,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Puerto
-const PORT = process.env.PORT || 3000;
+// Puerto - Railway asigna automáticamente
+const PORT = parseInt(process.env.PORT) || 3000;
+
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`�� Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📡 Listening on all interfaces (0.0.0.0:${PORT})`);
 });
