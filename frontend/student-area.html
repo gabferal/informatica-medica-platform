@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área de Estudiantes - Informática Médica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-laptop-medical me-2"></i>
+                Informática Médica
+            </a>
+            
+            <div class="d-flex">
+                <div id="user-info" class="text-light me-3">
+                    <!-- Info del usuario se carga aquí -->
+                </div>
+                <button class="btn btn-outline-light" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>📚 Área de Estudiantes</h2>
+                <p class="text-muted">Gestiona tus entregas de trabajos prácticos</p>
+            </div>
+        </div>
+
+        <!-- Formulario de subida -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload text-primary me-2"></i>
+                            Subir Nuevo Trabajo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="upload-form" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Título del Trabajo *</label>
+                                <input type="text" class="form-control" id="title" required 
+                                       placeholder="Ej: Trabajo Práctico 1 - Sistemas HIS">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descripción (opcional)</label>
+                                <textarea class="form-control" id="description" rows="3" 
+                                          placeholder="Describe brevemente el contenido del trabajo..."></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Archivo *</label>
+                                <input type="file" class="form-control" id="file" required 
+                                       accept=".pdf,.doc,.docx,.txt,.zip">
+                                <div class="form-text">
+                                    Formatos permitidos: PDF, DOC, DOCX, TXT, ZIP. Tamaño máximo: 10MB
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>
+                                Subir Trabajo
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            Instrucciones
+                        </h6>
+                        <ul class="small mb-0">
+                            <li>Usa un título descriptivo para tu trabajo</li>
+                            <li>Asegúrate de que el archivo esté completo</li>
+                            <li>Puedes subir múltiples versiones</li>
+                            <li>Guarda una copia de seguridad local</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de entregas -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list text-success me-2"></i>
+                            Mis Entregas
+                        </h5>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadSubmissions()">
+                            <i class="fas fa-refresh me-1"></i>
+                            Actualizar
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="submissions-list">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando entregas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres eliminar esta entrega?</p>
+                    <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirm-delete-btn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/student-area.js"></script>
+</body>
+</html>

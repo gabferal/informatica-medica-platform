@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informática Médica - Plataforma Educativa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-laptop-medical me-2"></i>
+                Informática Médica
+            </a>
+            
+            <div class="d-flex">
+                <a href="admin.html" class="btn btn-outline-light btn-sm opacity-75 me-2">
+                    <i class="fas fa-cog me-1"></i>
+                    Admin
+                </a>
+                <button id="login-btn" class="btn btn-outline-light" onclick="showAuthModal()">
+                    <i class="fas fa-sign-in-alt me-1"></i>
+                    Acceder
+                </button>
+                <div id="user-info" style="display: none;" class="text-light">
+                    <!-- Info del usuario se carga aquí -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-8 mx-auto text-center">
+                <h1 class="display-4 mb-4">🩺 Informática Médica</h1>
+                <p class="lead">Plataforma Educativa</p>
+                
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ✅ Servidor funcionando correctamente
+                </div>
+
+                <div class="row mt-5">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-book text-primary"></i>
+                                    Materiales del Curso
+                                </h5>
+                                <p class="card-text">Accede a los recursos educativos</p>
+                                <button class="btn btn-primary" onclick="loadMaterials()">
+                                    Ver Materiales
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-users text-success"></i>
+                                    Área de Estudiantes
+                                </h5>
+                                <p class="card-text">Entrega de trabajos prácticos</p>
+                                <button class="btn btn-success" onclick="goToStudentArea()">
+                                    Acceder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="materials-section" class="mt-5" style="display: none;">
+                    <h3>📚 Materiales del Curso</h3>
+                    <div id="materials-list" class="mt-3">
+                        <!-- Los materiales se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Autenticación -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acceder al Sistema</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Pestañas -->
+                    <ul class="nav nav-tabs mb-4" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#login-pane" type="button" role="tab">
+                                Iniciar Sesión
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#register-pane" type="button" role="tab">
+                                Registrarse
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content">
+                        <!-- Formulario de Login -->
+                        <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
+                            <form id="login-form">
+                                <div class="mb-3">
+                                    <label for="login-email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="login-email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="login-password" class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" id="login-password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Iniciar Sesión
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Formulario de Registro -->
+                        <div class="tab-pane fade" id="register-pane" role="tabpanel">
+                            <form id="register-form">
+                                <div class="mb-3">
+                                    <label for="register-nombre" class="form-label">Nombre Completo</label>
+                                    <input type="text" class="form-control" id="register-nombre" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="register-email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-ra" class="form-label">Registro Académico (RA)</label>
+                                    <input type="text" class="form-control" id="register-ra" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-password" class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" id="register-password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-confirm-password" class="form-label">Confirmar Contraseña</label>
+                                    <input type="password" class="form-control" id="register-confirm-password" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">
+                                    Registrarse
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadMaterials() {
+            try {
+                const response = await fetch('/api/materials');
+                const materials = await response.json();
+                
+                const materialsSection = document.getElementById('materials-section');
+                const materialsList = document.getElementById('materials-list');
+                
+                materialsSection.style.display = 'block';
+                
+                materialsList.innerHTML = materials.map(material => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">${material.title}</h6>
+                            <p class="card-text">${material.description}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary">${material.category}</span>
+                                <small class="text-muted">${new Date(material.uploaded_at).toLocaleDateString('es-ES')}</small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar materiales');
+            }
+        }
+
+        function showAuthModal() {
+            const modal = new bootstrap.Modal(document.getElementById('authModal'));
+            modal.show();
+        }
+
+        function goToStudentArea() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = 'student-area.html';
+            } else {
+                showAuthModal();
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
