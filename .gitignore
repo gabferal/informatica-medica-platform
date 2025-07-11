@@ -1,25 +1,6 @@
-# Dependencias
 node_modules/
-npm-debug.log*
-
-# Variables de entorno
 .env
-.env.local
-
-# Base de datos (opcional)
-backend/database/database.db
-
-# Archivos subidos
-uploads/
-
-# Logs
 *.log
-
-# MacOS
 .DS_Store
-
-# Windows
-Thumbs.db
-
-# VS Code
-.vscode/
+backend/database/database.db
+uploads/
