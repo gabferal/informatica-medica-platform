@@ -8,7 +8,7 @@ const authMiddleware = require('../middleware/auth');
 const emailService = require('../services/emailService');
 
 const router = express.Router();
-const dbPath = path.join(__dirname, '../database/database.db');
+const dbPath = path.join(__dirname, '../database.db'); // ← CORREGIDO: ruta simplificada
 
 // Usar el middleware de autenticación
 const authenticateToken = authMiddleware.authenticateToken;
@@ -126,14 +126,17 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     
     const db = new sqlite3.Database(dbPath);
     
+    // ✅ CORREGIDO: Usar los nombres de columna correctos
     db.run(
-        `INSERT INTO submissions (user_id, filename, original_name, file_path, title, description) 
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO submissions (user_id, filename, original_name, file_path, file_size, mime_type, title, description) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             req.user.userId,
             req.file.filename,
-            req.file.originalname,
+            req.file.originalname,  // ← CORREGIDO: ahora coincide con la columna de la DB
             req.file.path,
+            req.file.size,          // ← AGREGADO
+            req.file.mimetype,      // ← AGREGADO
             title.trim(),
             description ? description.trim() : null
         ],
@@ -167,17 +170,16 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
             };
 
             // Enviar notificación por email (no bloquear la respuesta)
-            emailService.sendSubmissionNotification(studentInfo, submissionInfo)
-                .then(emailResult => {
-                    if (emailResult.success) {
-                        console.log('📧 Notificaciones enviadas exitosamente');
-                    } else {
-                        console.log('⚠️ Error en notificaciones:', emailResult.error);
-                    }
-                })
-                .catch(emailError => {
-                    console.error('❌ Error enviando notificaciones:', emailError);
-                });
+            try {
+                const emailResult = await emailService.sendSubmissionNotification(studentInfo, submissionInfo);
+                if (emailResult.success) {
+                    console.log('📧 Notificaciones enviadas exitosamente');
+                } else {
+                    console.log('⚠️ Error en notificaciones:', emailResult.error);
+                }
+            } catch (emailError) {
+                console.error('❌ Error enviando notificaciones:', emailError);
+            }
             
             res.status(201).json({
                 message: 'Trabajo subido exitosamente',
