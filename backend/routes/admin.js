@@ -31,7 +31,7 @@ function authenticateDownload(req, res, next) {
         return res.status(401).json({ error: 'Token de acceso requerido' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET || 'tu_clave_secreta_aqui', (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'informatica_medica_secret_key_2024', (err, user) => {
         if (err) {
             return res.status(403).json({ error: 'Token inválido' });
         }
