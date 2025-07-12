@@ -16,14 +16,77 @@ class StudentArea {
 
         this.updateUserInfo();
         this.setupEventListeners();
+        this.loadStats();        // ← AGREGADO: Cargar estadísticas
         this.loadSubmissions();
     }
 
     updateUserInfo() {
         const userInfo = document.getElementById('user-info');
         if (userInfo) {
-            userInfo.innerHTML = `👋 Hola, ${this.user.nombre} (${this.user.ra})`;
+            // ✅ CORREGIDO: Usar this.user.name en lugar de this.user.nombre
+            const userName = this.user.name || this.user.nombre || this.user.email;
+            const userRa = this.user.ra || 'Sin RA';
+            userInfo.innerHTML = `👋 Hola, ${userName} (${userRa})`;
         }
+    }
+
+    // ✅ AGREGADO: Método para cargar estadísticas del estudiante
+    async loadStats() {
+        try {
+            console.log('📊 Cargando estadísticas del estudiante...');
+            
+            const response = await fetch('/api/submissions/my-submissions', {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.ok) {
+                const submissions = await response.json();
+                this.updateStatsDisplay(submissions);
+                console.log(`✅ Estadísticas actualizadas: ${submissions.length} entregas`);
+            } else {
+                console.error('Error cargando estadísticas:', response.status);
+            }
+        } catch (error) {
+            console.error('Error cargando estadísticas:', error);
+        }
+    }
+
+    // ✅ AGREGADO: Actualizar display de estadísticas
+    updateStatsDisplay(submissions) {
+        const totalSubmissions = submissions.length;
+        
+        // Calcular entregas de esta semana
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const thisWeekSubmissions = submissions.filter(sub => 
+            new Date(sub.submitted_at) >= oneWeekAgo
+        ).length;
+
+        // Calcular entregas de hoy
+        const today = new Date().toISOString().split('T')[0];
+        const todaySubmissions = submissions.filter(sub => 
+            sub.submitted_at && sub.submitted_at.split('T')[0] === today
+        ).length;
+
+        // Actualizar elementos en el DOM
+        const elements = {
+            'total-submissions': totalSubmissions,
+            'submissions-week': thisWeekSubmissions,
+            'submissions-today': todaySubmissions,
+            'last-submission': submissions.length > 0 ? 
+                new Date(submissions[0].submitted_at).toLocaleDateString('es-ES') : 
+                'Ninguna'
+        };
+
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        });
     }
 
     setupEventListeners() {
@@ -89,7 +152,10 @@ class StudentArea {
             if (response.ok) {
                 this.showAlert('¡Trabajo subido exitosamente!', 'success');
                 document.getElementById('upload-form').reset();
-                this.loadSubmissions(); // Recargar lista
+                
+                // ✅ AGREGADO: Actualizar estadísticas y lista después de subir
+                this.loadStats();
+                this.loadSubmissions();
             } else {
                 this.showAlert(data.error || 'Error al subir el archivo', 'danger');
             }
@@ -104,16 +170,27 @@ class StudentArea {
 
     async loadSubmissions() {
         try {
+            console.log('📋 Cargando entregas del estudiante...');
+            
             const response = await fetch('/api/submissions/my-submissions', {
                 headers: {
                     'Authorization': `Bearer ${this.token}`
                 }
             });
 
+            if (response.status === 401 || response.status === 403) {
+                // Token inválido, redirigir al login
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+                return;
+            }
+
             const submissions = await response.json();
 
             if (response.ok) {
                 this.renderSubmissions(submissions);
+                console.log(`✅ Cargadas ${submissions.length} entregas del estudiante`);
             } else {
                 this.showAlert('Error al cargar entregas', 'danger');
             }
@@ -126,6 +203,11 @@ class StudentArea {
 
     renderSubmissions(submissions) {
         const container = document.getElementById('submissions-list');
+        
+        if (!container) {
+            console.error('❌ No se encontró el contenedor submissions-list');
+            return;
+        }
         
         if (submissions.length === 0) {
             container.innerHTML = `
@@ -153,15 +235,15 @@ class StudentArea {
                         ${submissions.map(submission => `
                             <tr>
                                 <td>
-                                    <strong>${submission.title}</strong>
+                                    <strong>${submission.title || 'Sin título'}</strong>
                                     ${submission.description ? `<br><small class="text-muted">${submission.description}</small>` : ''}
                                 </td>
                                 <td>
                                     <i class="fas fa-file-alt text-primary me-1"></i>
-                                    ${submission.original_name}
+                                    ${submission.original_name || submission.filename || 'Sin archivo'}
                                 </td>
                                 <td>
-                                    <small>${new Date(submission.submitted_at).toLocaleString('es-ES')}</small>
+                                    <small>${submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('es-ES') : 'Sin fecha'}</small>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
@@ -171,7 +253,7 @@ class StudentArea {
                                             <i class="fas fa-download"></i>
                                         </button>
                                         <button class="btn btn-outline-danger" 
-                                                onclick="studentArea.confirmDelete(${submission.id}, '${submission.title}')"
+                                                onclick="studentArea.confirmDelete(${submission.id}, '${(submission.title || 'Sin título').replace(/'/g, '\'')}')"
                                                 title="Eliminar">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -182,12 +264,17 @@ class StudentArea {
                     </tbody>
                 </table>
             </div>
+            
+            <div class="mt-3">
+                <small class="text-muted">
+                    Total: ${submissions.length} entrega${submissions.length !== 1 ? 's' : ''}
+                </small>
+            </div>
         `;
     }
 
-    // MÉTODO MEJORADO PARA DESCARGA
     downloadSubmission(id) {
-        console.log('Iniciando descarga de entrega:', id);
+        console.log('📥 Iniciando descarga de entrega:', id);
         
         // Crear un enlace temporal con el token
         const downloadUrl = `/api/submissions/download/${id}?token=${encodeURIComponent(this.token)}`;
@@ -212,11 +299,13 @@ class StudentArea {
         
         // Actualizar el texto del modal
         const modalBody = document.querySelector('#deleteModal .modal-body');
-        modalBody.innerHTML = `
-            <p>¿Estás seguro de que quieres eliminar esta entrega?</p>
-            <p><strong>"${title}"</strong></p>
-            <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
-        `;
+        if (modalBody) {
+            modalBody.innerHTML = `
+                <p>¿Estás seguro de que quieres eliminar esta entrega?</p>
+                <p><strong>"${title}"</strong></p>
+                <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+            `;
+        }
         
         modal.show();
     }
@@ -234,11 +323,16 @@ class StudentArea {
 
             if (response.ok) {
                 this.showAlert('Entrega eliminada exitosamente', 'success');
-                this.loadSubmissions(); // Recargar lista
+                
+                // ✅ AGREGADO: Actualizar estadísticas y lista después de eliminar
+                this.loadStats();
+                this.loadSubmissions();
                 
                 // Cerrar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
-                modal.hide();
+                if (modal) {
+                    modal.hide();
+                }
             } else {
                 this.showAlert(data.error || 'Error al eliminar la entrega', 'danger');
             }
@@ -253,20 +347,24 @@ class StudentArea {
         const submitBtn = document.querySelector('#upload-form button[type="submit"]');
         const form = document.getElementById('upload-form');
         
-        if (isLoading) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Subiendo...
-            `;
-            form.style.opacity = '0.7';
-        } else {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = `
-                <i class="fas fa-upload me-2"></i>
-                Subir Trabajo
-            `;
-            form.style.opacity = '1';
+        if (submitBtn) {
+            if (isLoading) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Subiendo...
+                `;
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <i class="fas fa-upload me-2"></i>
+                    Subir Trabajo
+                `;
+            }
+        }
+        
+        if (form) {
+            form.style.opacity = isLoading ? '0.7' : '1';
         }
     }
 
