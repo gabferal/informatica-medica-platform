@@ -61,12 +61,13 @@ router.get('/stats', authenticateAdmin, (req, res) => {
         completed++;
         if (completed === totalQueries) {
             db.close();
+            console.log('📊 Estadísticas enviadas:', stats);
             res.json(stats);
         }
     }
     
     function handleError(operation, err) {
-        console.error(`Error en ${operation}:`, err);
+        console.error(`❌ Error en ${operation}:`, err);
         checkComplete();
     }
     
@@ -77,6 +78,7 @@ router.get('/stats', authenticateAdmin, (req, res) => {
             stats.totalStudents = 0;
         } else {
             stats.totalStudents = row.count;
+            console.log('✅ Total estudiantes:', row.count);
             checkComplete();
         }
     });
@@ -88,6 +90,7 @@ router.get('/stats', authenticateAdmin, (req, res) => {
             stats.totalSubmissions = 0;
         } else {
             stats.totalSubmissions = row.count;
+            console.log('✅ Total entregas:', row.count);
             checkComplete();
         }
     });
@@ -103,6 +106,7 @@ router.get('/stats', authenticateAdmin, (req, res) => {
                 stats.submissionsToday = 0;
             } else {
                 stats.submissionsToday = row.count;
+                console.log('✅ Entregas hoy:', row.count);
                 checkComplete();
             }
         }
@@ -120,6 +124,7 @@ router.get('/stats', authenticateAdmin, (req, res) => {
                 stats.submissionsWeek = 0;
             } else {
                 stats.submissionsWeek = row.count;
+                console.log('✅ Entregas semana:', row.count);
                 checkComplete();
             }
         }
@@ -128,10 +133,10 @@ router.get('/stats', authenticateAdmin, (req, res) => {
 
 // Obtener todas las entregas con información del estudiante
 router.get('/submissions', authenticateAdmin, (req, res) => {
-    console.log('📋 Solicitando todas las entregas para admin');
-    console.log("🔍 Query:", query);
-    console.log("🔍 Params:", params);    
+    console.log('�� Solicitando todas las entregas para admin');
+    
     const { search, date, title } = req.query;
+    console.log('🔍 Filtros recibidos:', { search, date, title });
     
     const db = new sqlite3.Database(dbPath);
     
@@ -167,15 +172,19 @@ router.get('/submissions', authenticateAdmin, (req, res) => {
     
     query += ` ORDER BY s.submitted_at DESC`;
     
+    console.log('🔍 Query SQL:', query);
+    console.log('🔍 Parámetros:', params);
+    
     db.all(query, params, (err, rows) => {
         db.close();
         
         if (err) {
-            console.error('Error obteniendo entregas:', err);
-            return res.status(500).json({ error: 'Error al obtener entregas' });
+            console.error('❌ Error obteniendo entregas:', err);
+            return res.status(500).json({ error: 'Error al obtener entregas: ' + err.message });
         }
         
-        console.log("🔍 Raw rows from DB:", rows);        console.log(`✅ Encontradas ${rows.length} entregas para admin`);
+        console.log(`✅ Encontradas ${rows.length} entregas para admin`);
+        console.log('📋 Primeras entregas:', rows.slice(0, 2));
         res.json(rows);
     });
 });
@@ -201,7 +210,7 @@ router.get('/submission/:id', authenticateAdmin, (req, res) => {
             db.close();
             
             if (err) {
-                console.error('Error obteniendo detalles de entrega:', err);
+                console.error('❌ Error obteniendo detalles de entrega:', err);
                 return res.status(500).json({ error: 'Error al obtener detalles' });
             }
             
@@ -213,35 +222,6 @@ router.get('/submission/:id', authenticateAdmin, (req, res) => {
             res.json(row);
         }
     );
-});
-
-// Obtener todos los usuarios (solo admin) - AGREGADO
-router.get('/users', authenticateAdmin, (req, res) => {
-    console.log('👥 Admin obteniendo todos los usuarios');
-    
-    const db = new sqlite3.Database(dbPath);
-    
-    db.all(`
-        SELECT 
-            id, 
-            name, 
-            email, 
-            ra, 
-            role, 
-            created_at 
-        FROM users 
-        ORDER BY created_at DESC
-    `, (err, rows) => {
-        db.close();
-        
-        if (err) {
-            console.error('Error obteniendo usuarios:', err);
-            return res.status(500).json({ error: 'Error al obtener usuarios' });
-        }
-        
-        console.log(`✅ Admin obtuvo ${rows.length} usuarios`);
-        res.json(rows);
-    });
 });
 
 // Descargar archivo de entrega (admin)
@@ -258,7 +238,7 @@ router.get('/download/:id', authenticateDownload, (req, res) => {
             db.close();
             
             if (err) {
-                console.error('Error obteniendo entrega:', err);
+                console.error('❌ Error obteniendo entrega:', err);
                 return res.status(500).json({ error: 'Error al obtener la entrega' });
             }
             
@@ -269,11 +249,10 @@ router.get('/download/:id', authenticateDownload, (req, res) => {
             const filePath = submission.file_path;
             
             if (!filePath || !fs.existsSync(filePath)) {
-                console.error('Archivo no encontrado:', filePath);
+                console.error('❌ Archivo no encontrado:', filePath);
                 return res.status(404).json({ error: 'Archivo no encontrado en el servidor' });
             }
             
-            // Obtener el nombre del archivo original o usar el filename como fallback
             const downloadName = submission.original_name || submission.filename || `submission_${submission.id}`;
             
             res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
@@ -281,7 +260,7 @@ router.get('/download/:id', authenticateDownload, (req, res) => {
             
             res.sendFile(path.resolve(filePath), (err) => {
                 if (err) {
-                    console.error('Error enviando archivo:', err);
+                    console.error('❌ Error enviando archivo:', err);
                     if (!res.headersSent) {
                         res.status(500).json({ error: 'Error al descargar el archivo' });
                     }
@@ -304,7 +283,7 @@ router.delete('/submissions/:id', authenticateAdmin, (req, res) => {
     db.get('SELECT * FROM submissions WHERE id = ?', [submissionId], (err, submission) => {
         if (err) {
             db.close();
-            console.error('Error obteniendo entrega:', err);
+            console.error('❌ Error obteniendo entrega:', err);
             return res.status(500).json({ error: 'Error al obtener la entrega' });
         }
         
@@ -318,7 +297,7 @@ router.delete('/submissions/:id', authenticateAdmin, (req, res) => {
             db.close();
             
             if (err) {
-                console.error('Error eliminando entrega:', err);
+                console.error('❌ Error eliminando entrega:', err);
                 return res.status(500).json({ error: 'Error al eliminar la entrega' });
             }
             
@@ -329,7 +308,6 @@ router.delete('/submissions/:id', authenticateAdmin, (req, res) => {
                     console.log('✅ Archivo físico eliminado:', submission.file_path);
                 } catch (fileErr) {
                     console.error('⚠️ Error eliminando archivo físico:', fileErr);
-                    // No fallar la operación si no se puede eliminar el archivo
                 }
             }
             
@@ -340,90 +318,6 @@ router.delete('/submissions/:id', authenticateAdmin, (req, res) => {
                 title: submission.title
             });
         });
-    });
-});
-
-// Obtener estadísticas avanzadas - AGREGADO
-router.get('/advanced-stats', authenticateAdmin, (req, res) => {
-    console.log('📈 Solicitando estadísticas avanzadas');
-    
-    const db = new sqlite3.Database(dbPath);
-    
-    const stats = {};
-    let completed = 0;
-    const totalQueries = 3;
-    
-    function checkComplete() {
-        completed++;
-        if (completed === totalQueries) {
-            db.close();
-            res.json(stats);
-        }
-    }
-    
-    // Entregas por día (últimos 7 días)
-    db.all(`
-        SELECT 
-            DATE(submitted_at) as date,
-            COUNT(*) as count
-        FROM submissions 
-        WHERE submitted_at >= datetime('now', '-7 days')
-        GROUP BY DATE(submitted_at)
-        ORDER BY date DESC
-    `, (err, rows) => {
-        if (err) {
-            console.error('Error obteniendo entregas por día:', err);
-            stats.submissionsByDay = [];
-        } else {
-            stats.submissionsByDay = rows;
-        }
-        checkComplete();
-    });
-    
-    // Top 5 estudiantes con más entregas
-    db.all(`
-        SELECT 
-            u.name as student_name,
-            u.email as student_email,
-            COUNT(s.id) as submission_count
-        FROM users u
-        LEFT JOIN submissions s ON u.id = s.user_id
-        WHERE u.role = 'student'
-        GROUP BY u.id, u.name, u.email
-        ORDER BY submission_count DESC
-        LIMIT 5
-    `, (err, rows) => {
-        if (err) {
-            console.error('Error obteniendo top estudiantes:', err);
-            stats.topStudents = [];
-        } else {
-            stats.topStudents = rows;
-        }
-        checkComplete();
-    });
-    
-    // Tipos de archivo más comunes
-    db.all(`
-        SELECT 
-            CASE 
-                WHEN original_name LIKE '%.pdf' THEN 'PDF'
-                WHEN original_name LIKE '%.doc%' THEN 'Word'
-                WHEN original_name LIKE '%.txt' THEN 'Texto'
-                WHEN original_name LIKE '%.zip' THEN 'ZIP'
-                ELSE 'Otros'
-            END as file_type,
-            COUNT(*) as count
-        FROM submissions
-        GROUP BY file_type
-        ORDER BY count DESC
-    `, (err, rows) => {
-        if (err) {
-            console.error('Error obteniendo tipos de archivo:', err);
-            stats.fileTypes = [];
-        } else {
-            stats.fileTypes = rows;
-        }
-        checkComplete();
     });
 });
 
@@ -451,7 +345,7 @@ router.get('/export', authenticateDownload, (req, res) => {
             db.close();
             
             if (err) {
-                console.error('Error exportando datos:', err);
+                console.error('❌ Error exportando datos:', err);
                 return res.status(500).json({ error: 'Error al exportar datos' });
             }
             
