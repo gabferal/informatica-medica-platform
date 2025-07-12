@@ -25,6 +25,12 @@ class AdminPanel {
             return false;
         }
 
+        // Verificar que el usuario sea admin
+        if (this.user.role !== 'admin') {
+            this.showUnauthorizedAccess();
+            return false;
+        }
+
         // Verificar que el token no haya expirado
         try {
             const tokenPayload = JSON.parse(atob(this.token.split('.')[1]));
@@ -58,17 +64,17 @@ class AdminPanel {
                                     <i class="fas fa-shield-alt fa-4x text-danger mb-3"></i>
                                     <h5>Panel de Administración</h5>
                                     <p class="text-muted">
-                                        Necesitas iniciar sesión para acceder a esta área.
+                                        Necesitas permisos de administrador para acceder a esta área.
                                     </p>
                                 </div>
                                 
                                 <div class="alert alert-warning">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
-                                    <strong>Área Protegida:</strong> Solo usuarios autenticados pueden acceder.
+                                    <strong>Área Protegida:</strong> Solo administradores pueden acceder.
                                 </div>
                                 
                                 <div class="d-grid gap-2">
-                                    <a href="index.html" class="btn btn-primary">
+                                    <a href="login.html" class="btn btn-primary">
                                         <i class="fas fa-sign-in-alt me-2"></i>
                                         Ir a Iniciar Sesión
                                     </a>
@@ -94,8 +100,10 @@ class AdminPanel {
     updateUserInfo() {
         const userInfo = document.getElementById('admin-user-info');
         if (userInfo) {
+            // ✅ CORREGIDO: usar this.user.name en lugar de this.user.nombre
+            const userName = this.user.name || this.user.nombre || this.user.email || 'Admin';
             userInfo.innerHTML = `
-                <span class="me-3">👨‍💼 ${this.user.nombre} (${this.user.role.toUpperCase()})</span>
+                <span class="me-3">👨‍�� ${userName} (${this.user.role.toUpperCase()})</span>
                 <button class="btn btn-outline-light btn-sm" onclick="adminPanel.logout()">
                     <i class="fas fa-sign-out-alt me-1"></i>
                     Cerrar Sesión
@@ -133,13 +141,22 @@ class AdminPanel {
                 this.applyFilters();
             });
         }
+
+        // Botón de refrescar
+        const refreshBtn = document.getElementById('refresh-submissions');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadAllSubmissions();
+            });
+        }
     }
 
     async loadDashboardStats() {
         try {
             const response = await fetch('/api/admin/stats', {
                 headers: {
-                    'Authorization': `Bearer ${this.token}`
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
                 }
             });
             
@@ -152,7 +169,7 @@ class AdminPanel {
                 const stats = await response.json();
                 this.updateDashboard(stats);
             } else {
-                console.error('Error cargando estadísticas');
+                console.error('Error cargando estadísticas:', response.status);
                 this.updateDashboard({
                     totalStudents: '-',
                     totalSubmissions: '-',
@@ -176,7 +193,7 @@ class AdminPanel {
             'total-students': stats.totalStudents,
             'total-submissions': stats.totalSubmissions,
             'submissions-today': stats.submissionsToday,
-            'email-status': '✓'
+            'submissions-week': stats.submissionsWeek || '-'
         };
 
         Object.entries(elements).forEach(([id, value]) => {
@@ -189,6 +206,7 @@ class AdminPanel {
         // Actualizar el estado del email
         const emailStatus = document.getElementById('email-status');
         if (emailStatus) {
+            emailStatus.textContent = '✓ Activo';
             emailStatus.parentElement.parentElement.className = 'card bg-success text-white';
         }
     }
@@ -199,7 +217,8 @@ class AdminPanel {
             
             const response = await fetch('/api/admin/submissions', {
                 headers: {
-                    'Authorization': `Bearer ${this.token}`
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
                 }
             });
             
@@ -212,7 +231,10 @@ class AdminPanel {
                 this.submissions = await response.json();
                 this.filteredSubmissions = [...this.submissions];
                 this.renderSubmissions(this.filteredSubmissions);
+                console.log(`✅ Cargadas ${this.submissions.length} entregas`);
             } else {
+                const errorText = await response.text();
+                console.error('Error al cargar entregas:', response.status, errorText);
                 this.showError('Error al cargar entregas');
             }
         } catch (error) {
@@ -227,16 +249,22 @@ class AdminPanel {
         const titleFilter = document.getElementById('filter-title')?.value.toLowerCase() || '';
 
         this.filteredSubmissions = this.submissions.filter(submission => {
+            // ✅ MEJORADO: verificar que las propiedades existan antes de usarlas
+            const studentName = (submission.student_name || '').toLowerCase();
+            const studentEmail = (submission.student_email || '').toLowerCase();
+            const studentRa = (submission.student_ra || '').toLowerCase();
+            const submissionTitle = (submission.title || '').toLowerCase();
+
             const matchesStudent = !studentSearch || 
-                submission.student_name.toLowerCase().includes(studentSearch) ||
-                submission.student_email.toLowerCase().includes(studentSearch) ||
-                submission.student_ra.toLowerCase().includes(studentSearch);
+                studentName.includes(studentSearch) ||
+                studentEmail.includes(studentSearch) ||
+                studentRa.includes(studentSearch);
 
             const matchesDate = !dateFilter || 
-                submission.submitted_at.split('T')[0] === dateFilter;
+                (submission.submitted_at && submission.submitted_at.split('T')[0] === dateFilter);
 
             const matchesTitle = !titleFilter || 
-                submission.title.toLowerCase().includes(titleFilter);
+                submissionTitle.includes(titleFilter);
 
             return matchesStudent && matchesDate && matchesTitle;
         });
@@ -310,21 +338,21 @@ class AdminPanel {
                                 <td>
                                     <div>
                                         <strong>${submission.student_name || 'Sin nombre'}</strong><br>
-                                        <small class="text-muted">${submission.student_email}</small><br>
-                                        <span class="badge bg-secondary">${submission.student_ra}</span>
+                                        <small class="text-muted">${submission.student_email || 'Sin email'}</small><br>
+                                        <span class="badge bg-secondary">${submission.student_ra || 'Sin RA'}</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <strong>${submission.title}</strong>
+                                    <strong>${submission.title || 'Sin título'}</strong>
                                     ${submission.description ? `<br><small class="text-muted">${submission.description}</small>` : ''}
                                 </td>
                                 <td>
                                     <i class="fas fa-file-alt text-primary me-1"></i>
-                                    ${submission.original_name}<br>
+                                    ${submission.original_name || submission.filename || 'Sin archivo'}<br>
                                     <small class="text-muted">ID: ${submission.id}</small>
                                 </td>
                                 <td>
-                                    <small>${new Date(submission.submitted_at).toLocaleString('es-ES')}</small>
+                                    <small>${submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('es-ES') : 'Sin fecha'}</small>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
@@ -338,10 +366,10 @@ class AdminPanel {
                                                 title="Ver detalles">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-outline-success" 
-                                                onclick="adminPanel.sendFeedback(${submission.id})"
-                                                title="Enviar feedback">
-                                            <i class="fas fa-comment"></i>
+                                        <button class="btn btn-outline-danger" 
+                                                onclick="adminPanel.deleteSubmission(${submission.id})"
+                                                title="Eliminar">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -379,11 +407,38 @@ class AdminPanel {
         window.open(`/api/admin/download/${id}?token=${encodeURIComponent(this.token)}`, '_blank');
     }
 
+    async deleteSubmission(id) {
+        if (!confirm('¿Estás seguro de que quieres eliminar esta entrega? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/admin/submissions/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                this.showAlert('Entrega eliminada exitosamente', 'success');
+                this.loadAllSubmissions(); // Recargar la lista
+            } else {
+                this.showAlert('Error al eliminar la entrega', 'danger');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.showAlert('Error de conexión', 'danger');
+        }
+    }
+
     async viewDetails(id) {
         try {
             const response = await fetch(`/api/admin/submission/${id}`, {
                 headers: {
-                    'Authorization': `Bearer ${this.token}`
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
                 }
             });
             
@@ -421,23 +476,24 @@ class AdminPanel {
                             <div class="row">
                                 <div class="col-md-6">
                                     <h6 class="text-primary">👤 Información del Estudiante</h6>
-                                    <p><strong>Nombre:</strong> ${submission.student_name}</p>
-                                    <p><strong>Email:</strong> ${submission.student_email}</p>
-                                    <p><strong>RA:</strong> ${submission.student_ra}</p>
+                                    <p><strong>Nombre:</strong> ${submission.student_name || 'Sin nombre'}</p>
+                                    <p><strong>Email:</strong> ${submission.student_email || 'Sin email'}</p>
+                                    <p><strong>RA:</strong> ${submission.student_ra || 'Sin RA'}</p>
                                 </div>
                                 <div class="col-md-6">
                                     <h6 class="text-success">📋 Información del Trabajo</h6>
                                     <p><strong>ID:</strong> ${submission.id}</p>
-                                    <p><strong>Título:</strong> ${submission.title}</p>
-                                    <p><strong>Fecha:</strong> ${new Date(submission.submitted_at).toLocaleString('es-ES')}</p>
+                                    <p><strong>Título:</strong> ${submission.title || 'Sin título'}</p>
+                                    <p><strong>Fecha:</strong> ${submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('es-ES') : 'Sin fecha'}</p>
                                 </div>
                             </div>
                             
                             <hr>
                             
                             <h6 class="text-info">📄 Archivo</h6>
-                            <p><strong>Nombre original:</strong> ${submission.original_name}</p>
-                            <p><strong>Nombre en servidor:</strong> ${submission.filename}</p>
+                            <p><strong>Nombre original:</strong> ${submission.original_name || 'Sin nombre'}</p>
+                            <p><strong>Nombre en servidor:</strong> ${submission.filename || 'Sin archivo'}</p>
+                            ${submission.file_size ? `<p><strong>Tamaño:</strong> ${(submission.file_size / 1024 / 1024).toFixed(2)} MB</p>` : ''}
                             
                             ${submission.description ? `
                                 <hr>
@@ -449,6 +505,10 @@ class AdminPanel {
                             <button type="button" class="btn btn-primary" onclick="adminPanel.downloadSubmission(${submission.id})">
                                 <i class="fas fa-download me-1"></i>
                                 Descargar Archivo
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="adminPanel.deleteSubmission(${submission.id}); bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();">
+                                <i class="fas fa-trash me-1"></i>
+                                Eliminar
                             </button>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                         </div>
@@ -469,11 +529,6 @@ class AdminPanel {
         // Mostrar modal
         const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
         modal.show();
-    }
-
-    sendFeedback(id) {
-        console.log('Enviando feedback para entrega:', id);
-        this.showAlert('Funcionalidad de feedback en desarrollo', 'info');
     }
 
     async exportData() {
