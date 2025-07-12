@@ -3,209 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Informática Médica - Plataforma Educativa</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Informática Médica - Plataforma de Entregas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-laptop-medical me-2"></i>
-                Informática Médica
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-heartbeat me-2"></i>Informática Médica
             </a>
-            
-            <div class="d-flex">
-                <a href="admin.html" class="btn btn-outline-light btn-sm opacity-75 me-2">
-                    <i class="fas fa-cog me-1"></i>
-                    Admin
-                </a>
-                <button id="login-btn" class="btn btn-outline-light" onclick="showAuthModal()">
-                    <i class="fas fa-sign-in-alt me-1"></i>
-                    Acceder
-                </button>
-                <div id="user-info" style="display: none;" class="text-light">
-                    <!-- Info del usuario se carga aquí -->
-                </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="login.html">Iniciar Sesión</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="register.html">Registrarse</a>
+                    </li>
+                </ul>
+                <div id="user-info" class="d-flex align-items-center"></div>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-8 mx-auto text-center">
-                <h1 class="display-4 mb-4">🩺 Informática Médica</h1>
-                <p class="lead">Plataforma Educativa</p>
-                
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    ✅ Servidor funcionando correctamente
-                </div>
-
-                <div class="row mt-5">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="fas fa-book text-primary"></i>
-                                    Materiales del Curso
-                                </h5>
-                                <p class="card-text">Accede a los recursos educativos</p>
-                                <button class="btn btn-primary" onclick="loadMaterials()">
-                                    Ver Materiales
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="fas fa-users text-success"></i>
-                                    Área de Estudiantes
-                                </h5>
-                                <p class="card-text">Entrega de trabajos prácticos</p>
-                                <button class="btn btn-success" onclick="goToStudentArea()">
-                                    Acceder
-                                </button>
-                            </div>
-                        </div>
+    <!-- Hero Section -->
+    <section class="hero-section bg-primary text-white py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        <i class="fas fa-laptop-medical me-3"></i>
+                        Plataforma de Informática Médica
+                    </h1>
+                    <p class="lead mb-4">
+                        Sistema de entrega de trabajos prácticos para estudiantes de medicina. 
+                        Sube tus trabajos de forma segura y organizada.
+                    </p>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="register.html" class="btn btn-light btn-lg me-md-2">
+                            <i class="fas fa-user-plus me-2"></i>Registrarse
+                        </a>
+                        <a href="login.html" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                        </a>
                     </div>
                 </div>
-
-                <div id="materials-section" class="mt-5" style="display: none;">
-                    <h3>📚 Materiales del Curso</h3>
-                    <div id="materials-list" class="mt-3">
-                        <!-- Los materiales se cargarán aquí -->
-                    </div>
+                <div class="col-lg-6 text-center">
+                    <i class="fas fa-file-medical-alt" style="font-size: 12rem; opacity: 0.3;"></i>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Modal de Autenticación -->
-    <div class="modal fade" id="authModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Acceder al Sistema</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col">
+                    <h2 class="display-5 fw-bold">Características del Sistema</h2>
+                    <p class="lead text-muted">Todo lo que necesitas para gestionar tus entregas académicas</p>
                 </div>
-                <div class="modal-body">
-                    <!-- Pestañas -->
-                    <ul class="nav nav-tabs mb-4" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#login-pane" type="button" role="tab">
-                                Iniciar Sesión
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#register-pane" type="button" role="tab">
-                                Registrarse
-                            </button>
-                        </li>
-                    </ul>
-                    
-                    <div class="tab-content">
-                        <!-- Formulario de Login -->
-                        <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
-                            <form id="login-form">
-                                <div class="mb-3">
-                                    <label for="login-email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="login-email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="login-password" class="form-label">Contraseña</label>
-                                    <input type="password" class="form-control" id="login-password" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">
-                                    Iniciar Sesión
-                                </button>
-                            </form>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-upload text-primary mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="card-title">Subida Fácil</h5>
+                            <p class="card-text">
+                                Sube tus trabajos en formatos PDF, DOCX, PNG y JPG de manera rápida y segura.
+                            </p>
                         </div>
-                        
-                        <!-- Formulario de Registro -->
-                        <div class="tab-pane fade" id="register-pane" role="tabpanel">
-                            <form id="register-form">
-                                <div class="mb-3">
-                                    <label for="register-nombre" class="form-label">Nombre Completo</label>
-                                    <input type="text" class="form-control" id="register-nombre" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="register-email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="register-email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="register-ra" class="form-label">Registro Académico (RA)</label>
-                                    <input type="text" class="form-control" id="register-ra" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="register-password" class="form-label">Contraseña</label>
-                                    <input type="password" class="form-control" id="register-password" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="register-confirm-password" class="form-label">Confirmar Contraseña</label>
-                                    <input type="password" class="form-control" id="register-confirm-password" required>
-                                </div>
-                                <button type="submit" class="btn btn-success w-100">
-                                    Registrarse
-                                </button>
-                            </form>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock text-success mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="card-title">Historial Completo</h5>
+                            <p class="card-text">
+                                Mantén un registro detallado de todas tus entregas con fecha y hora exacta.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shield-alt text-warning mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="card-title">Seguro y Confiable</h5>
+                            <p class="card-text">
+                                Tus archivos están protegidos con autenticación segura y almacenamiento confiable.
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <script>
-        async function loadMaterials() {
-            try {
-                const response = await fetch('/api/materials');
-                const materials = await response.json();
-                
-                const materialsSection = document.getElementById('materials-section');
-                const materialsList = document.getElementById('materials-list');
-                
-                materialsSection.style.display = 'block';
-                
-                materialsList.innerHTML = materials.map(material => `
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h6 class="card-title">${material.title}</h6>
-                            <p class="card-text">${material.description}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-secondary">${material.category}</span>
-                                <small class="text-muted">${new Date(material.uploaded_at).toLocaleDateString('es-ES')}</small>
+    <!-- Instructions Section -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="text-center mb-5">¿Cómo usar la plataforma?</h2>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>1</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Regístrate</h5>
+                                    <p class="text-muted">Crea tu cuenta con tu email institucional y datos académicos.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>2</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Inicia Sesión</h5>
+                                    <p class="text-muted">Accede a tu área personal con tus credenciales.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>3</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Sube tu Trabajo</h5>
+                                    <p class="text-muted">Selecciona el archivo y completa la información requerida.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>4</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Confirma la Entrega</h5>
+                                    <p class="text-muted">Verifica que tu trabajo se haya subido correctamente.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                `).join('');
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al cargar materiales');
-            }
-        }
+                </div>
+            </div>
+        </div>
+    </section>
 
-        function showAuthModal() {
-            const modal = new bootstrap.Modal(document.getElementById('authModal'));
-            modal.show();
-        }
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-heartbeat me-2"></i>Informática Médica</h5>
+                    <p class="text-muted">Plataforma de entregas académicas para estudiantes de medicina.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6>Soporte Técnico</h6>
+                    <p class="text-muted">
+                        <i class="fas fa-envelope me-2"></i>
+                        ec.gabrielalvarez@gmail.com
+                    </p>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="text-center">
+                <small class="text-muted">
+                    © 2024 Informática Médica - Desarrollado por Gabriel Álvarez
+                </small>
+            </div>
+        </div>
+    </footer>
 
-        function goToStudentArea() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                window.location.href = 'student-area.html';
-            } else {
-                showAuthModal();
-            }
-        }
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    
+    <!-- Auth JS - RUTA CORRECTA -->
     <script src="js/auth.js"></script>
 </body>
 </html>
