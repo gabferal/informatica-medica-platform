@@ -6,6 +6,7 @@
     <title>Área de Estudiantes - Informática Médica</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -26,6 +27,11 @@
             </div>
         </div>
     </nav>
+
+    <!-- Alert container para mensajes -->
+    <div class="container mt-3">
+        <div id="alert-container"></div>
+    </div>
 
     <div class="container mt-4">
         <div class="row">
@@ -62,13 +68,13 @@
                             <div class="mb-3">
                                 <label for="file" class="form-label">Archivo *</label>
                                 <input type="file" class="form-control" id="file" required 
-                                       accept=".pdf,.doc,.docx,.txt,.zip">
+                                       accept=".pdf,.doc,.docx,.txt,.zip,.png,.jpg,.jpeg">
                                 <div class="form-text">
-                                    Formatos permitidos: PDF, DOC, DOCX, TXT, ZIP. Tamaño máximo: 10MB
+                                    Formatos permitidos: PDF, DOC, DOCX, TXT, ZIP, PNG, JPG. Tamaño máximo: 10MB
                                 </div>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="upload-btn">
                                 <i class="fas fa-upload me-2"></i>
                                 Subir Trabajo
                             </button>
@@ -89,7 +95,28 @@
                             <li>Asegúrate de que el archivo esté completo</li>
                             <li>Puedes subir múltiples versiones</li>
                             <li>Guarda una copia de seguridad local</li>
+                            <li>Revisa que el archivo no supere 10MB</li>
                         </ul>
+                    </div>
+                </div>
+                
+                <!-- Estadísticas del estudiante -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-chart-bar text-success me-2"></i>
+                            Mis Estadísticas
+                        </h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 id="student-total-submissions" class="text-primary">-</h4>
+                                <small class="text-muted">Entregas</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 id="student-last-submission" class="text-success">-</h4>
+                                <small class="text-muted">Última</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,7 +171,82 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>  <!-- ← AGREGADO: Referencia a auth.js -->
     <script src="js/student-area.js"></script>
+    
+    <script>
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔐 Verificando autenticación de estudiante...');
+            
+            // Usar función de auth.js para verificar autenticación
+            if (!window.authFunctions.requireAuth()) {
+                return; // requireAuth ya maneja la redirección
+            }
+            
+            // Mostrar información del usuario
+            const user = window.authFunctions.getUser();
+            if (user) {
+                document.getElementById('user-info').innerHTML = `
+                    <span class="navbar-text">
+                        <i class="fas fa-user me-1"></i>
+                        ${user.name} (${user.ra})
+                    </span>
+                `;
+                
+                // Actualizar estadísticas del estudiante
+                updateStudentStats();
+            }
+            
+            console.log('✅ Acceso de estudiante verificado');
+        });
+        
+        // Función logout usando auth.js
+        function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                window.authFunctions.logout();
+            }
+        }
+        
+        // Función para actualizar estadísticas del estudiante
+        function updateStudentStats() {
+            // Esta función se puede implementar para mostrar estadísticas
+            // Por ahora, mostrar valores por defecto
+            document.getElementById('student-total-submissions').textContent = '0';
+            document.getElementById('student-last-submission').textContent = '-';
+        }
+        
+        // Mejorar el manejo del formulario de subida
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const uploadBtn = document.getElementById('upload-btn');
+            const originalText = uploadBtn.innerHTML;
+            
+            // Validar que hay un token
+            if (!window.authFunctions.getToken()) {
+                window.authFunctions.showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'danger');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+            
+            // Deshabilitar botón durante la subida
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo...';
+            
+            // Aquí se ejecutará la función de student-area.js
+            // Restaurar botón después de un tiempo si no se maneja en student-area.js
+            setTimeout(() => {
+                if (uploadBtn.disabled) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = originalText;
+                }
+            }, 30000); // 30 segundos timeout
+        });
+    </script>
 </body>
 </html>
