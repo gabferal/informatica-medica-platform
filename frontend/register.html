@@ -35,30 +35,30 @@
                         <form id="registerForm">
                             <div class="mb-3">
                                 <label for="name" class="form-label">Nombre Completo *</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
+                                <input type="text" class="form-control" id="name" required>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email *</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
+                                <input type="email" class="form-control" id="email" required>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="ra" class="form-label">RA (Registro Académico) *</label>
-                                <input type="text" class="form-control" id="ra" name="ra" required>
+                                <input type="text" class="form-control" id="ra" required>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="password" class="form-label">Contraseña *</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <input type="password" class="form-control" id="password" required>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="confirmPassword" class="form-label">Confirmar Contraseña *</label>
-                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                <input type="password" class="form-control" id="confirmPassword" required>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary w-100">
+                            <button type="submit" class="btn btn-primary w-100" id="submitBtn">
                                 <i class="fas fa-user-plus me-2"></i>Registrarse
                             </button>
                         </form>
@@ -76,83 +76,111 @@
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
     
     <script>
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        console.log('🚀 Script de registro cargado');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registerForm');
+            const submitBtn = document.getElementById('submitBtn');
             
-            // Obtener valores del formulario
-            const formData = {
-                name: document.getElementById('name').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                ra: document.getElementById('ra').value.trim(),
-                password: document.getElementById('password').value,
-                confirmPassword: document.getElementById('confirmPassword').value
-            };
-            
-            console.log('📝 Datos del formulario:', formData);
-            
-            // Validaciones del frontend
-            if (!formData.name || !formData.email || !formData.ra || !formData.password) {
-                showAlert('Todos los campos son obligatorios', 'danger');
-                return;
-            }
-            
-            if (formData.password !== formData.confirmPassword) {
-                showAlert('Las contraseñas no coinciden', 'danger');
-                return;
-            }
-            
-            if (formData.password.length < 6) {
-                showAlert('La contraseña debe tener al menos 6 caracteres', 'danger');
-                return;
-            }
-            
-            // Preparar datos para enviar (sin confirmPassword)
-            const dataToSend = {
-                name: formData.name,
-                email: formData.email,
-                ra: formData.ra,
-                password: formData.password
-            };
-            
-            console.log('📤 Enviando al servidor:', dataToSend);
-            
-            try {
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dataToSend)
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                console.log('📝 Formulario enviado');
+                
+                // Deshabilitar botón
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
+                
+                // Obtener valores
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const ra = document.getElementById('ra').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                console.log('📋 Datos capturados:', { 
+                    name: name ? 'OK' : 'VACÍO', 
+                    email: email ? 'OK' : 'VACÍO', 
+                    ra: ra ? 'OK' : 'VACÍO', 
+                    password: password ? 'OK' : 'VACÍO' 
                 });
                 
-                console.log('📥 Respuesta del servidor:', response.status);
-                
-                const data = await response.json();
-                console.log('📋 Datos de respuesta:', data);
-                
-                if (response.ok) {
-                    showAlert('Usuario registrado exitosamente. Redirigiendo al login...', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
-                } else {
-                    showAlert(data.error || 'Error en el registro', 'danger');
+                // Validaciones
+                if (!name || !email || !ra || !password) {
+                    showAlert('Todos los campos son obligatorios', 'danger');
+                    resetButton();
+                    return;
                 }
-            } catch (error) {
-                console.error('❌ Error:', error);
-                showAlert('Error de conexión. Intenta nuevamente.', 'danger');
+                
+                if (password !== confirmPassword) {
+                    showAlert('Las contraseñas no coinciden', 'danger');
+                    resetButton();
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showAlert('La contraseña debe tener al menos 6 caracteres', 'danger');
+                    resetButton();
+                    return;
+                }
+                
+                // Datos para enviar
+                const userData = {
+                    name: name,
+                    email: email,
+                    ra: ra,
+                    password: password
+                };
+                
+                console.log('📤 Enviando datos:', userData);
+                
+                try {
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    console.log('📥 Respuesta recibida:', response.status, response.statusText);
+                    
+                    const result = await response.json();
+                    console.log('📋 Datos de respuesta:', result);
+                    
+                    if (response.ok) {
+                        showAlert('¡Usuario registrado exitosamente! Redirigiendo al login...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                    } else {
+                        showAlert(result.error || 'Error en el registro', 'danger');
+                        resetButton();
+                    }
+                } catch (error) {
+                    console.error('❌ Error de conexión:', error);
+                    showAlert('Error de conexión. Verifica tu internet e intenta nuevamente.', 'danger');
+                    resetButton();
+                }
+            });
+            
+            function resetButton() {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Registrarse';
+            }
+            
+            function showAlert(message, type) {
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                // Scroll al alert
+                alertContainer.scrollIntoView({ behavior: 'smooth' });
             }
         });
-        
-        function showAlert(message, type) {
-            const alertContainer = document.getElementById('alert-container');
-            alertContainer.innerHTML = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-        }
     </script>
 </body>
 </html>
