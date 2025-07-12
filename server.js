@@ -5,10 +5,16 @@ const fs = require('fs');
 
 const app = express();
 
-// Middleware
+// Middleware - ORDEN IMPORTANTE
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' })); // Aumentar límite
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Logging middleware
+app.use((req, res, next) => {
+    console.log(`📡 ${req.method} ${req.path}`, req.body ? 'with body' : 'no body');
+    next();
+});
 
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'frontend')));
@@ -67,11 +73,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Puerto - Railway asigna automáticamente
+// Puerto
 const PORT = parseInt(process.env.PORT) || 3000;
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`�� Server running on port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📡 Listening on all interfaces (0.0.0.0:${PORT})`);
+    console.log(`�� Listening on all interfaces (0.0.0.0:${PORT})`);
 });
