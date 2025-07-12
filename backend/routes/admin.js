@@ -129,7 +129,8 @@ router.get('/stats', authenticateAdmin, (req, res) => {
 // Obtener todas las entregas con información del estudiante
 router.get('/submissions', authenticateAdmin, (req, res) => {
     console.log('📋 Solicitando todas las entregas para admin');
-    
+    console.log("🔍 Query:", query);
+    console.log("🔍 Params:", params);    
     const { search, date, title } = req.query;
     
     const db = new sqlite3.Database(dbPath);
@@ -174,7 +175,7 @@ router.get('/submissions', authenticateAdmin, (req, res) => {
             return res.status(500).json({ error: 'Error al obtener entregas' });
         }
         
-        console.log(`✅ Encontradas ${rows.length} entregas para admin`);
+        console.log("🔍 Raw rows from DB:", rows);        console.log(`✅ Encontradas ${rows.length} entregas para admin`);
         res.json(rows);
     });
 });
