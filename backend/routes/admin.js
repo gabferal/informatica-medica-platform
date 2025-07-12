@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
-const dbPath = path.join(__dirname, '../database/database.db');
+const dbPath = path.join(__dirname, '../database.db'); // ← CORREGIDO: ruta simplificada
 
 // Usar los middlewares de autenticación
 const authenticateToken = authMiddleware.authenticateToken;
@@ -65,8 +65,8 @@ router.get('/stats', authenticateAdmin, (req, res) => {
         }
     }
     
-    // Total de estudiantes
-    db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
+    // Total de estudiantes - CORREGIDO: filtrar solo estudiantes
+    db.get('SELECT COUNT(*) as count FROM users WHERE role = "student"', (err, row) => {
         if (err) {
             console.error('Error obteniendo total de estudiantes:', err);
             stats.totalStudents = 0;
@@ -129,10 +129,11 @@ router.get('/submissions', authenticateAdmin, (req, res) => {
     
     const db = new sqlite3.Database(dbPath);
     
+    // ✅ CORREGIDO: usar u.name en lugar de u.nombre
     let query = `
         SELECT 
             s.*,
-            u.nombre as student_name,
+            u.name as student_name,
             u.email as student_email,
             u.ra as student_ra
         FROM submissions s
@@ -142,9 +143,9 @@ router.get('/submissions', authenticateAdmin, (req, res) => {
     
     const params = [];
     
-    // Aplicar filtros
+    // Aplicar filtros - CORREGIDO: usar u.name
     if (search) {
-        query += ` AND (u.nombre LIKE ? OR u.email LIKE ? OR u.ra LIKE ?)`;
+        query += ` AND (u.name LIKE ? OR u.email LIKE ? OR u.ra LIKE ?)`;
         const searchParam = `%${search}%`;
         params.push(searchParam, searchParam, searchParam);
     }
@@ -177,14 +178,15 @@ router.get('/submissions', authenticateAdmin, (req, res) => {
 // Obtener detalles de una entrega específica
 router.get('/submission/:id', authenticateAdmin, (req, res) => {
     const submissionId = req.params.id;
-    console.log('�� Solicitando detalles de entrega:', submissionId);
+    console.log('🔍 Solicitando detalles de entrega:', submissionId);
     
     const db = new sqlite3.Database(dbPath);
     
+    // ✅ CORREGIDO: usar u.name en lugar de u.nombre
     db.get(
         `SELECT 
             s.*,
-            u.nombre as student_name,
+            u.name as student_name,
             u.email as student_email,
             u.ra as student_ra
         FROM submissions s
@@ -255,12 +257,58 @@ router.get('/download/:id', authenticateDownload, (req, res) => {
     );
 });
 
+// Eliminar entrega (admin) - AGREGADO
+router.delete('/submissions/:id', authenticateAdmin, (req, res) => {
+    const submissionId = req.params.id;
+    console.log('🗑️ Admin eliminando entrega:', submissionId);
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    // Primero obtener info del archivo
+    db.get('SELECT * FROM submissions WHERE id = ?', [submissionId], (err, submission) => {
+        if (err) {
+            db.close();
+            console.error('Error obteniendo entrega:', err);
+            return res.status(500).json({ error: 'Error al obtener la entrega' });
+        }
+        
+        if (!submission) {
+            db.close();
+            return res.status(404).json({ error: 'Entrega no encontrada' });
+        }
+        
+        // Eliminar de la base de datos
+        db.run('DELETE FROM submissions WHERE id = ?', [submissionId], function(err) {
+            db.close();
+            
+            if (err) {
+                console.error('Error eliminando entrega:', err);
+                return res.status(500).json({ error: 'Error al eliminar la entrega' });
+            }
+            
+            // Eliminar archivo físico
+            if (submission.file_path && fs.existsSync(submission.file_path)) {
+                try {
+                    fs.unlinkSync(submission.file_path);
+                    console.log('✅ Archivo físico eliminado:', submission.file_path);
+                } catch (fileErr) {
+                    console.error('Error eliminando archivo físico:', fileErr);
+                }
+            }
+            
+            console.log('✅ Admin eliminó entrega:', submission.title);
+            res.json({ message: 'Entrega eliminada exitosamente' });
+        });
+    });
+});
+
 // Exportar datos a CSV
 router.get('/export', authenticateDownload, (req, res) => {
     console.log('📊 Exportando datos a CSV');
     
     const db = new sqlite3.Database(dbPath);
     
+    // ✅ CORREGIDO: usar u.name en lugar de u.nombre
     db.all(
         `SELECT 
             s.id,
@@ -268,7 +316,7 @@ router.get('/export', authenticateDownload, (req, res) => {
             s.description,
             s.original_name,
             s.submitted_at,
-            u.nombre as student_name,
+            u.name as student_name,
             u.email as student_email,
             u.ra as student_ra
         FROM submissions s
