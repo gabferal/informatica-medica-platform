@@ -5,8 +5,14 @@ const fs = require('fs');
 
 const app = express();
 
-// ✅ AGREGAR: Configuración para Railway/proxies
-app.set('trust proxy', true);
+// ✅ MEJORA: Configuración específica para Railway
+if (process.env.NODE_ENV === 'production') {
+    // En producción (Railway), confiar en el primer proxy
+    app.set('trust proxy', 1);
+} else {
+    // En desarrollo, confiar en todos los proxies locales
+    app.set('trust proxy', true);
+}
 
 // Middleware - ORDEN IMPORTANTE
 app.use(cors());

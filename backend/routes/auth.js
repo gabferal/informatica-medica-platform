@@ -12,19 +12,19 @@ try {
     console.error('❌ Error cargando base de datos en auth.js:', error);
 }
 
-// ✅ MEJORA: Configuración desde variables de entorno
+// ✅ Configuración desde variables de entorno
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 12;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// ✅ MEJORA: Validación estricta de configuración crítica
+// ✅ Validación estricta de configuración crítica
 if (!JWT_SECRET) {
     console.error('❌ CRÍTICO: JWT_SECRET no está definido en variables de entorno');
     console.log('💡 Verifica tu archivo .env y asegúrate de que JWT_SECRET esté configurado');
 }
 
-// ✅ MEJORA: Rate limiting configurado desde variables de entorno
+// ✅ Rate limiting configurado para Railway
 const authLimiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 5,
@@ -34,6 +34,7 @@ const authLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    trustProxy: NODE_ENV === 'production' ? 1 : true,
     skip: (req) => {
         return NODE_ENV === 'development' && (req.ip === '::1' || req.ip === '127.0.0.1');
     },
@@ -51,6 +52,7 @@ const registerLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    trustProxy: NODE_ENV === 'production' ? 1 : true,
     skip: (req) => {
         return NODE_ENV === 'development' && (req.ip === '::1' || req.ip === '127.0.0.1');
     },
@@ -59,7 +61,7 @@ const registerLimiter = rateLimit({
     }
 });
 
-// ✅ MEJORA: Función de validación robusta
+// ✅ Función de validación robusta
 const validateRegistrationData = (data) => {
     const { name, email, ra, password } = data;
     const errors = [];
@@ -120,15 +122,21 @@ const validateRegistrationData = (data) => {
         const hasLowerCase = /[a-z]/.test(password);
         const hasNumbers = /\d/.test(password);
         
-        if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-            errors.push('Contraseña debe contener al menos una mayúscula, una minúscula y un número');
+        if (!hasUpperCase) {
+            errors.push('Contraseña debe contener al menos una letra mayúscula');
+        }
+        if (!hasLowerCase) {
+            errors.push('Contraseña debe contener al menos una letra minúscula');
+        }
+        if (!hasNumbers) {
+            errors.push('Contraseña debe contener al menos un número');
         }
     }
 
     return errors;
 };
 
-// ✅ MEJORA: Función de logging seguro
+// ✅ Función de logging seguro
 const logSafeData = (data, excludeFields = ['password']) => {
     if (!data || typeof data !== 'object') return data;
     
@@ -141,7 +149,7 @@ const logSafeData = (data, excludeFields = ['password']) => {
     return safe;
 };
 
-// ✅ MEJORA: Función para sanitizar entrada
+// ✅ Función para sanitizar entrada
 const sanitizeInput = (str) => {
     if (typeof str !== 'string') return str;
     return str.trim()
@@ -150,12 +158,12 @@ const sanitizeInput = (str) => {
         .replace(/on\w+=/gi, '');
 };
 
-// ✅ MEJORA: Función para generar timestamp ISO
+// ✅ Función para generar timestamp ISO
 const getCurrentTimestamp = () => {
     return new Date().toISOString();
 };
 
-// ✅ MEJORA: Función para log de eventos de seguridad
+// ✅ Función para log de eventos de seguridad
 const logSecurityEvent = (event, details, req) => {
     const timestamp = getCurrentTimestamp();
     const ip = req.ip || req.connection.remoteAddress;
@@ -169,7 +177,7 @@ const logSecurityEvent = (event, details, req) => {
     });
 };
 
-// ✅ REGISTRO DE USUARIO - COMPATIBLE CON ESQUEMA ACTUAL
+// ✅ REGISTRO DE USUARIO - COMPATIBLE CON TU ESQUEMA
 router.post('/register', registerLimiter, async (req, res) => {
     const startTime = Date.now();
     
@@ -206,7 +214,7 @@ router.post('/register', registerLimiter, async (req, res) => {
             password: password
         };
 
-        // ✅ COMPATIBLE: Usar solo columnas que existen
+        // ✅ COMPATIBLE: Usar solo columnas que existen en tu esquema
         db.get('SELECT id, email, ra FROM users WHERE email = ? OR ra = ?', 
             [sanitizedData.email, sanitizedData.ra], async (err, existingUser) => {
             
@@ -238,9 +246,9 @@ router.post('/register', registerLimiter, async (req, res) => {
                 console.log('✅ Creando nuevo usuario...');
                 const hashedPassword = await bcrypt.hash(sanitizedData.password, BCRYPT_ROUNDS);
                 
-                // ✅ COMPATIBLE: Usar solo columnas existentes en tu esquema
-                db.run('INSERT INTO users (name, email, ra, password) VALUES (?, ?, ?, ?)',
-                    [sanitizedData.name, sanitizedData.email, sanitizedData.ra, hashedPassword], 
+                // ✅ EXACTAMENTE TU ESQUEMA: name, email, ra, password, role (created_at es automático)
+                db.run('INSERT INTO users (name, email, ra, password, role) VALUES (?, ?, ?, ?, ?)',
+                    [sanitizedData.name, sanitizedData.email, sanitizedData.ra, hashedPassword, 'student'], 
                     function(err) {
                         if (err) {
                             console.error('❌ Error creando usuario:', err.message);
@@ -289,7 +297,7 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
 });
 
-// ✅ LOGIN DE USUARIO - COMPATIBLE CON ESQUEMA ACTUAL
+// ✅ LOGIN DE USUARIO - COMPATIBLE CON TU ESQUEMA
 router.post('/login', authLimiter, async (req, res) => {
     const startTime = Date.now();
     
@@ -323,8 +331,8 @@ router.post('/login', authLimiter, async (req, res) => {
             });
         }
 
-        // ✅ COMPATIBLE: Usar solo columnas que existen
-        db.get('SELECT id, name, email, password, role FROM users WHERE email = ?', 
+        // ✅ EXACTAMENTE TU ESQUEMA: id, name, email, password, role, created_at
+        db.get('SELECT id, name, email, password, role, created_at FROM users WHERE email = ?', 
             [sanitizedEmail], async (err, user) => {
             
             if (err) {
@@ -393,7 +401,8 @@ router.post('/login', authLimiter, async (req, res) => {
                         id: user.id,
                         name: user.name,
                         email: user.email,
-                        role: user.role || 'student'
+                        role: user.role || 'student',
+                        memberSince: user.created_at
                     }
                 });
                 
@@ -481,6 +490,68 @@ router.get('/verify', (req, res) => {
     } catch (error) {
         console.error('❌ Error verificando token:', error.message);
         logSecurityEvent('TOKEN_VERIFICATION_ERROR', { error: error.message }, req);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ✅ NUEVA RUTA: Información del usuario autenticado
+router.get('/me', (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ 
+                error: 'Token no proporcionado',
+                code: 'NO_TOKEN'
+            });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ 
+                    error: 'Token inválido',
+                    code: 'INVALID_TOKEN'
+                });
+            }
+
+            // ✅ COMPATIBLE: Buscar información usando tu esquema
+            db.get('SELECT id, name, email, role, created_at FROM users WHERE id = ?', 
+                [decoded.userId], (dbErr, user) => {
+                
+                if (dbErr) {
+                    console.error('❌ Error buscando usuario:', dbErr.message);
+                    return res.status(500).json({ 
+                        error: 'Error interno del servidor',
+                        code: 'DATABASE_ERROR'
+                    });
+                }
+
+                if (!user) {
+                    return res.status(404).json({ 
+                        error: 'Usuario no encontrado',
+                        code: 'USER_NOT_FOUND'
+                    });
+                }
+
+                res.json({
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        memberSince: user.created_at
+                    }
+                });
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo información del usuario:', error.message);
         res.status(500).json({ 
             error: 'Error interno del servidor',
             code: 'INTERNAL_ERROR'
