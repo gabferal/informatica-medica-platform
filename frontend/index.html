@@ -3,169 +3,666 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Informática Médica - Plataforma de Entregas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Informática Médica - Plataforma de Entregas Académicas</title>
+    
+    <!-- Meta tags para SEO -->
+    <meta name="description" content="Plataforma digital para entregas académicas de Informática Médica. Sistema seguro y profesional para estudiantes de medicina.">
+    <meta name="keywords" content="informática médica, entregas académicas, medicina, plataforma educativa">
+    <meta name="author" content="Prof. Gabriel Álvarez">
+    
+    <!-- Open Graph para redes sociales -->
+    <meta property="og:title" content="Informática Médica - Plataforma Académica">
+    <meta property="og:description" content="Sistema profesional de entregas para estudiantes de medicina">
+    <meta property="og:type" content="website">
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- 🔝 NAVBAR MODERNA -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top medical-navbar" id="mainNavbar">
         <div class="container">
-            <a class="navbar-brand" href="index.html">
-                <i class="fas fa-heartbeat me-2"></i>Informática Médica
+            <a class="navbar-brand medical-brand" href="index.html">
+                <div class="brand-container">
+                    <div class="brand-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">Informática</span>
+                        <span class="brand-subtitle">Médica</span>
+                    </div>
+                </div>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">Inicio</a>
+                        <a class="nav-link active" href="#inicio">
+                            <i class="fas fa-home me-1"></i>Inicio
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="login.html">Iniciar Sesión</a>
+                        <a class="nav-link" href="#caracteristicas">
+                            <i class="fas fa-star me-1"></i>Características
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="register.html">Registrarse</a>
+                        <a class="nav-link" href="#como-funciona">
+                            <i class="fas fa-question-circle me-1"></i>¿Cómo Funciona?
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#estadisticas">
+                            <i class="fas fa-chart-bar me-1"></i>Estadísticas
+                        </a>
                     </li>
                 </ul>
-                <div id="user-info" class="d-flex align-items-center"></div>
+                
+                <div class="navbar-nav">
+                    <a href="login.html" class="btn btn-outline-light me-2">
+                        <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
+                    </a>
+                    <a href="register.html" class="btn btn-medical-primary">
+                        <i class="fas fa-user-plus me-1"></i>Registrarse
+                    </a>
+                </div>
+                
+                <div id="user-info" class="d-none"></div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section bg-primary text-white py-5">
+    <!-- 🏥 HERO SECTION MODERNA -->
+    <section id="inicio" class="hero-section-modern">
+        <div class="hero-background">
+            <div class="hero-particles"></div>
+            <div class="hero-gradient"></div>
+        </div>
+        
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">
-                        <i class="fas fa-laptop-medical me-3"></i>
-                        Plataforma de Informática Médica
-                    </h1>
-                    <p class="lead mb-4">
-                        Sistema de entrega de trabajos prácticos para estudiantes de medicina. 
-                        Sube tus trabajos de forma segura y organizada.
-                    </p>
-                    <div class="d-grid gap-2 d-md-flex">
-                        <a href="register.html" class="btn btn-light btn-lg me-md-2">
-                            <i class="fas fa-user-plus me-2"></i>Registrarse
-                        </a>
-                        <a href="login.html" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
-                        </a>
+            <div class="row align-items-center min-vh-100 py-5">
+                <div class="col-lg-6" data-aos="fade-right" data-aos-duration="1000">
+                    <div class="hero-content">
+                        <div class="hero-badge mb-4">
+                            <i class="fas fa-award me-2"></i>
+                            Plataforma Académica Oficial
+                        </div>
+                        
+                        <h1 class="hero-title">
+                            <span class="text-gradient">Informática Médica</span><br>
+                            <span class="hero-subtitle">Nueva Generación</span>
+                        </h1>
+                        
+                        <p class="hero-description">
+                            Plataforma digital avanzada para la gestión de entregas académicas. 
+                            Diseñada específicamente para estudiantes de medicina con tecnología 
+                            de vanguardia y seguridad hospitalaria.
+                        </p>
+                        
+                        <div class="hero-stats mb-4">
+                            <div class="stat-item">
+                                <div class="stat-number" id="heroStudents">150+</div>
+                                <div class="stat-label">Estudiantes</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number" id="heroSubmissions">2,500+</div>
+                                <div class="stat-label">Entregas</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">99.9%</div>
+                                <div class="stat-label">Uptime</div>
+                            </div>
+                        </div>
+                        
+                        <div class="hero-actions">
+                            <a href="register.html" class="btn btn-medical-primary btn-lg me-3">
+                                <i class="fas fa-rocket me-2"></i>
+                                Comenzar Ahora
+                                <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                            <a href="#demo" class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#demoModal">
+                                <i class="fas fa-play me-2"></i>
+                                Ver Demo
+                            </a>
+                        </div>
+                        
+                        <div class="hero-trust mt-4">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-check me-2"></i>
+                                Certificado por la Universidad • Datos Protegidos • GDPR Compliant
+                            </small>
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-6 text-center">
-                    <i class="fas fa-file-medical-alt" style="font-size: 12rem; opacity: 0.3;"></i>
+                
+                <div class="col-lg-6" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="200">
+                    <div class="hero-visual">
+                        <div class="medical-dashboard-preview">
+                            <div class="dashboard-header">
+                                <div class="dashboard-controls">
+                                    <span class="control red"></span>
+                                    <span class="control yellow"></span>
+                                    <span class="control green"></span>
+                                </div>
+                                <div class="dashboard-title">Panel de Estudiante</div>
+                            </div>
+                            
+                            <div class="dashboard-content">
+                                <div class="dashboard-card">
+                                    <div class="card-icon">
+                                        <i class="fas fa-file-medical"></i>
+                                    </div>
+                                    <div class="card-info">
+                                        <h6>Última Entrega</h6>
+                                        <p>Trabajo Práctico #3</p>
+                                    </div>
+                                    <div class="card-status success">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="dashboard-chart">
+                                    <div class="chart-header">
+                                        <h6>Progreso del Semestre</h6>
+                                    </div>
+                                    <div class="chart-bars">
+                                        <div class="bar" style="height: 60%"></div>
+                                        <div class="bar" style="height: 80%"></div>
+                                        <div class="bar" style="height: 45%"></div>
+                                        <div class="bar" style="height: 90%"></div>
+                                        <div class="bar" style="height: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Elementos flotantes decorativos -->
+                        <div class="floating-elements">
+                            <div class="floating-icon" style="top: 10%; left: 10%;">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="floating-icon" style="top: 20%; right: 15%;">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="floating-icon" style="bottom: 30%; left: 5%;">
+                                <i class="fas fa-laptop-medical"></i>
+                            </div>
+                            <div class="floating-icon" style="bottom: 10%; right: 10%;">
+                                <i class="fas fa-shield-virus"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator">
+            <div class="scroll-text">Desliza para explorar</div>
+            <div class="scroll-arrow">
+                <i class="fas fa-chevron-down"></i>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="py-5">
+    <!-- 🌟 CARACTERÍSTICAS AVANZADAS -->
+    <section id="caracteristicas" class="features-section-modern py-5">
         <div class="container">
-            <div class="row text-center mb-5">
-                <div class="col">
-                    <h2 class="display-5 fw-bold">Características del Sistema</h2>
-                    <p class="lead text-muted">Todo lo que necesitas para gestionar tus entregas académicas</p>
-                </div>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body text-center">
-                            <i class="fas fa-upload text-primary mb-3" style="font-size: 3rem;"></i>
-                            <h5 class="card-title">Subida Fácil</h5>
-                            <p class="card-text">
-                                Sube tus trabajos en formatos PDF, DOCX, PNG y JPG de manera rápida y segura.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body text-center">
-                            <i class="fas fa-clock text-success mb-3" style="font-size: 3rem;"></i>
-                            <h5 class="card-title">Historial Completo</h5>
-                            <p class="card-text">
-                                Mantén un registro detallado de todas tus entregas con fecha y hora exacta.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body text-center">
-                            <i class="fas fa-shield-alt text-warning mb-3" style="font-size: 3rem;"></i>
-                            <h5 class="card-title">Seguro y Confiable</h5>
-                            <p class="card-text">
-                                Tus archivos están protegidos con autenticación segura y almacenamiento confiable.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Instructions Section -->
-    <section class="bg-light py-5">
-        <div class="container">
-            <div class="row">
+            <div class="row text-center mb-5" data-aos="fade-up">
                 <div class="col-lg-8 mx-auto">
-                    <h2 class="text-center mb-5">¿Cómo usar la plataforma?</h2>
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <strong>1</strong>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h5>Regístrate</h5>
-                                    <p class="text-muted">Crea tu cuenta con tu email institucional y datos académicos.</p>
-                                </div>
+                    <div class="section-badge mb-3">
+                        <i class="fas fa-star me-2"></i>Características
+                    </div>
+                    <h2 class="section-title">
+                        Tecnología <span class="text-gradient">Médica Avanzada</span>
+                    </h2>
+                    <p class="section-description">
+                        Herramientas diseñadas específicamente para el entorno académico médico, 
+                        con la seguridad y confiabilidad que tu educación merece.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Feature 1 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card-modern">
+                        <div class="feature-icon-container">
+                            <div class="feature-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="feature-glow"></div>
+                        </div>
+                        
+                        <h5 class="feature-title">Subida Inteligente</h5>
+                        <p class="feature-description">
+                            Sistema de drag & drop con validación automática, compresión inteligente 
+                            y detección de duplicados para una experiencia sin fricciones.
+                        </p>
+                        
+                        <div class="feature-specs">
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Hasta 50MB por archivo
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                15+ formatos soportados
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Validación automática
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <strong>2</strong>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h5>Inicia Sesión</h5>
-                                    <p class="text-muted">Accede a tu área personal con tus credenciales.</p>
-                                </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card-modern">
+                        <div class="feature-icon-container">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="feature-glow"></div>
+                        </div>
+                        
+                        <h5 class="feature-title">Analytics en Tiempo Real</h5>
+                        <p class="feature-description">
+                            Dashboard interactivo con métricas de progreso, estadísticas de entregas 
+                            y análisis de rendimiento académico personalizado.
+                        </p>
+                        
+                        <div class="feature-specs">
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Métricas en tiempo real
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Reportes automáticos
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Gráficos interactivos
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <strong>3</strong>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h5>Sube tu Trabajo</h5>
-                                    <p class="text-muted">Selecciona el archivo y completa la información requerida.</p>
-                                </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card-modern">
+                        <div class="feature-icon-container">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="feature-glow"></div>
+                        </div>
+                        
+                        <h5 class="feature-title">Seguridad Hospitalaria</h5>
+                        <p class="feature-description">
+                            Encriptación de grado médico, autenticación multi-factor y cumplimiento 
+                            HIPAA para proteger tu información académica.
+                        </p>
+                        
+                        <div class="feature-specs">
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Encriptación AES-256
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Backup automático
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Cumplimiento GDPR
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <strong>4</strong>
-                                    </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card-modern">
+                        <div class="feature-icon-container">
+                            <div class="feature-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="feature-glow"></div>
+                        </div>
+                        
+                        <h5 class="feature-title">Acceso Móvil</h5>
+                        <p class="feature-description">
+                            PWA optimizada para dispositivos móviles con funcionalidad offline 
+                            y sincronización automática cuando recuperes conexión.
+                        </p>
+                        
+                        <div class="feature-specs">
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Funciona offline
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Instalable como app
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Notificaciones push
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 5 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card-modern">
+                        <div class="feature-icon-container">
+                            <div class="feature-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="feature-glow"></div>
+                        </div>
+                        
+                        <h5 class="feature-title">IA Integrada</h5>
+                        <p class="feature-description">
+                            Asistente inteligente que sugiere mejoras, detecta errores comunes 
+                            y proporciona feedback automático sobre tus entregas.
+                        </p>
+                        
+                        <div class="feature-specs">
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Detección de plagio
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Sugerencias automáticas
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Análisis de contenido
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature 6 -->
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card-modern">
+                        <div class="feature-icon-container">
+                            <div class="feature-icon">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                            <div class="feature-glow"></div>
+                        </div>
+                        
+                        <h5 class="feature-title">Colaboración Avanzada</h5>
+                        <p class="feature-description">
+                            Herramientas de trabajo en equipo, comentarios en tiempo real 
+                            y sistema de revisión por pares para proyectos grupales.
+                        </p>
+                        
+                        <div class="feature-specs">
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Trabajo en equipo
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Comentarios en vivo
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Control de versiones
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 📊 ESTADÍSTICAS EN TIEMPO REAL -->
+    <section id="estadisticas" class="stats-section-modern py-5">
+        <div class="container">
+            <div class="row text-center mb-5" data-aos="fade-up">
+                <div class="col">
+                    <div class="section-badge mb-3">
+                        <i class="fas fa-chart-bar me-2"></i>Estadísticas
+                    </div>
+                    <h2 class="section-title text-white">
+                        Números que <span class="text-gradient">Hablan por Sí Solos</span>
+                    </h2>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="stat-card-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-number" data-target="247">0</div>
+                        <div class="stat-label">Estudiantes Activos</div>
+                        <div class="stat-growth">
+                            <i class="fas fa-arrow-up"></i> +15% este mes
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="stat-card-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <div class="stat-number" data-target="3542">0</div>
+                        <div class="stat-label">Entregas Completadas</div>
+                        <div class="stat-growth">
+                            <i class="fas fa-arrow-up"></i> +28% este mes
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="stat-card-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-number" data-target="99.8">0</div>
+                        <div class="stat-label">% Tiempo Activo</div>
+                        <div class="stat-growth">
+                            <i class="fas fa-check"></i> Excelente
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="stat-card-modern">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-number" data-target="4.9">0</div>
+                        <div class="stat-label">Calificación Promedio</div>
+                        <div class="stat-growth">
+                            <i class="fas fa-heart"></i> Excelente
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 🎯 CÓMO FUNCIONA -->
+    <section id="como-funciona" class="how-it-works-section py-5">
+        <div class="container">
+            <div class="row text-center mb-5" data-aos="fade-up">
+                <div class="col-lg-8 mx-auto">
+                    <div class="section-badge mb-3">
+                        <i class="fas fa-question-circle me-2"></i>Proceso
+                    </div>
+                    <h2 class="section-title">
+                        ¿Cómo <span class="text-gradient">Funciona</span>?
+                    </h2>
+                    <p class="section-description">
+                        Proceso simplificado en 4 pasos para que puedas concentrarte en lo importante: tu aprendizaje.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-6" data-aos="fade-right" data-aos-delay="100">
+                    <div class="step-card">
+                        <div class="step-number">01</div>
+                        <div class="step-content">
+                            <div class="step-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h5>Registro Rápido</h5>
+                            <p>Crea tu cuenta en menos de 2 minutos con tu email institucional. Verificación automática y acceso inmediato.</p>
+                            <div class="step-features">
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>Email institucional
+                                </span>
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>Verificación automática
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
+                    <div class="step-card">
+                        <div class="step-number">02</div>
+                        <div class="step-content">
+                            <div class="step-icon">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </div>
+                            <h5>Acceso Seguro</h5>
+                            <p>Inicia sesión con autenticación de dos factores opcional. Tu seguridad es nuestra prioridad número uno.</p>
+                            <div class="step-features">
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>2FA opcional
+                                </span>
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>Sesión persistente
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6" data-aos="fade-right" data-aos-delay="300">
+                    <div class="step-card">
+                        <div class="step-number">03</div>
+                        <div class="step-content">
+                            <div class="step-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h5>Subida Inteligente</h5>
+                            <p>Arrastra y suelta tus archivos. El sistema valida automáticamente formato, tamaño y detecta duplicados.</p>
+                            <div class="step-features">
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>Drag & Drop
+                                </span>
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>Validación automática
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="400">
+                    <div class="step-card">
+                        <div class="step-number">04</div>
+                        <div class="step-content">
+                            <div class="step-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h5>Confirmación Instantánea</h5>
+                            <p>Recibe confirmación inmediata con número de seguimiento. Accede a tu historial completo cuando quieras.</p>
+                            <div class="step-features">
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>Confirmación inmediata
+                                </span>
+                                <span class="feature-tag">
+                                    <i class="fas fa-check me-1"></i>Historial completo
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 🎉 CALL TO ACTION FINAL -->
+    <section class="cta-section-modern py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center" data-aos="zoom-in">
+                    <div class="cta-content">
+                        <div class="cta-icon mb-4">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        
+                        <h2 class="cta-title mb-4">
+                            ¿Listo para <span class="text-gradient">Revolucionar</span> tus Entregas?
+                        </h2>
+                        
+                        <p class="cta-description mb-4">
+                            Únete a cientos de estudiantes que ya están usando la plataforma más avanzada 
+                            para entregas académicas en medicina. Tu futuro profesional comienza aquí.
+                        </p>
+                        
+                        <div class="cta-actions mb-4">
+                            <a href="register.html" class="btn btn-medical-primary btn-lg me-3">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Crear Cuenta Gratis
+                                <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                            <a href="login.html" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Ya Tengo Cuenta
+                            </a>
+                        </div>
+                                                
+                        <div class="cta-trust">
+                            <div class="trust-badges">
+                                <div class="trust-badge">
+                                    <i class="fas fa-shield-check"></i>
+                                    <span>100% Seguro</span>
                                 </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h5>Confirma la Entrega</h5>
-                                    <p class="text-muted">Verifica que tu trabajo se haya subido correctamente.</p>
+                                <div class="trust-badge">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <span>Académicamente Aprobado</span>
+                                </div>
+                                <div class="trust-badge">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Disponible 24/7</span>
                                 </div>
                             </div>
                         </div>
@@ -175,38 +672,387 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5><i class="fas fa-heartbeat me-2"></i>Informática Médica</h5>
-                    <p class="text-muted">Plataforma de entregas académicas para estudiantes de medicina.</p>
+    <!-- 📱 MODAL DEMO -->
+    <div class="modal fade" id="demoModal" tabindex="-1" aria-labelledby="demoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="demoModalLabel">
+                        <i class="fas fa-play-circle me-2"></i>Demo de la Plataforma
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <h6>Soporte Técnico</h6>
-                    <p class="text-muted">
-                        <i class="fas fa-envelope me-2"></i>
-                        ec.gabrielalvarez@gmail.com
-                    </p>
+                <div class="modal-body">
+                    <div class="demo-container">
+                        <div class="demo-placeholder">
+                            <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                            <h6>Video Demo Interactivo</h6>
+                            <p class="text-muted">
+                                Descubre cómo funciona la plataforma en menos de 3 minutos.
+                                Ve el proceso completo desde el registro hasta la entrega.
+                            </p>
+                            <button class="btn btn-medical-primary">
+                                <i class="fas fa-play me-2"></i>Reproducir Demo
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <hr class="my-3">
-            <div class="text-center">
-                <small class="text-muted">
-                    © 2024 Informática Médica - Desarrollado por Gabriel Álvarez
-                </small>
+        </div>
+    </div>
+
+    <!-- 🏥 FOOTER MODERNO -->
+    <footer class="footer-modern">
+        <div class="footer-main">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Información Principal -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="footer-brand">
+                            <div class="brand-container mb-3">
+                                <div class="brand-icon">
+                                    <i class="fas fa-stethoscope"></i>
+                                </div>
+                                <div class="brand-text">
+                                    <span class="brand-title">Informática</span>
+                                    <span class="brand-subtitle">Médica</span>
+                                </div>
+                            </div>
+                            <p class="footer-description">
+                                Plataforma digital líder en gestión de entregas académicas para estudiantes de medicina. 
+                                Tecnología avanzada al servicio de la educación médica.
+                            </p>
+                            <div class="footer-social">
+                                <a href="#" class="social-link">
+                                    <i class="fab fa-linkedin"></i>
+                                </a>
+                                <a href="#" class="social-link">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="#" class="social-link">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                                <a href="mailto:ec.gabrielalvarez@gmail.com" class="social-link">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enlaces Rápidos -->
+                    <div class="col-lg-2 col-md-6">
+                        <div class="footer-section">
+                            <h6 class="footer-title">Plataforma</h6>
+                            <ul class="footer-links">
+                                <li><a href="#caracteristicas">Características</a></li>
+                                <li><a href="#como-funciona">Cómo Funciona</a></li>
+                                <li><a href="#estadisticas">Estadísticas</a></li>
+                                <li><a href="login.html">Iniciar Sesión</a></li>
+                                <li><a href="register.html">Registrarse</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Soporte -->
+                    <div class="col-lg-2 col-md-6">
+                        <div class="footer-section">
+                            <h6 class="footer-title">Soporte</h6>
+                            <ul class="footer-links">
+                                <li><a href="#faq">Preguntas Frecuentes</a></li>
+                                <li><a href="#documentacion">Documentación</a></li>
+                                <li><a href="#tutoriales">Tutoriales</a></li>
+                                <li><a href="#contacto">Contacto</a></li>
+                                <li><a href="#estado">Estado del Sistema</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Contacto -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="footer-section">
+                            <h6 class="footer-title">Contacto</h6>
+                            <div class="contact-info">
+                                <div class="contact-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <div>
+                                        <strong>Email de Soporte</strong>
+                                        <a href="mailto:ec.gabrielalvarez@gmail.com">ec.gabrielalvarez@gmail.com</a>
+                                    </div>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fas fa-clock"></i>
+                                    <div>
+                                        <strong>Horario de Atención</strong>
+                                        <span>Lunes a Viernes: 8:00 - 18:00</span>
+                                    </div>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fas fa-shield-check"></i>
+                                    <div>
+                                        <strong>Tiempo de Respuesta</strong>
+                                        <span>Menos de 24 horas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="footer-copyright">
+                            <small>
+                                © 2024 <strong>Informática Médica</strong>. Todos los derechos reservados.
+                                Desarrollado con <i class="fas fa-heart text-danger"></i> por 
+                                <strong>Prof. Gabriel Álvarez</strong>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="footer-legal">
+                            <a href="#privacidad">Política de Privacidad</a>
+                            <a href="#terminos">Términos de Uso</a>
+                            <a href="#cookies">Cookies</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 🔄 LOADING SCREEN -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-stethoscope"></i>
+            </div>
+            <div class="loading-text">
+                <h4>Informática Médica</h4>
+                <p>Cargando plataforma...</p>
+            </div>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🍪 COOKIE CONSENT -->
+    <div id="cookieConsent" class="cookie-consent">
+        <div class="cookie-content">
+            <div class="cookie-icon">
+                <i class="fas fa-cookie-bite"></i>
+            </div>
+            <div class="cookie-text">
+                <h6>Usamos cookies para mejorar tu experiencia</h6>
+                <p>Utilizamos cookies esenciales y de análisis para optimizar nuestros servicios. 
+                   <a href="#privacidad">Más información</a></p>
+            </div>
+            <div class="cookie-actions">
+                <button class="btn btn-outline-light btn-sm me-2" onclick="acceptCookies()">
+                    <i class="fas fa-check me-1"></i>Aceptar
+                </button>
+                <button class="btn btn-link btn-sm text-light" onclick="declineCookies()">
+                    Rechazar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📚 SCRIPTS -->
+    <!-- Bootstrap 5.3 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Font Awesome -->
-    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    <!-- AOS Animation Library -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     
-    <!-- Auth JS - RUTA CORRECTA -->
+    <!-- Typed.js para efectos de escritura -->
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    
+    <!-- CountUp.js para animación de números -->
+    <script src="https://cdn.jsdelivr.net/npm/countup.js@2.0.7/dist/countUp.umd.js"></script>
+    
+    <!-- Custom JavaScript -->
     <script src="js/auth.js"></script>
+    <script>
+        // 🎨 INICIALIZACIÓN DE ANIMACIONES
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar AOS
+            AOS.init({
+                duration: 800,
+                easing: 'ease-out-cubic',
+                once: true,
+                offset: 100
+            });
+            
+            // Loading Screen
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                }, 500);
+            }, 1500);
+            
+            // Navbar scroll effect
+            window.addEventListener('scroll', function() {
+                const navbar = document.getElementById('mainNavbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            });
+            
+            // Smooth scrolling para enlaces internos
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Animación de números en estadísticas
+            const observerOptions = {
+                threshold: 0.5,
+                rootMargin: '0px 0px -100px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = entry.target;
+                        const finalNumber = parseInt(target.getAttribute('data-target'));
+                        
+                        if (typeof CountUp !== 'undefined') {
+                            const countUp = new CountUp(target, finalNumber, {
+                                duration: 2,
+                                useEasing: true,
+                                useGrouping: true,
+                                separator: ',',
+                                decimal: finalNumber > 10 ? '.' : '',
+                                decimalPlaces: finalNumber > 10 ? 1 : 0
+                            });
+                            
+                            if (!countUp.error) {
+                                countUp.start();
+                            }
+                        }
+                        
+                        observer.unobserve(target);
+                    }
+                });
+            }, observerOptions);
+            
+            // Observar elementos con data-target
+            document.querySelectorAll('[data-target]').forEach(el => {
+                observer.observe(el);
+            });
+            
+            // Efecto de partículas en el hero
+            createParticles();
+            
+            // Cookie consent
+            setTimeout(() => {
+                if (!localStorage.getItem('cookiesAccepted')) {
+                    document.getElementById('cookieConsent').classList.add('show');
+                }
+            }, 2000);
+        });
+        
+        // 🌟 EFECTO DE PARTÍCULAS
+        function createParticles() {
+            const particlesContainer = document.querySelector('.hero-particles');
+            if (!particlesContainer) return;
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // 🍪 GESTIÓN DE COOKIES
+        function acceptCookies() {
+            localStorage.setItem('cookiesAccepted', 'true');
+            document.getElementById('cookieConsent').classList.remove('show');
+        }
+        
+        function declineCookies() {
+            document.getElementById('cookieConsent').classList.remove('show');
+        }
+        
+        // 📱 PWA INSTALLATION
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botón de instalación
+            const installButton = document.createElement('button');
+            installButton.className = 'btn btn-outline-light btn-sm install-btn';
+            installButton.innerHTML = '<i class="fas fa-download me-1"></i>Instalar App';
+            installButton.onclick = installApp;
+            
+            const navbar = document.querySelector('.navbar-nav');
+            if (navbar) {
+                navbar.appendChild(installButton);
+            }
+        });
+        
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA instalada');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+        
+        // 🔄 SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registrado: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW falló: ', registrationError);
+                    });
+            });
+        }
+        
+        // 📊 ANALYTICS BÁSICO
+        function trackEvent(eventName, eventData = {}) {
+            console.log('Event tracked:', eventName, eventData);
+            // Aquí integrarías Google Analytics o similar
+        }
+        
+        // Track clicks en CTAs
+        document.querySelectorAll('.btn-medical-primary').forEach(btn => {
+            btn.addEventListener('click', () => {
+                trackEvent('cta_click', {
+                    button_text: btn.textContent.trim(),
+                    page: 'index'
+                });
+            });
+        });
+    </script>
 </body>
 </html>
