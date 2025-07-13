@@ -5,9 +5,12 @@ const fs = require('fs');
 
 const app = express();
 
+// ✅ AGREGAR: Configuración para Railway/proxies
+app.set('trust proxy', true);
+
 // Middleware - ORDEN IMPORTANTE
 app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Aumentar límite
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logging middleware
