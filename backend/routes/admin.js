@@ -5,8 +5,12 @@ const fs = require('fs');
 const { authenticateAdmin } = require('../middleware/auth');
 const router = express.Router();
 
-// ✅ MEJORA: Configuración de base de datos
-const dbPath = path.join(__dirname, '../database/database.db');
+// ✅ CORRECCIÓN: Configuración correcta de base de datos
+const dbPath = process.env.NODE_ENV === 'production' 
+    ? '/app/data/database.sqlite'
+    : path.join(__dirname, '..', 'data', 'database.sqlite');
+
+console.log('🔧 Ruta de BD configurada:', dbPath);
 
 // ✅ MEJORA: Función para logging de eventos de seguridad
 const logSecurityEvent = (event, details, req) => {
@@ -14,7 +18,7 @@ const logSecurityEvent = (event, details, req) => {
     const ip = req.ip || req.connection.remoteAddress;
     const userAgent = req.get('User-Agent') || 'Unknown';
     
-    console.log(`�� [ADMIN] ${timestamp} - ${event}`, {
+    console.log(`🔒 [ADMIN] ${timestamp} - ${event}`, {
         ip,
         userAgent: userAgent.substring(0, 100),
         details,
@@ -160,7 +164,7 @@ router.get('/submissions', authenticateAdmin, async (req, res) => {
     try {
         const { search, date, title } = req.query;
         
-                logSecurityEvent('ADMIN_LIST_SUBMISSIONS', { 
+        logSecurityEvent('ADMIN_LIST_SUBMISSIONS', { 
             adminId: req.user.userId,
             filters: { search, date, title }
         }, req);
@@ -646,45 +650,313 @@ router.get('/export/submissions', authenticateAdmin, async (req, res) => {
     }
 });
 
-// ✅ ENDPOINT MEJORADO: Migración completa usando script
-router.post('/migrate-database', authenticateAdmin, async (req, res) => {
+// ✅ NUEVO: Endpoint de verificación completa de estructura
+router.post('/check-database-structure', authenticateAdmin, async (req, res) => {
     try {
-        logSecurityEvent('ADMIN_MIGRATE_DATABASE_ATTEMPT', { 
+        console.log('🔍 Verificando estructura completa de la base de datos...');
+        logSecurityEvent('ADMIN_CHECK_DB_STRUCTURE', { 
             adminId: req.user.userId,
             adminEmail: req.user.email 
         }, req);
 
-        console.log('🔧 Ejecutando migración completa desde admin...');
+        const db = new sqlite3.Database(dbPath);
         
-        // Importar y ejecutar el script de migración
-        const { runMigration } = require('../scripts/migrate-database');
-        const result = await runMigration();
+        // Obtener estructura completa
+        const tableInfo = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns);
+            });
+        });
         
-        logSecurityEvent('ADMIN_MIGRATE_DATABASE_SUCCESS', { 
+        // Obtener algunos registros de ejemplo
+        const sampleData = await new Promise((resolve, reject) => {
+            db.all("SELECT * FROM submissions LIMIT 3", (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+        
+        // Contar total de registros
+        const totalCount = await new Promise((resolve, reject) => {
+            db.get("SELECT COUNT(*) as count FROM submissions", (err, row) => {
+                if (err) reject(err);
+                else resolve(row.count);
+            });
+        });
+        
+        db.close();
+        
+        const columnNames = tableInfo.map(col => col.name);
+        const requiredColumns = ['mime_type', 'file_size', 'file_path', 'original_filename'];
+        const missingColumns = requiredColumns.filter(col => !columnNames.includes(col));
+        
+        console.log('📊 Estructura verificada:', {
+            totalColumns: columnNames.length,
+            columnNames,
+            missingColumns,
+            totalRecords: totalCount
+        });
+        
+        logSecurityEvent('ADMIN_CHECK_DB_STRUCTURE_SUCCESS', { 
             adminId: req.user.userId,
-            result 
+            columnCount: columnNames.length,
+            missingColumns
         }, req);
         
-        res.json({ 
+        res.json({
             success: true,
-            message: 'Migración completada exitosamente',
-            ...result
+            structure: {
+                columns: tableInfo,
+                columnNames,
+                missingColumns,
+                totalRecords: totalCount,
+                sampleData: sampleData.map(row => Object.keys(row))
+            }
         });
         
     } catch (error) {
-        console.error('❌ Error en migración desde admin:', error);
-        logSecurityEvent('ADMIN_MIGRATE_DATABASE_ERROR', { 
+        console.error('❌ Error verificando estructura:', error);
+        logSecurityEvent('ADMIN_CHECK_DB_STRUCTURE_ERROR', { 
             adminId: req.user.userId,
             error: error.message 
         }, req);
-
-        res.status(500).json({ 
-            success: false,
-            error: 'Error ejecutando migración',
-            details: error.message
-        });
+        
+        res.status(500).json({ success: false, error: error.message });
     }
 });
+
+// ✅ NUEVO: Endpoint de migración forzada completa
+router.post('/force-complete-migration', authenticateAdmin, async (req, res) => {
+    try {
+        console.log('🚀 Ejecutando migración forzada completa...');
+        logSecurityEvent('ADMIN_FORCE_MIGRATION_ATTEMPT', { 
+            adminId: req.user.userId,
+            adminEmail: req.user.email 
+        }, req);
+
+        const db = new sqlite3.Database(dbPath);
+        
+        const results = [];
+        
+        // Lista de todas las columnas necesarias
+        const migrations = [
+            {
+                name: 'mime_type',
+                sql: "ALTER TABLE submissions ADD COLUMN mime_type TEXT DEFAULT 'application/octet-stream'",
+                update: `UPDATE submissions SET mime_type = CASE 
+                    WHEN filename LIKE '%.pdf' THEN 'application/pdf'
+                    WHEN filename LIKE '%.doc' THEN 'application/msword'
+                    WHEN filename LIKE '%.docx' THEN 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    WHEN filename LIKE '%.txt' THEN 'text/plain'
+                    WHEN filename LIKE '%.zip' THEN 'application/zip'
+                    WHEN filename LIKE '%.png' THEN 'image/png'
+                    WHEN filename LIKE '%.jpg' OR filename LIKE '%.jpeg' THEN 'image/jpeg'
+                    ELSE 'application/octet-stream'
+                END WHERE mime_type IS NULL OR mime_type = '' OR mime_type = 'application/octet-stream'`
+            },
+            {
+                name: 'file_size',
+                sql: "ALTER TABLE submissions ADD COLUMN file_size INTEGER DEFAULT 0",
+                update: "UPDATE submissions SET file_size = 0 WHERE file_size IS NULL"
+            },
+            {
+                name: 'file_path',
+                sql: "ALTER TABLE submissions ADD COLUMN file_path TEXT",
+                update: "UPDATE submissions SET file_path = 'uploads/' || filename WHERE file_path IS NULL OR file_path = ''"
+            },
+            {
+                name: 'original_filename',
+                sql: "ALTER TABLE submissions ADD COLUMN original_filename TEXT",
+                update: "UPDATE submissions SET original_filename = filename WHERE original_filename IS NULL OR original_filename = ''"
+            }
+        ];
+        
+        // Obtener columnas actuales
+        const currentColumns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns.map(col => col.name));
+            });
+        });
+                console.log('📋 Columnas actuales:', currentColumns);
+        
+        // Ejecutar cada migración
+        for (const migration of migrations) {
+            try {
+                if (!currentColumns.includes(migration.name)) {
+                    console.log(`➕ Agregando columna: ${migration.name}`);
+                    
+                    // Agregar columna
+                    await new Promise((resolve, reject) => {
+                        db.run(migration.sql, (err) => {
+                            if (err) reject(err);
+                            else resolve();
+                        });
+                    });
+                    
+                    // Actualizar datos
+                    const updateResult = await new Promise((resolve, reject) => {
+                        db.run(migration.update, function(err) {
+                            if (err) reject(err);
+                            else resolve({ changes: this.changes });
+                        });
+                    });
+                    
+                    results.push({
+                        column: migration.name,
+                        status: 'added',
+                        updatedRecords: updateResult.changes
+                    });
+                    
+                    console.log(`✅ ${migration.name} agregada, ${updateResult.changes} registros actualizados`);
+                } else {
+                    console.log(`⏭️ ${migration.name} ya existe`);
+                    results.push({
+                        column: migration.name,
+                        status: 'exists'
+                    });
+                }
+            } catch (error) {
+                console.error(`❌ Error con ${migration.name}:`, error.message);
+                results.push({
+                    column: migration.name,
+                    status: 'error',
+                    error: error.message
+                });
+            }
+        }
+        
+        // Verificar estructura final
+        const finalColumns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns.map(col => col.name));
+            });
+        });
+        
+        db.close();
+        
+        console.log('🎉 Migración forzada completada');
+        console.log('📊 Columnas finales:', finalColumns);
+        
+        logSecurityEvent('ADMIN_FORCE_MIGRATION_SUCCESS', { 
+            adminId: req.user.userId,
+            results,
+            finalColumns
+        }, req);
+        
+        res.json({
+            success: true,
+            message: 'Migración forzada completada',
+            results,
+            finalColumns
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en migración forzada:', error);
+        logSecurityEvent('ADMIN_FORCE_MIGRATION_ERROR', { 
+            adminId: req.user.userId,
+            error: error.message 
+        }, req);
+        
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ✅ ENDPOINT: Agregar columna mime_type (mejorado)
+router.post('/fix-mime-type-column', authenticateAdmin, async (req, res) => {
+    try {
+        logSecurityEvent('ADMIN_FIX_MIME_TYPE_ATTEMPT', { 
+            adminId: req.user.userId,
+            adminEmail: req.user.email 
+        }, req);
+
+        console.log('🔧 Verificando/agregando columna mime_type...');
+        const db = new sqlite3.Database(dbPath);
+        
+        // Verificar si ya existe
+        const columns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns.map(col => col.name));
+            });
+        });
+        
+        console.log('📋 Columnas actuales:', columns);
+        
+        if (columns.includes('mime_type')) {
+            db.close();
+            return res.json({ success: true, message: 'Columna mime_type ya existe', currentColumns: columns });
+        }
+        
+        // Agregar columna
+        await new Promise((resolve, reject) => {
+            console.log('➕ Ejecutando: ALTER TABLE submissions ADD COLUMN mime_type TEXT DEFAULT \'application/octet-stream\'');
+            db.run("ALTER TABLE submissions ADD COLUMN mime_type TEXT DEFAULT 'application/octet-stream'", (err) => {
+                if (err) {
+                    console.error('❌ Error agregando mime_type:', err.message);
+                    reject(err);
+                } else {
+                    console.log('✅ Columna mime_type agregada');
+                    resolve();
+                }
+            });
+        });
+        
+        // Actualizar registros existentes con tipos MIME apropiados
+        const updateResult = await new Promise((resolve, reject) => {
+            console.log('🔄 Actualizando tipos MIME...');
+            const updateQuery = `
+                UPDATE submissions 
+                SET mime_type = CASE 
+                    WHEN filename LIKE '%.pdf' THEN 'application/pdf'
+                    WHEN filename LIKE '%.doc' THEN 'application/msword'
+                    WHEN filename LIKE '%.docx' THEN 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    WHEN filename LIKE '%.txt' THEN 'text/plain'
+                    WHEN filename LIKE '%.zip' THEN 'application/zip'
+                    WHEN filename LIKE '%.png' THEN 'image/png'
+                    WHEN filename LIKE '%.jpg' OR filename LIKE '%.jpeg' THEN 'image/jpeg'
+                    ELSE 'application/octet-stream'
+                END
+                WHERE mime_type IS NULL OR mime_type = '' OR mime_type = 'application/octet-stream'
+            `;
+            
+            db.run(updateQuery, function(err) {
+                if (err) {
+                    console.error('❌ Error actualizando tipos MIME:', err.message);
+                    reject(err);
+                } else {
+                    console.log(`✅ ${this.changes} registros actualizados con tipos MIME`);
+                    resolve({ changes: this.changes });
+                }
+            });
+        });
+        
+        db.close();
+        
+        logSecurityEvent('ADMIN_FIX_MIME_TYPE_SUCCESS', { 
+            adminId: req.user.userId,
+            updateResult 
+        }, req);
+        
+        res.json({ 
+            success: true, 
+            message: 'Columna mime_type agregada y actualizada exitosamente', 
+            updatedRecords: updateResult.changes 
+        });
+        
+    } catch (error) {
+        console.error('❌ Error con mime_type:', error);
+        logSecurityEvent('ADMIN_FIX_MIME_TYPE_ERROR', { 
+            adminId: req.user.userId,
+            error: error.message 
+        }, req);
+        
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ✅ ENDPOINTS ESPECÍFICOS para columnas faltantes
 router.post('/add-file-path-column', authenticateAdmin, async (req, res) => {
     try {
@@ -801,7 +1073,7 @@ router.post('/add-original-filename-column', authenticateAdmin, async (req, res)
         });
         
         const updateResult = await new Promise((resolve, reject) => {
-            console.log('�� Actualizando registros existentes...');
+            console.log('🔄 Actualizando registros existentes...');
             db.run("UPDATE submissions SET original_filename = filename WHERE original_filename IS NULL OR original_filename = ''", function(err) {
                 if (err) {
                     console.error('❌ Error actualizando registros:', err.message);
@@ -911,4 +1183,5 @@ router.post('/add-file-size-column', authenticateAdmin, async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
 module.exports = router;
