@@ -1,139 +1,145 @@
 const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const dbPath = path.join(__dirname, 'database.db');
 
-async function migrateDatabase() {
+console.log('🔧 Iniciando migración de base de datos...');
+console.log('📍 Ubicación DB:', dbPath);
+
+const db = new sqlite3.Database(dbPath);
+
+// Función para verificar si una columna existe
+function columnExists(tableName, columnName) {
     return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(dbPath);
-
-        console.log('🔄 Iniciando migración de base de datos...');
-
-        db.serialize(async () => {
-            // Verificar si la columna 'role' ya existe
-            db.all("PRAGMA table_info(users)", (err, columns) => {
-                if (err) {
-                    console.error('Error obteniendo info de tabla:', err);
-                    db.close();
-                    reject(err);
-                    return;
-                }
-
-                const hasRoleColumn = columns.some(col => col.name === 'role');
-
-                if (!hasRoleColumn) {
-                    console.log('➕ Agregando columna "role" a la tabla users...');
-                    
-                    // Agregar columna role
-                    db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'student'", (err) => {
-                        if (err) {
-                            console.error('❌ Error agregando columna role:', err);
-                            db.close();
-                            reject(err);
-                            return;
-                        }
-
-                        console.log('✅ Columna "role" agregada exitosamente');
-                        createAdmin(db, resolve, reject);
-                    });
-                } else {
-                    console.log('✅ Columna "role" ya existe');
-                    createAdmin(db, resolve, reject);
-                }
-            });
+        db.all(`PRAGMA table_info(${tableName})`, (err, columns) => {
+            if (err) {
+                reject(err);
+            } else {
+                const exists = columns.some(col => col.name === columnName);
+                resolve(exists);
+            }
         });
     });
 }
 
-async function createAdmin(db, resolve, reject) {
-    // Verificar si ya existe el administrador
-    db.get('SELECT * FROM users WHERE email = ?', ['ec.gabrielalvarez@gmail.com'], async (err, user) => {
-        if (err) {
-            console.error('Error verificando admin:', err);
-            db.close();
-            reject(err);
-            return;
-        }
-
-        if (!user) {
-            // Crear administrador
-            try {
-                console.log('👨‍💼 Creando administrador...');
-                const hashedPassword = await bcrypt.hash('Guepardo.25', 12);
-                
-                db.run(
-                    'INSERT INTO users (email, password, ra, nombre, role) VALUES (?, ?, ?, ?, ?)',
-                    ['ec.gabrielalvarez@gmail.com', hashedPassword, 'ADMIN001', 'Gabriel Alvarez', 'admin'],
-                    function(err) {
-                        if (err) {
-                            console.error('❌ Error creando administrador:', err);
-                            db.close();
-                            reject(err);
-                        } else {
-                            console.log('✅ Administrador creado exitosamente');
-                            console.log('📧 Email: ec.gabrielalvarez@gmail.com');
-                            console.log('🔑 Password: Guepardo.25');
-                            console.log('🎭 Rol: admin');
-                            console.log('🆔 ID:', this.lastID);
-                            
-                            db.close();
-                            resolve();
-                        }
+// Función para agregar columna si no existe
+function addColumnIfNotExists(tableName, columnName, columnDefinition) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const exists = await columnExists(tableName, columnName);
+            
+            if (!exists) {
+                console.log(`➕ Agregando columna ${columnName} a tabla ${tableName}`);
+                db.run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`, (err) => {
+                    if (err) {
+                        console.error(`❌ Error agregando columna ${columnName}:`, err.message);
+                        reject(err);
+                    } else {
+                        console.log(`✅ Columna ${columnName} agregada exitosamente`);
+                        resolve();
                     }
-                );
-            } catch (hashError) {
-                console.error('Error hasheando contraseña:', hashError);
-                db.close();
-                reject(hashError);
-            }
-        } else {
-            // Usuario existe, verificar/actualizar rol
-            if (user.role !== 'admin') {
-                console.log('🔄 Actualizando rol de usuario existente a admin...');
-                db.run(
-                    'UPDATE users SET role = ?, nombre = ? WHERE email = ?',
-                    ['admin', 'Gabriel Alvarez', 'ec.gabrielalvarez@gmail.com'],
-                    (err) => {
-                        if (err) {
-                            console.error('❌ Error actualizando rol:', err);
-                            db.close();
-                            reject(err);
-                        } else {
-                            console.log('✅ Rol de administrador actualizado');
-                            console.log('�� Email: ec.gabrielalvarez@gmail.com');
-                            console.log('🔑 Password: Guepardo.25');
-                            console.log('🎭 Rol: admin');
-                            
-                            db.close();
-                            resolve();
-                        }
-                    }
-                );
+                });
             } else {
-                console.log('✅ Administrador ya existe con rol correcto');
-                console.log('📧 Email: ec.gabrielalvarez@gmail.com');
-                console.log('🔑 Password: Guepardo.25');
-                console.log('🎭 Rol: admin');
-                
-                db.close();
+                console.log(`✅ Columna ${columnName} ya existe en tabla ${tableName}`);
                 resolve();
             }
+        } catch (error) {
+            reject(error);
         }
     });
 }
 
-module.exports = migrateDatabase;
-
-// Ejecutar si se llama directamente
-if (require.main === module) {
-    migrateDatabase()
-        .then(() => {
-            console.log('🎉 Migración completada exitosamente');
-            process.exit(0);
-        })
-        .catch((error) => {
-            console.error('❌ Error en migración:', error);
-            process.exit(1);
+// Función para actualizar datos faltantes
+function updateMissingData() {
+    return new Promise((resolve, reject) => {
+        console.log('🔄 Actualizando datos faltantes...');
+        
+        // Actualizar original_name donde sea NULL usando filename
+        db.run(`
+            UPDATE submissions 
+            SET original_name = filename 
+            WHERE original_name IS NULL OR original_name = ''
+        `, function(err) {
+            if (err) {
+                console.error('❌ Error actualizando original_name:', err.message);
+                reject(err);
+            } else {
+                console.log(`✅ Actualizadas ${this.changes} filas con original_name`);
+                
+                // Actualizar file_path donde sea NULL
+                db.run(`
+                    UPDATE submissions 
+                    SET file_path = 'uploads/submissions/' || filename 
+                    WHERE file_path IS NULL OR file_path = ''
+                `, function(err) {
+                    if (err) {
+                        console.error('❌ Error actualizando file_path:', err.message);
+                        reject(err);
+                    } else {
+                        console.log(`✅ Actualizadas ${this.changes} filas con file_path`);
+                        resolve();
+                    }
+                });
+            }
         });
+    });
 }
+
+// Ejecutar migración
+async function runMigration() {
+    try {
+        console.log('📋 Verificando estructura actual de submissions...');
+        
+        // Verificar columnas existentes
+        const columns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns);
+            });
+        });
+        
+        console.log('📋 Columnas actuales en submissions:');
+        columns.forEach(col => {
+            console.log(`  - ${col.name} (${col.type}) ${col.notnull ? 'NOT NULL' : ''} ${col.dflt_value ? `DEFAULT ${col.dflt_value}` : ''}`);
+        });
+        
+        // Agregar columnas faltantes
+        await addColumnIfNotExists('submissions', 'original_name', 'TEXT');
+        await addColumnIfNotExists('submissions', 'file_path', 'TEXT');
+        await addColumnIfNotExists('submissions', 'file_size', 'INTEGER');
+        await addColumnIfNotExists('submissions', 'mime_type', 'TEXT');
+        
+        // Actualizar datos faltantes
+        await updateMissingData();
+        
+        // Verificar estructura final
+        console.log('\n📋 Verificando estructura final...');
+        const finalColumns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns);
+            });
+        });
+        
+        console.log('📋 Columnas finales en submissions:');
+        finalColumns.forEach(col => {
+            console.log(`  - ${col.name} (${col.type}) ${col.notnull ? 'NOT NULL' : ''} ${col.dflt_value ? `DEFAULT ${col.dflt_value}` : ''}`);
+        });
+        
+        console.log('\n🎉 ¡Migración completada exitosamente!');
+        
+    } catch (error) {
+        console.error('❌ Error en migración:', error);
+    } finally {
+        db.close((err) => {
+            if (err) {
+                console.error('❌ Error cerrando DB:', err);
+            } else {
+                console.log('✅ Base de datos cerrada');
+            }
+        });
+    }
+}
+
+// Ejecutar migración
+runMigration();
