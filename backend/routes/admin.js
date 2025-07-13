@@ -729,19 +729,19 @@ router.get('/advanced-stats', authenticateAdmin, async (req, res) => {
         });
     }
 });
-// ✅ RUTA TEMPORAL: Migrar base de datos en producción
-router.post('/migrate-database', authenticateAdmin, async (req, res) => {
+// ✅ ENDPOINT TEMPORAL: Agregar columna mime_type específicamente
+router.post('/fix-mime-type-column', authenticateAdmin, async (req, res) => {
     try {
-        logSecurityEvent('ADMIN_DATABASE_MIGRATION_ATTEMPT', { 
+        logSecurityEvent('ADMIN_FIX_MIME_TYPE_ATTEMPT', { 
             adminId: req.user.userId,
             adminEmail: req.user.email 
         }, req);
 
-        console.log('🔧 Ejecutando migración de base de datos en producción...');
+        console.log('🔧 Agregando columna mime_type específicamente...');
         
         const db = new sqlite3.Database(dbPath);
         
-        // Verificar columnas existentes
+        // Verificar si mime_type ya existe
         const columns = await new Promise((resolve, reject) => {
             db.all("PRAGMA table_info(submissions)", (err, columns) => {
                 if (err) reject(err);
@@ -750,111 +750,80 @@ router.post('/migrate-database', authenticateAdmin, async (req, res) => {
         });
         
         const columnNames = columns.map(col => col.name);
-        const missingColumns = [];
-        
         console.log('📋 Columnas actuales:', columnNames);
         
-        // Verificar columnas requeridas
-        const requiredColumns = [
-            { name: 'original_filename', type: 'TEXT' },
-            { name: 'file_path', type: 'TEXT' },
-            { name: 'file_size', type: 'INTEGER' },
-            { name: 'mime_type', type: 'TEXT' }
-        ];
-        
-        for (const col of requiredColumns) {
-            if (!columnNames.includes(col.name)) {
-                missingColumns.push(col);
-            }
-        }
-        
-        if (missingColumns.length === 0) {
+        if (columnNames.includes('mime_type')) {
             db.close();
-            logSecurityEvent('ADMIN_DATABASE_MIGRATION_NOT_NEEDED', { 
-                adminId: req.user.userId,
-                currentColumns: columnNames 
-            }, req);
-            
             return res.json({ 
                 success: true,
-                message: 'Base de datos ya está actualizada',
+                message: 'Columna mime_type ya existe',
                 currentColumns: columnNames
             });
         }
         
-        console.log('➕ Columnas faltantes:', missingColumns.map(c => c.name));
-        
-        // Agregar columnas faltantes
-        for (const col of missingColumns) {
-            await new Promise((resolve, reject) => {
-                console.log(`➕ Agregando columna ${col.name} (${col.type})`);
-                db.run(`ALTER TABLE submissions ADD COLUMN ${col.name} ${col.type}`, (err) => {
-                    if (err) {
-                        console.error(`❌ Error agregando ${col.name}:`, err.message);
-                        reject(err);
-                    } else {
-                        console.log(`✅ Columna ${col.name} agregada`);
-                        resolve();
-                    }
-                });
+        // Agregar columna mime_type
+        await new Promise((resolve, reject) => {
+            console.log('➕ Agregando columna mime_type...');
+            db.run(`ALTER TABLE submissions ADD COLUMN mime_type TEXT`, (err) => {
+                if (err) {
+                    console.error('❌ Error agregando mime_type:', err.message);
+                    reject(err);
+                } else {
+                    console.log('✅ Columna mime_type agregada');
+                    resolve();
+                }
             });
-        }
+        });
         
-        // Actualizar datos faltantes
-        console.log('🔄 Actualizando datos faltantes...');
-        
-        const updateResults = await Promise.all([
-            new Promise((resolve, reject) => {
-                db.run(`
-                    UPDATE submissions 
-                    SET original_filename = filename 
-                    WHERE original_filename IS NULL OR original_filename = ''
-                `, function(err) {
-                    if (err) reject(err);
-                    else resolve({ field: 'original_filename', changes: this.changes });
-                });
-            }),
-            new Promise((resolve, reject) => {
-                db.run(`
-                    UPDATE submissions 
-                    SET file_path = 'uploads/submissions/' || filename 
-                    WHERE file_path IS NULL OR file_path = ''
-                `, function(err) {
-                    if (err) reject(err);
-                    else resolve({ field: 'file_path', changes: this.changes });
-                });
-            })
-        ]);
+        // Actualizar registros existentes con mime_type por defecto
+        const updateResult = await new Promise((resolve, reject) => {
+            db.run(`
+                UPDATE submissions 
+                SET mime_type = CASE 
+                    WHEN filename LIKE '%.pdf' THEN 'application/pdf'
+                    WHEN filename LIKE '%.doc' THEN 'application/msword'
+                    WHEN filename LIKE '%.docx' THEN 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    WHEN filename LIKE '%.txt' THEN 'text/plain'
+                    WHEN filename LIKE '%.zip' THEN 'application/zip'
+                    WHEN filename LIKE '%.png' THEN 'image/png'
+                    WHEN filename LIKE '%.jpg' OR filename LIKE '%.jpeg' THEN 'image/jpeg'
+                    ELSE 'application/octet-stream'
+                END
+                WHERE mime_type IS NULL OR mime_type = ''
+            `, function(err) {
+                if (err) reject(err);
+                else resolve({ changes: this.changes });
+            });
+        });
         
         db.close();
         
-        logSecurityEvent('ADMIN_DATABASE_MIGRATION_SUCCESS', { 
+        logSecurityEvent('ADMIN_FIX_MIME_TYPE_SUCCESS', { 
             adminId: req.user.userId,
-            addedColumns: missingColumns.map(c => c.name),
-            updateResults 
+            updateResult 
         }, req);
         
-        console.log('🎉 Migración en producción completada exitosamente!');
+        console.log('🎉 Columna mime_type agregada y actualizada exitosamente!');
         
         res.json({ 
             success: true,
-            message: 'Migración completada exitosamente',
-            addedColumns: missingColumns.map(c => c.name),
-            updateResults
+            message: 'Columna mime_type agregada exitosamente',
+            updatedRecords: updateResult.changes
         });
         
     } catch (error) {
-        console.error('❌ Error en migración:', error);
-        logSecurityEvent('ADMIN_DATABASE_MIGRATION_ERROR', { 
+        console.error('❌ Error agregando mime_type:', error);
+        logSecurityEvent('ADMIN_FIX_MIME_TYPE_ERROR', { 
             adminId: req.user.userId,
             error: error.message 
         }, req);
 
         res.status(500).json({ 
             success: false,
-            error: 'Error ejecutando migración',
+            error: 'Error agregando columna mime_type',
             details: error.message
         });
     }
 });
+
 module.exports = router;
