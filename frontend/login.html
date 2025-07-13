@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Informática Médica</title>
     
-    <!-- Meta tags -->
-    <meta name="description" content="Iniciar sesión en la plataforma de Informática Médica">
-    <meta name="theme-color" content="#007AFF">
-    
     <!-- CSS Libraries -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,12 +13,8 @@
     <style>
         :root {
             --medical-primary: #007AFF;
-            --medical-secondary: #34C759;
-            --medical-accent: #5856D6;
             --medical-gradient: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-            --light-gray: #F2F2F7;
             --border-radius: 12px;
-            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
             --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -57,14 +49,8 @@
         }
         
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .login-info {
@@ -81,10 +67,7 @@
         .login-info::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
             pointer-events: none;
         }
@@ -102,8 +85,7 @@
         }
         
         .brand-icon {
-            width: 50px;
-            height: 50px;
+            width: 50px; height: 50px;
             background: rgba(255,255,255,0.2);
             border-radius: 50%;
             display: flex;
@@ -311,6 +293,11 @@
             border-radius: var(--border-radius);
             padding: 1rem;
             margin-bottom: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .demo-credentials:hover {
+            background: rgba(0,122,255,0.1);
         }
         
         .demo-credentials h6 {
@@ -365,9 +352,8 @@
 </head>
 
 <body>
-    <!-- Container Principal -->
     <div class="login-container">
-        <!-- Panel Izquierdo - Información -->
+        <!-- Panel Izquierdo -->
         <div class="login-info">
             <div class="info-content">
                 <div class="brand">
@@ -388,18 +374,16 @@
             </div>
         </div>
 
-        <!-- Panel Derecho - Formulario -->
+        <!-- Panel Derecho -->
         <div class="login-form">
             <div class="form-header">
                 <h1>Iniciar Sesión</h1>
                 <p>Ingresa tus credenciales para acceder</p>
             </div>
 
-            <!-- Alert Container -->
             <div id="alert-container"></div>
 
-            <!-- Credenciales de Demo -->
-            <div class="demo-credentials">
+            <div class="demo-credentials" onclick="fillDemoCredentials()" title="Haz clic para llenar automáticamente">
                 <h6><i class="fas fa-info-circle me-1"></i> Credenciales de Acceso:</h6>
                 <div class="demo-item">
                     <span>Admin:</span>
@@ -408,7 +392,6 @@
             </div>
 
             <form id="loginForm">
-                <!-- Email -->
                 <div class="form-group">
                     <label class="form-label" for="email">Email *</label>
                     <div class="input-group">
@@ -427,7 +410,6 @@
                     </div>
                 </div>
 
-                <!-- Contraseña -->
                 <div class="form-group">
                     <label class="form-label" for="password">Contraseña *</label>
                     <div class="input-group">
@@ -446,26 +428,22 @@
                     </div>
                 </div>
 
-                <!-- Botón de Login -->
                 <button type="submit" class="btn-login" id="submitBtn">
                     <span class="loading-spinner" id="loadingSpinner"></span>
                     <i class="fas fa-sign-in-alt" id="loginIcon"></i>
                     <span id="btnText">Iniciar Sesión</span>
                 </button>
 
-                <!-- Divider -->
                 <div style="text-align: center; margin: 1.5rem 0; color: #666;">
                     <span>o</span>
                 </div>
 
-                <!-- Botón de Registro -->
                 <a href="register.html" class="btn-outline">
                     <i class="fas fa-user-plus"></i>
                     <span>Crear Nueva Cuenta</span>
                 </a>
             </form>
 
-            <!-- Footer -->
             <div class="login-footer">
                 <p>¿Problemas para acceder? <a href="mailto:ec.gabrielalvarez@gmail.com">Contacta al profesor</a></p>
             </div>
@@ -475,71 +453,49 @@
     <!-- Scripts -->
     <script src="js/auth.js"></script>
     <script>
-        // ========================================
-        // LOGIN CON AUTENTICACIÓN REAL
-        // ========================================
-        
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔐 Inicializando login real...');
+            console.log('Inicializando login real...');
             
-            // Verificar si ya está autenticado
-            if (isAuthenticated()) {
-                const user = getUser();
-                showAlert('Ya tienes una sesión activa. Redirigiendo...', 'info');
-                
-                setTimeout(() => {
-                    if (user.role === 'admin') {
-                        window.location.href = 'admin-panel.html';
-                    } else {
-                        window.location.href = 'student-area.html';
-                    }
-                }, 1500);
-                return;
-            }
+            // NO verificar sesión automáticamente - esto era el problema
+            // Comentamos esta línea para evitar login automático:
+            // checkExistingSession();
             
-            // Configurar formulario
             const loginForm = document.getElementById('loginForm');
             const submitBtn = document.getElementById('submitBtn');
             const loadingSpinner = document.getElementById('loadingSpinner');
             const loginIcon = document.getElementById('loginIcon');
             const btnText = document.getElementById('btnText');
             
-            // Manejar envío del formulario
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
                 
-                // Validación básica
                 if (!email || !password) {
                     showAlert('Por favor completa todos los campos', 'danger');
                     return;
                 }
                 
-                // Mostrar loading
                 setLoadingState(true);
                 
                 try {
-                    // Llamar a la función de login real
                     const result = await handleLogin(email, password);
                     
                     if (result.success) {
                         showAlert('¡Login exitoso! Redirigiendo...', 'success');
-                        // La redirección se maneja en handleLogin
                     } else {
                         showAlert(result.error || 'Error en el login', 'danger');
                     }
                     
                 } catch (error) {
-                    console.error('❌ Error en login:', error);
+                    console.error('Error en login:', error);
                     showAlert('Error de conexión. Verifica tu internet.', 'danger');
                 } finally {
                     setLoadingState(false);
                 }
             });
             
-            // Función para manejar estado de loading
             function setLoadingState(loading) {
                 submitBtn.disabled = loading;
                 
@@ -554,32 +510,20 @@
                 }
             }
             
-            // Auto-focus en email
             document.getElementById('email').focus();
             
-            console.log('✅ Login real configurado');
+            console.log('Login real configurado - SIN login automático');
         });
         
-        // Función para llenar credenciales de demo
         function fillDemoCredentials() {
             document.getElementById('email').value = 'ec.gabrielalvarez@gmail.com';
             document.getElementById('password').value = 'Guepardo.25';
             showAlert('Credenciales de administrador cargadas', 'info');
         }
         
-        // Agregar botón para llenar credenciales demo
-        document.addEventListener('DOMContentLoaded', function() {
-            const demoCredentials = document.querySelector('.demo-credentials');
-            if (demoCredentials) {
-                demoCredentials.style.cursor = 'pointer';
-                demoCredentials.addEventListener('click', fillDemoCredentials);
-                demoCredentials.title = 'Haz clic para llenar automáticamente';
-            }
-        });
-        
-        console.log('🔐 Login con autenticación real cargado');
-        console.log('📧 Email admin: ec.gabrielalvarez@gmail.com');
-        console.log('🔑 Password admin: Guepardo.25');
+        console.log('Login con autenticación real cargado');
+        console.log('Email admin: ec.gabrielalvarez@gmail.com');
+        console.log('Password admin: Guepardo.25');
     </script>
 </body>
 </html>
