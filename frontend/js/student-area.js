@@ -1,1253 +1,1239 @@
-// ✅ MEJORA: Configuración global y constantes
+// 🏥 SISTEMA DE INFORMÁTICA MÉDICA - ÁREA DEL ESTUDIANTE
+// Versión: 2.0 - Completamente en Español
+// Autor: Prof. Gabriel Álvarez
+
+// �� CONFIGURACIÓN GLOBAL
 const CONFIG = {
     API_BASE: '/api',
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
-    ALLOWED_TYPES: [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/plain',
-        'application/zip',
-        'application/x-zip-compressed',
-        'image/png',
-        'image/jpeg'
-    ],
-    ALLOWED_EXTENSIONS: ['.pdf', '.doc', '.docx', '.txt', '.zip', '.png', '.jpg', '.jpeg'],
-    RETRY_ATTEMPTS: 3,
-    RETRY_DELAY: 1000
+    ALLOWED_EXTENSIONS: ['.pdf', '.doc', '.docx', '.txt', '.zip', '.rar'],
+    TOAST_DURATION: 5000,
+    REFRESH_INTERVAL: 30000, // 30 segundos
+    LANGUAGE: 'es'
 };
 
-// ✅ MEJORA: Estado global de la aplicación
-const AppState = {
-    isLoading: false,
-    submissions: [],
-    currentUser: null,
-    lastUpdate: null,
-    uploadInProgress: false
+// 🎨 MENSAJES EN ESPAÑOL
+const MENSAJES = {
+    CARGANDO: 'Cargando...',
+    ERROR_CONEXION: 'Error de conexión con el servidor',
+    ERROR_AUTENTICACION: 'Error de autenticación',
+    ARCHIVO_SUBIDO: 'Archivo subido exitosamente',
+    ARCHIVO_ELIMINADO: 'Entrega eliminada correctamente',
+    ARCHIVO_DEMASIADO_GRANDE: 'El archivo es demasiado grande (máx. 10MB)',
+    FORMATO_NO_PERMITIDO: 'Formato de archivo no permitido',
+    CAMPOS_REQUERIDOS: 'Por favor completa todos los campos requeridos',
+    SESION_EXPIRADA: 'Tu sesión ha expirado. Por favor inicia sesión nuevamente',
+    EXPORTACION_EXITOSA: 'Datos exportados exitosamente',
+    SIN_ENTREGAS: 'No tienes entregas registradas',
+    CONFIRMACION_ELIMINACION: '¿Estás seguro de que deseas eliminar esta entrega?'
 };
 
-// ✅ MEJORA: Utilidades para manejo de errores y UI
-const UIUtils = {
-    // Mostrar alertas mejoradas
-    showAlert(message, type = 'info', duration = 5000) {
-        const alertContainer = document.getElementById('alert-container') || this.createAlertContainer();
+// 🔐 GESTIÓN DE AUTENTICACIÓN
+class GestorAutenticacion {
+    static verificarToken() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            this.redirigirLogin();
+            return false;
+        }
         
-        const alertId = 'alert-' + Date.now();
-        const alertHtml = `
-            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <i class="fas fa-${this.getAlertIcon(type)} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        
-        alertContainer.insertAdjacentHTML('beforeend', alertHtml);
-        
-        // Auto-dismiss después del tiempo especificado
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const ahora = Date.now() / 1000;
+            
+            if (payload.exp < ahora) {
+                this.cerrarSesion();
+                return false;
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Error verificando token:', error);
+            this.cerrarSesion();
+            return false;
+        }
+    }
+    
+    static obtenerToken() {
+        return localStorage.getItem('token');
+    }
+    
+    static cerrarSesion() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
+        this.redirigirLogin();
+    }
+    
+    static redirigirLogin() {
+        mostrarNotificacion('warning', 'Sesión Expirada', MENSAJES.SESION_EXPIRADA);
         setTimeout(() => {
-            const alert = document.getElementById(alertId);
-            if (alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+            window.location.href = 'login.html';
+        }, 2000);
+    }
+}
+
+// 📡 CLIENTE API
+class ClienteAPI {
+    static async realizarPeticion(endpoint, opciones = {}) {
+        const token = GestorAutenticacion.obtenerToken();
+        
+        const configuracionPorDefecto = {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
-        }, duration);
-    },
-
-    createAlertContainer() {
-        const container = document.createElement('div');
-        container.id = 'alert-container';
-        container.className = 'position-fixed top-0 end-0 p-3';
-        container.style.zIndex = '9999';
-        document.body.appendChild(container);
-        return container;
-    },
-
-    getAlertIcon(type) {
-        const icons = {
-            'success': 'check-circle',
-            'danger': 'exclamation-triangle',
-            'warning': 'exclamation-circle',
-            'info': 'info-circle'
-        };
-        return icons[type] || 'info-circle';
-    },
-
-    // Mostrar/ocultar loading states
-    setLoadingState(element, isLoading, originalText = '') {
-        if (isLoading) {
-            element.disabled = true;
-            element.dataset.originalText = element.innerHTML;
-            element.innerHTML = `
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Cargando...
-            `;
-        } else {
-            element.disabled = false;
-            element.innerHTML = element.dataset.originalText || originalText;
-        }
-    },
-
-    // Formatear tamaño de archivo
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    },
-
-    // Formatear fecha
-    formatDate(dateString) {
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleString('es-ES', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (error) {
-            console.warn('Error formateando fecha:', error);
-            return dateString;
-        }
-    },
-
-    // Obtener icono por tipo de archivo
-    getFileIcon(mimeType) {
-        const iconMap = {
-            'application/pdf': 'fas fa-file-pdf text-danger',
-            'application/msword': 'fas fa-file-word text-primary',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'fas fa-file-word text-primary',
-            'text/plain': 'fas fa-file-alt text-secondary',
-            'application/zip': 'fas fa-file-archive text-warning',
-            'application/x-zip-compressed': 'fas fa-file-archive text-warning',
-            'image/png': 'fas fa-file-image text-success',
-            'image/jpeg': 'fas fa-file-image text-success'
-        };
-        return iconMap[mimeType] || 'fas fa-file text-muted';
-    }
-};
-
-// ✅ MEJORA: Clase para manejo de API con retry y mejor error handling
-class APIClient {
-    constructor() {
-        this.baseURL = CONFIG.API_BASE;
-        this.token = localStorage.getItem('token');
-    }
-
-    // Obtener headers con token
-    getHeaders(includeContentType = true) {
-        const headers = {
-            'Authorization': `Bearer ${this.token}`
         };
         
-        if (includeContentType) {
-            headers['Content-Type'] = 'application/json';
+        // Si es FormData, no establecer Content-Type
+        if (opciones.body instanceof FormData) {
+            delete configuracionPorDefecto.headers['Content-Type'];
         }
         
-        return headers;
-    }
-
-    // Realizar petición con retry automático
-    async request(url, options = {}, retryCount = 0) {
+        const configuracionFinal = {
+            ...configuracionPorDefecto,
+            ...opciones,
+            headers: {
+                ...configuracionPorDefecto.headers,
+                ...opciones.headers
+            }
+        };
+        
         try {
-            const response = await fetch(`${this.baseURL}${url}`, {
-                ...options,
-                headers: {
-                    ...this.getHeaders(!options.body || !(options.body instanceof FormData)),
-                    ...options.headers
-                }
-            });
-
-            // ✅ MEJORA: Verificar headers de advertencia de token
-            const tokenWarning = response.headers.get('X-Token-Warning');
-            if (tokenWarning) {
-                console.warn('⚠️ Advertencia de token:', tokenWarning);
-                UIUtils.showAlert('Tu sesión expirará pronto. Considera recargar la página.', 'warning', 8000);
+            const respuesta = await fetch(`${CONFIG.API_BASE}${endpoint}`, configuracionFinal);
+            
+            if (respuesta.status === 401) {
+                GestorAutenticacion.cerrarSesion();
+                return null;
             }
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new APIError(response.status, errorData.error || 'Error en la petición', errorData.code);
+            
+            if (!respuesta.ok) {
+                throw new Error(`Error HTTP: ${respuesta.status}`);
             }
-
-            return await response.json();
+            
+            const contentType = respuesta.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await respuesta.json();
+            }
+            
+            return respuesta;
         } catch (error) {
-            // ✅ MEJORA: Retry automático para errores de red
-            if (retryCount < CONFIG.RETRY_ATTEMPTS && this.shouldRetry(error)) {
-                console.log(`🔄 Reintentando petición (${retryCount + 1}/${CONFIG.RETRY_ATTEMPTS}):`, url);
-                await this.delay(CONFIG.RETRY_DELAY * (retryCount + 1));
-                return this.request(url, options, retryCount + 1);
-            }
+            console.error(`❌ Error en petición ${endpoint}:`, error);
+            mostrarNotificacion('error', 'Error de Conexión', MENSAJES.ERROR_CONEXION);
             throw error;
         }
     }
-
-    shouldRetry(error) {
-        return error.name === 'TypeError' || // Network errors
-               (error.status >= 500 && error.status < 600); // Server errors
+    
+    static async obtenerEntregas() {
+        return await this.realizarPeticion('/submissions');
     }
-
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // Métodos específicos de API
-    async getSubmissions() {
-        return this.request('/submissions/my-submissions');
-    }
-
-    async uploadSubmission(formData) {
-        return this.request('/submissions/upload', {
+    
+    static async subirEntrega(formData) {
+        return await this.realizarPeticion('/submissions', {
             method: 'POST',
             body: formData
         });
     }
-
-    async deleteSubmission(id) {
-        return this.request(`/submissions/${id}`, {
+    
+    static async eliminarEntrega(id) {
+        return await this.realizarPeticion(`/submissions/${id}`, {
             method: 'DELETE'
         });
     }
-
-    async downloadSubmission(id) {
-        const url = `${this.baseURL}/submissions/download/${id}?token=${this.token}`;
-        window.open(url, '_blank');
+    
+    static async obtenerEstadisticasUsuario() {
+        return await this.realizarPeticion('/submissions/stats');
+    }
+    
+    static async exportarDatos() {
+        return await this.realizarPeticion('/submissions/export');
     }
 }
 
-// ✅ MEJORA: Clase de error personalizada
-class APIError extends Error {
-    constructor(status, message, code) {
-        super(message);
-        this.name = 'APIError';
-        this.status = status;
-        this.code = code;
+// 🎨 GESTOR DE INTERFAZ
+class GestorInterfaz {
+    static mostrarCargando(elemento, mostrar = true) {
+        if (mostrar) {
+            elemento.classList.add('loading');
+            elemento.style.pointerEvents = 'none';
+        } else {
+            elemento.classList.remove('loading');
+            elemento.style.pointerEvents = 'auto';
+        }
     }
-}
-
-// ✅ MEJORA: Clase principal de la aplicación
-class StudentArea {
-    constructor() {
-        this.api = new APIClient();
-        this.initializeElements();
-        this.attachEventListeners();
-        this.loadSubmissions();
-        this.setupFileValidation();
+    
+    static animarElemento(elemento, animacion = 'medical-bounce') {
+        elemento.classList.add(animacion);
+        setTimeout(() => {
+            elemento.classList.remove(animacion);
+        }, 1000);
     }
-
-    initializeElements() {
-        // Elementos del DOM
-        this.elements = {
-            uploadForm: document.getElementById('uploadForm'),
-            fileInput: document.getElementById('file'),
-            titleInput: document.getElementById('title'),
-            descriptionInput: document.getElementById('description'),
-            uploadBtn: document.getElementById('uploadBtn'),
-            submissionsList: document.getElementById('submissionsList'),
-            loadingSpinner: document.getElementById('loadingSpinner'),
-            emptyState: document.getElementById('emptyState'),
-            fileInfo: document.getElementById('fileInfo'),
-            fileError: document.getElementById('fileError')
+    
+    static formatearFecha(fecha) {
+        const opciones = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         };
+        return new Date(fecha).toLocaleDateString('es-ES', opciones);
+    }
+    
+    static formatearTamano(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const tamaños = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + tamaños[i];
+    }
+    
+    static obtenerIconoArchivo(nombreArchivo) {
+        const extension = nombreArchivo.toLowerCase().split('.').pop();
+        const iconos = {
+            'pdf': 'fas fa-file-pdf text-danger',
+            'doc': 'fas fa-file-word text-primary',
+            'docx': 'fas fa-file-word text-primary',
+            'txt': 'fas fa-file-alt text-secondary',
+            'zip': 'fas fa-file-archive text-warning',
+            'rar': 'fas fa-file-archive text-warning'
+        };
+        return iconos[extension] || 'fas fa-file text-muted';
+    }
+}
 
-        // Verificar elementos críticos
-        const missingElements = Object.entries(this.elements)
-            .filter(([key, element]) => !element)
-            .map(([key]) => key);
+// 🔔 SISTEMA DE NOTIFICACIONES
+function mostrarNotificacion(tipo, titulo, mensaje, duracion = CONFIG.TOAST_DURATION) {
+    const toast = document.getElementById('toastNotificacion');
+    const iconoToast = document.getElementById('iconoToast');
+    const tituloToast = document.getElementById('tituloToast');
+    const mensajeToast = document.getElementById('mensajeToast');
+    const tiempoToast = document.getElementById('tiempoToast');
+    
+    // Configurar iconos y colores según el tipo
+    const configuraciones = {
+        'success': {
+            icono: 'fas fa-check-circle text-success',
+            clase: 'bg-success'
+        },
+        'error': {
+            icono: 'fas fa-exclamation-circle text-danger',
+            clase: 'bg-danger'
+        },
+        'warning': {
+            icono: 'fas fa-exclamation-triangle text-warning',
+            clase: 'bg-warning'
+        },
+        'info': {
+            icono: 'fas fa-info-circle text-primary',
+            clase: 'bg-primary'
+        }
+    };
+    
+    const config = configuraciones[tipo] || configuraciones['info'];
+    
+    iconoToast.className = config.icono;
+    tituloToast.textContent = titulo;
+    mensajeToast.textContent = mensaje;
+    tiempoToast.textContent = 'ahora';
+    
+    // Mostrar toast
+    const bsToast = new bootstrap.Toast(toast, {
+        delay: duracion
+    });
+    bsToast.show();
+    
+    // Efecto de sonido (opcional)
+    if (tipo === 'success') {
+        // Aquí podrías agregar un sonido de éxito
+    }
+}
 
-        if (missingElements.length > 0) {
-            console.error('❌ Elementos DOM faltantes:', missingElements);
-            UIUtils.showAlert('Error inicializando la aplicación. Recarga la página.', 'danger');
+// 📊 GESTOR DE ESTADÍSTICAS
+class GestorEstadisticas {
+    static async cargarEstadisticas() {
+        try {
+            const entregas = await ClienteAPI.obtenerEntregas();
+            if (!entregas) return;
+            
+            const estadisticas = this.calcularEstadisticas(entregas);
+            this.actualizarInterfazEstadisticas(estadisticas);
+            
+        } catch (error) {
+            console.error('❌ Error cargando estadísticas:', error);
         }
     }
-
-    attachEventListeners() {
-        // ✅ MEJORA: Event listeners con mejor manejo de errores
-        if (this.elements.uploadForm) {
-            this.elements.uploadForm.addEventListener('submit', (e) => this.handleSubmit(e));
-        }
-
-        if (this.elements.fileInput) {
-            this.elements.fileInput.addEventListener('change', (e) => this.handleFileChange(e));
-        }
-
-        // ✅ MEJORA: Validación en tiempo real del título
-        if (this.elements.titleInput) {
-            this.elements.titleInput.addEventListener('input', (e) => this.validateTitle(e.target.value));
-        }
-
-        // ✅ MEJORA: Auto-resize del textarea de descripción
-        if (this.elements.descriptionInput) {
-            this.elements.descriptionInput.addEventListener('input', (e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-            });
-        }
-
-        // ✅ MEJORA: Prevenir pérdida de datos accidental
-        window.addEventListener('beforeunload', (e) => {
-            if (AppState.uploadInProgress) {
-                e.preventDefault();
-                e.returnValue = '¿Estás seguro? Hay una subida en progreso.';
-            }
-        });
-    }
-
-    setupFileValidation() {
-        if (!this.elements.fileInput) return;
-
-        // ✅ MEJORA: Configurar atributos de validación
-        this.elements.fileInput.setAttribute('accept', CONFIG.ALLOWED_EXTENSIONS.join(','));
+    
+    static calcularEstadisticas(entregas) {
+        const ahora = new Date();
+        const inicioSemana = new Date(ahora.setDate(ahora.getDate() - ahora.getDay()));
         
-        // ✅ MEJORA: Drag & Drop support
-        const dropZone = this.elements.fileInput.closest('.mb-3');
-        if (dropZone) {
-            this.setupDragAndDrop(dropZone);
+        const estadisticas = {
+            total: entregas.length,
+            estaSemana: 0,
+            espacioTotal: 0,
+            ultimaEntrega: null,
+            porTipo: {},
+            porMes: {}
+        };
+        
+        entregas.forEach(entrega => {
+            const fechaEntrega = new Date(entrega.submitted_at);
+            
+            // Entregas de esta semana
+            if (fechaEntrega >= inicioSemana) {
+                estadisticas.estaSemana++;
+            }
+            
+            // Espacio total
+            estadisticas.espacioTotal += entrega.file_size || 0;
+            
+            // Última entrega
+            if (!estadisticas.ultimaEntrega || fechaEntrega > new Date(estadisticas.ultimaEntrega.submitted_at)) {
+                estadisticas.ultimaEntrega = entrega;
+            }
+            
+            // Por tipo de archivo
+            const extension = entrega.filename ? entrega.filename.split('.').pop().toLowerCase() : 'desconocido';
+            estadisticas.porTipo[extension] = (estadisticas.porTipo[extension] || 0) + 1;
+            
+            // Por mes
+            const mes = fechaEntrega.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' });
+            estadisticas.porMes[mes] = (estadisticas.porMes[mes] || 0) + 1;
+        });
+        
+        return estadisticas;
+    }
+    
+    static actualizarInterfazEstadisticas(estadisticas) {
+        // Actualizar cards de estadísticas
+        document.getElementById('totalEntregas').textContent = estadisticas.total;
+        document.getElementById('entregasSemana').textContent = estadisticas.estaSemana;
+        document.getElementById('espacioTotal').textContent = GestorInterfaz.formatearTamano(estadisticas.espacioTotal);
+        
+        const ultimaEntregaElement = document.getElementById('ultimaEntrega');
+        if (estadisticas.ultimaEntrega) {
+            const fecha = new Date(estadisticas.ultimaEntrega.submitted_at);
+            ultimaEntregaElement.textContent = fecha.toLocaleDateString('es-ES', { 
+                day: 'numeric', 
+                month: 'short' 
+            });
+        } else {
+            ultimaEntregaElement.textContent = 'Ninguna';
+        }
+        
+        // Animar las estadísticas
+        document.querySelectorAll('.medical-stat-card').forEach(card => {
+            GestorInterfaz.animarElemento(card, 'fade-in-up');
+        });
+    }
+    
+    static async mostrarEstadisticasDetalladas() {
+        try {
+            const entregas = await ClienteAPI.obtenerEntregas();
+            if (!entregas) return;
+            
+            const estadisticas = this.calcularEstadisticas(entregas);
+            const contenido = this.generarHTMLEstadisticasDetalladas(estadisticas);
+            
+            document.getElementById('contenidoEstadisticas').innerHTML = contenido;
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalEstadisticas'));
+            modal.show();
+            
+        } catch (error) {
+            console.error('❌ Error mostrando estadísticas detalladas:', error);
+            mostrarNotificacion('error', 'Error', 'No se pudieron cargar las estadísticas detalladas');
         }
     }
+    
+    static generarHTMLEstadisticasDetalladas(estadisticas) {
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="medical-stat-card">
+                        <h5><i class="fas fa-chart-bar text-primary"></i> Resumen General</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Total de entregas:</strong> ${estadisticas.total}</li>
+                            <li><strong>Esta semana:</strong> ${estadisticas.estaSemana}</li>
+                            <li><strong>Espacio utilizado:</strong> ${GestorInterfaz.formatearTamano(estadisticas.espacioTotal)}</li>
+                            <li><strong>Promedio por entrega:</strong> ${estadisticas.total > 0 ? GestorInterfaz.formatearTamano(estadisticas.espacioTotal / estadisticas.total) : '0 Bytes'}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="medical-stat-card">
+                        <h5><i class="fas fa-file-alt text-success"></i> Tipos de Archivo</h5>
+                        <ul class="list-unstyled">
+                            ${Object.entries(estadisticas.porTipo).map(([tipo, cantidad]) => 
+                                `<li><span class="badge badge-primary me-2">${tipo.toUpperCase()}</span> ${cantidad} archivo${cantidad !== 1 ? 's' : ''}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="medical-stat-card">
+                        <h5><i class="fas fa-calendar text-info"></i> Entregas por Mes</h5>
+                        <div class="row">
+                            ${Object.entries(estadisticas.porMes).map(([mes, cantidad]) => 
+                                `<div class="col-md-4 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>${mes}:</span>
+                                        <span class="fw-bold">${cantidad}</span>
+                                    </div>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
 
-    setupDragAndDrop(dropZone) {
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            });
+// 📁 GESTOR DE ARCHIVOS
+class GestorArchivos {
+    static configurarDragAndDrop() {
+        const zonaArrastre = document.getElementById('zonaArrastre');
+        const inputArchivo = document.getElementById('archivo');
+        
+        // Eventos de drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evento => {
+            zonaArrastre.addEventListener(evento, this.prevenirDefecto, false);
         });
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
-                dropZone.classList.add('border-primary', 'bg-light');
-            });
+        
+        ['dragenter', 'dragover'].forEach(evento => {
+            zonaArrastre.addEventListener(evento, () => {
+                zonaArrastre.classList.add('dragover');
+            }, false);
         });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
-                dropZone.classList.remove('border-primary', 'bg-light');
-            });
+        
+        ['dragleave', 'drop'].forEach(evento => {
+            zonaArrastre.addEventListener(evento, () => {
+                zonaArrastre.classList.remove('dragover');
+            }, false);
         });
-
-        dropZone.addEventListener('drop', (e) => {
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                this.elements.fileInput.files = files;
-                this.handleFileChange({ target: { files } });
+        
+        zonaArrastre.addEventListener('drop', (e) => {
+            const archivos = e.dataTransfer.files;
+            if (archivos.length > 0) {
+                this.manejarArchivoSeleccionado(archivos[0]);
+                inputArchivo.files = archivos;
+            }
+        }, false);
+        
+        // Click en zona de arrastre
+        zonaArrastre.addEventListener('click', () => {
+            inputArchivo.click();
+        });
+        
+        // Cambio en input de archivo
+        inputArchivo.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                this.manejarArchivoSeleccionado(e.target.files[0]);
             }
         });
     }
-
-    // ✅ MEJORA: Validación de archivo mejorada
-    validateFile(file) {
-        const errors = [];
-
-        if (!file) {
-            errors.push('Debe seleccionar un archivo');
-            return { isValid: false, errors };
-        }
-
+    
+    static prevenirDefecto(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    static manejarArchivoSeleccionado(archivo) {
         // Validar tamaño
-        if (file.size > CONFIG.MAX_FILE_SIZE) {
-            errors.push(`El archivo es demasiado grande. Máximo: ${UIUtils.formatFileSize(CONFIG.MAX_FILE_SIZE)}`);
+        if (archivo.size > CONFIG.MAX_FILE_SIZE) {
+            mostrarNotificacion('error', 'Archivo Demasiado Grande', MENSAJES.ARCHIVO_DEMASIADO_GRANDE);
+            return false;
         }
-
-        // Validar tipo MIME
-        if (!CONFIG.ALLOWED_TYPES.includes(file.type)) {
-            errors.push(`Tipo de archivo no permitido. Tipos válidos: ${CONFIG.ALLOWED_EXTENSIONS.join(', ')}`);
-        }
-
-        // Validar extensión
-        const extension = '.' + file.name.split('.').pop().toLowerCase();
-        if (!CONFIG.ALLOWED_EXTENSIONS.includes(extension)) {
-            errors.push(`Extensión no permitida: ${extension}`);
-        }
-
-        // Validar nombre de archivo
-        if (file.name.length > 255) {
-            errors.push('El nombre del archivo es demasiado largo');
-        }
-
-        return {
-            isValid: errors.length === 0,
-            errors
-        };
-    }
-
-    handleFileChange(event) {
-        const file = event.target.files[0];
-        const validation = this.validateFile(file);
-
-        // Limpiar estados anteriores
-        this.clearFileMessages();
-
-        if (!validation.isValid) {
-            this.showFileErrors(validation.errors);
-            this.elements.uploadBtn.disabled = true;
-            return;
-        }
-
-        this.showFileInfo(file);
-        this.updateUploadButtonState();
-    }
-
-    clearFileMessages() {
-        if (this.elements.fileInfo) {
-            this.elements.fileInfo.style.display = 'none';
-        }
-        if (this.elements.fileError) {
-            this.elements.fileError.style.display = 'none';
-        }
-    }
-
-    showFileErrors(errors) {
-        if (!this.elements.fileError) return;
-
-        this.elements.fileError.innerHTML = `
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Error en el archivo:</strong>
-                <ul class="mb-0 mt-2">
-                    ${errors.map(error => `<li>${error}</li>`).join('')}
-                </ul>
-            </div>
-        `;
-        this.elements.fileError.style.display = 'block';
-    }
-
-    showFileInfo(file) {
-        if (!this.elements.fileInfo) return;
-
-        const icon = UIUtils.getFileIcon(file.type);
-        this.elements.fileInfo.innerHTML = `
-            <div class="alert alert-success">
-                <i class="${icon} me-2"></i>
-                <strong>Archivo seleccionado:</strong> ${file.name}
-                <br>
-                <small class="text-muted">
-                    Tamaño: ${UIUtils.formatFileSize(file.size)} | 
-                    Tipo: ${file.type || 'Desconocido'}
-                </small>
-            </div>
-        `;
-        this.elements.fileInfo.style.display = 'block';
-    }
-
-    validateTitle(title) {
-        const titleGroup = this.elements.titleInput?.closest('.mb-3');
-        if (!titleGroup) return true;
-
-        const feedback = titleGroup.querySelector('.invalid-feedback') || this.createFeedbackElement(titleGroup);
         
-        if (!title || title.trim().length === 0) {
-            this.elements.titleInput.classList.add('is-invalid');
-            feedback.textContent = 'El título es obligatorio';
+        // Validar extensión
+        const extension = '.' + archivo.name.split('.').pop().toLowerCase();
+        if (!CONFIG.ALLOWED_EXTENSIONS.includes(extension)) {
+            mostrarNotificacion('error', 'Formato No Permitido', MENSAJES.FORMATO_NO_PERMITIDO);
             return false;
         }
-
-        if (title.length > 200) {
-            this.elements.titleInput.classList.add('is-invalid');
-            feedback.textContent = 'El título es demasiado largo (máximo 200 caracteres)';
-            return false;
-        }
-
-        this.elements.titleInput.classList.remove('is-invalid');
-        this.elements.titleInput.classList.add('is-valid');
+        
+        // Mostrar información del archivo
+        this.mostrarInformacionArchivo(archivo);
+        
+        // Animar zona de arrastre
+        const zonaArrastre = document.getElementById('zonaArrastre');
+        GestorInterfaz.animarElemento(zonaArrastre, 'medical-bounce');
+        
         return true;
     }
-
-    createFeedbackElement(parent) {
-        const feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback';
-        parent.appendChild(feedback);
-        return feedback;
+    
+    static mostrarInformacionArchivo(archivo) {
+        const infoArchivo = document.getElementById('infoArchivo');
+        const nombreArchivo = document.getElementById('nombreArchivo');
+        const tamanoArchivo = document.getElementById('tamanoArchivo');
+        const tipoArchivo = document.getElementById('tipoArchivo');
+        
+        nombreArchivo.textContent = archivo.name;
+        tamanoArchivo.textContent = GestorInterfaz.formatearTamano(archivo.size);
+        tipoArchivo.textContent = archivo.type || 'Desconocido';
+        
+        infoArchivo.classList.remove('d-none');
+        GestorInterfaz.animarElemento(infoArchivo, 'fade-in-up');
     }
-
-    updateUploadButtonState() {
-        if (!this.elements.uploadBtn) return;
-
-        const hasFile = this.elements.fileInput?.files?.length > 0;
-        const hasTitle = this.elements.titleInput?.value?.trim().length > 0;
-        const isValid = hasFile && hasTitle && !AppState.uploadInProgress;
-
-        this.elements.uploadBtn.disabled = !isValid;
+    
+    static limpiarInformacionArchivo() {
+        const infoArchivo = document.getElementById('infoArchivo');
+        infoArchivo.classList.add('d-none');
     }
+}
 
-    async handleSubmit(event) {
-        event.preventDefault();
-
-        if (AppState.uploadInProgress) {
-            UIUtils.showAlert('Ya hay una subida en progreso', 'warning');
-            return;
-        }
-
-        // ✅ MEJORA: Validación completa antes de enviar
-        const title = this.elements.titleInput?.value?.trim();
-        const description = this.elements.descriptionInput?.value?.trim();
-        const file = this.elements.fileInput?.files[0];
-
-        if (!this.validateTitle(title)) {
-            UIUtils.showAlert('Por favor corrige los errores en el formulario', 'danger');
-            return;
-        }
-
-        const fileValidation = this.validateFile(file);
-        if (!fileValidation.isValid) {
-            this.showFileErrors(fileValidation.errors);
-            UIUtils.showAlert('Por favor selecciona un archivo válido', 'danger');
-            return;
-        }
-
-        await this.uploadFile(title, description, file);
-    }
-
-    async uploadFile(title, description, file) {
-        AppState.uploadInProgress = true;
-        UIUtils.setLoadingState(this.elements.uploadBtn, true);
-
+// 📋 GESTOR DE ENTREGAS
+class GestorEntregas {
+    static entregas = [];
+    static entregasFiltradas = [];
+    
+    static async cargarEntregas() {
         try {
-            console.log('📤 Iniciando subida:', { title, filename: file.name, size: file.size });
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('title', title);
-            if (description) {
-                formData.append('description', description);
+            const contenedor = document.getElementById('contenedorEntregas');
+            GestorInterfaz.mostrarCargando(contenedor, true);
+            
+            this.entregas = await ClienteAPI.obtenerEntregas();
+            
+            if (!this.entregas) {
+                this.entregas = [];
             }
-
-            const result = await this.api.uploadSubmission(formData);
-
-            console.log('✅ Subida exitosa:', result);
             
-            UIUtils.showAlert(
-                `¡Archivo "${file.name}" subido exitosamente!`, 
-                'success'
-            );
-
-            // ✅ MEJORA: Limpiar formulario y actualizar lista
-            this.resetForm();
-            await this.loadSubmissions();
-
-        } catch (error) {
-            console.error('❌ Error en subida:', error);
-            this.handleUploadError(error);
-        } finally {
-            AppState.uploadInProgress = false;
-            UIUtils.setLoadingState(this.elements.uploadBtn, false);
-            this.updateUploadButtonState();
-        }
-    }
-
-    handleUploadError(error) {
-        let message = 'Error al subir el archivo';
-        
-        if (error instanceof APIError) {
-            switch (error.code) {
-                case 'TITLE_REQUIRED':
-                    message = 'El título es obligatorio';
-                    break;
-                case 'FILE_REQUIRED':
-                    message = 'Debe seleccionar un archivo';
-                    break;
-                case 'FILE_PROCESSING_ERROR':
-                    message = 'Error procesando el archivo. Inténtalo de nuevo.';
-                    break;
-                case 'DUPLICATE_TITLE':
-                    message = 'Ya existe una entrega con ese título';
-                    break;
-                default:
-                    message = error.message || message;
-            }
-        }
-
-        UIUtils.showAlert(message, 'danger');
-    }
-
-    resetForm() {
-        if (this.elements.uploadForm) {
-            this.elements.uploadForm.reset();
-        }
-        
-        this.clearFileMessages();
-        
-        // Limpiar clases de validación
-        [this.elements.titleInput, this.elements.fileInput].forEach(input => {
-            if (input) {
-                input.classList.remove('is-valid', 'is-invalid');
-            }
-        });
-
-        this.updateUploadButtonState();
-    }
-
-    async loadSubmissions() {
-        if (AppState.isLoading) return;
-
-        AppState.isLoading = true;
-        this.showLoadingState();
-
-        try {
-            console.log('📋 Cargando entregas...');
+            this.entregasFiltradas = [...this.entregas];
+            this.renderizarEntregas();
             
-            const submissions = await this.api.getSubmissions();
+            // Cargar estadísticas
+            await GestorEstadisticas.cargarEstadisticas();
             
-            console.log(`✅ Cargadas ${submissions.length} entregas`);
-            
-            AppState.submissions = submissions;
-            AppState.lastUpdate = new Date();
-            
-            this.renderSubmissions(submissions);
-
         } catch (error) {
             console.error('❌ Error cargando entregas:', error);
-            this.handleLoadError(error);
+            this.mostrarErrorCarga();
         } finally {
-            AppState.isLoading = false;
-            this.hideLoadingState();
+            const contenedor = document.getElementById('contenedorEntregas');
+            GestorInterfaz.mostrarCargando(contenedor, false);
         }
     }
-
-    showLoadingState() {
-        if (this.elements.loadingSpinner) {
-            this.elements.loadingSpinner.style.display = 'block';
-        }
-        if (this.elements.submissionsList) {
-            this.elements.submissionsList.style.display = 'none';
-        }
-        if (this.elements.emptyState) {
-            this.elements.emptyState.style.display = 'none';
-        }
-    }
-
-    hideLoadingState() {
-        if (this.elements.loadingSpinner) {
-            this.elements.loadingSpinner.style.display = 'none';
-        }
-    }
-
-    handleLoadError(error) {
-        let message = 'Error al cargar las entregas';
+    
+    static renderizarEntregas() {
+        const contenedor = document.getElementById('contenedorEntregas');
+        const sinEntregas = document.getElementById('sinEntregas');
         
-        if (error instanceof APIError) {
-            if (error.status === 401) {
-                message = 'Sesión expirada. Por favor inicia sesión nuevamente.';
-                // Redirigir al login después de un delay
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 3000);
-            } else {
-                message = error.message || message;
-            }
-        }
-
-        UIUtils.showAlert(message, 'danger');
-        
-        // Mostrar estado de error en lugar de lista vacía
-        this.renderErrorState(message);
-    }
-
-    renderErrorState(message) {
-        if (!this.elements.submissionsList) return;
-
-        this.elements.submissionsList.innerHTML = `
-            <div class="alert alert-danger text-center">
-                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                <h5>Error al cargar entregas</h5>
-                <p>${message}</p>
-                <button class="btn btn-outline-danger" onclick="studentArea.loadSubmissions()">
-                    <i class="fas fa-redo me-2"></i>Reintentar
-                </button>
-            </div>
-        `;
-        this.elements.submissionsList.style.display = 'block';
-    }
-
-    renderSubmissions(submissions) {
-        if (!this.elements.submissionsList) return;
-
-        if (submissions.length === 0) {
-            this.showEmptyState();
+        if (this.entregasFiltradas.length === 0) {
+            contenedor.innerHTML = '';
+            sinEntregas.classList.remove('d-none');
             return;
         }
-
-        const submissionsHtml = submissions.map(submission => 
-            this.createSubmissionCard(submission)
-        ).join('');
-
-        this.elements.submissionsList.innerHTML = submissionsHtml;
-        this.elements.submissionsList.style.display = 'block';
         
-        if (this.elements.emptyState) {
-            this.elements.emptyState.style.display = 'none';
-        }
+        sinEntregas.classList.add('d-none');
+        
+        const html = this.entregasFiltradas.map(entrega => this.generarHTMLEntrega(entrega)).join('');
+        contenedor.innerHTML = html;
+        
+        // Animar entregas
+        setTimeout(() => {
+            document.querySelectorAll('.submission-item').forEach((item, index) => {
+                setTimeout(() => {
+                    GestorInterfaz.animarElemento(item, 'fade-in-up');
+                }, index * 100);
+            });
+        }, 100);
     }
-
-    showEmptyState() {
-        if (this.elements.emptyState) {
-            this.elements.emptyState.style.display = 'block';
-        }
-        if (this.elements.submissionsList) {
-            this.elements.submissionsList.style.display = 'none';
-        }
-    }
-
-    createSubmissionCard(submission) {
-        const icon = UIUtils.getFileIcon(submission.mime_type);
-        const formattedDate = UIUtils.formatDate(submission.submitted_at);
-        const formattedSize = UIUtils.formatFileSize(submission.file_size);
-
+    
+    static generarHTMLEntrega(entrega) {
+        const fechaFormateada = GestorInterfaz.formatearFecha(entrega.submitted_at);
+        const tamanoFormateado = GestorInterfaz.formatearTamano(entrega.file_size || 0);
+        const iconoArchivo = GestorInterfaz.obtenerIconoArchivo(entrega.original_name || entrega.filename);
+        
         return `
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 submission-card" data-id="${submission.id}">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start mb-3">
-                            <i class="${icon} fa-2x me-3"></i>
-                            <div class="flex-grow-1">
-                                <h6 class="card-title mb-1">${this.escapeHtml(submission.title)}</h6>
-                                <small class="text-muted">${this.escapeHtml(submission.original_name)}</small>
+            <div class="submission-item" data-id="${entrega.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="${iconoArchivo} fa-lg me-3"></i>
+                            <div>
+                                <h5 class="mb-1 fw-bold">${entrega.title}</h5>
+                                <p class="text-muted mb-0">${entrega.description || 'Sin descripción'}</p>
                             </div>
                         </div>
                         
-                        ${submission.description ? `
-                            <p class="card-text text-muted small mb-3">
-                                ${this.escapeHtml(submission.description)}
-                            </p>
-                        ` : ''}
-                        
-                        <div class="submission-meta mb-3">
-                            <small class="text-muted d-block">
-                                <i class="fas fa-calendar me-1"></i>
-                                ${formattedDate}
-                            </small>
-                            <small class="text-muted d-block">
-                                <i class="fas fa-hdd me-1"></i>
-                                ${formattedSize}
-                            </small>
+                        <div class="submission-meta">
+                            <span>
+                                <i class="fas fa-calendar-alt text-primary"></i>
+                                ${fechaFormateada}
+                            </span>
+                            <span>
+                                <i class="fas fa-file text-info"></i>
+                                ${entrega.original_name || entrega.filename}
+                            </span>
+                            <span>
+                                <i class="fas fa-weight text-success"></i>
+                                ${tamanoFormateado}
+                            </span>
                         </div>
                     </div>
                     
-                    <div class="card-footer bg-transparent">
-                        <div class="btn-group w-100" role="group">
-                            <button class="btn btn-outline-primary btn-sm" 
-                                    onclick="studentArea.downloadSubmission(${submission.id})"
-                                    title="Descargar archivo">
-                                <i class="fas fa-download me-1"></i>
-                                Descargar
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm" 
-                                    onclick="studentArea.confirmDelete(${submission.id}, '${this.escapeHtml(submission.title)}')"
-                                    title="Eliminar entrega">
-                                <i class="fas fa-trash me-1"></i>
-                                Eliminar
-                            </button>
-                        </div>
+                    <div class="d-flex gap-2 ms-3">
+                        <button class="btn btn-outline-primary btn-sm" 
+                                onclick="descargarEntrega(${entrega.id})"
+                                title="Descargar archivo">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" 
+                                onclick="previsualizarEntrega(${entrega.id})"
+                                title="Previsualizar">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" 
+                                onclick="confirmarEliminacion(${entrega.id}, '${entrega.title}')"
+                                title="Eliminar entrega">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         `;
     }
-
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    async downloadSubmission(id) {
+    
+    static async subirEntrega(formData) {
         try {
-            console.log('📥 Descargando entrega:', id);
-            await this.api.downloadSubmission(id);
+            const formulario = document.getElementById('formularioEntrega');
+            GestorInterfaz.mostrarCargando(formulario, true);
             
-            UIUtils.showAlert('Descarga iniciada', 'success', 2000);
+            const resultado = await ClienteAPI.subirEntrega(formData);
+            
+            if (resultado && resultado.success) {
+                mostrarNotificacion('success', 'Éxito', MENSAJES.ARCHIVO_SUBIDO);
+                
+                // Limpiar formulario
+                formulario.reset();
+                GestorArchivos.limpiarInformacionArchivo();
+                
+                // Recargar entregas
+                await this.cargarEntregas();
+                
+                // Scroll a la sección de entregas
+                document.getElementById('entregas').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+                
+            } else {
+                throw new Error(resultado?.message || 'Error desconocido');
+            }
             
         } catch (error) {
-            console.error('❌ Error en descarga:', error);
-            UIUtils.showAlert('Error al descargar el archivo', 'danger');
+            console.error('❌ Error subiendo entrega:', error);
+            mostrarNotificacion('error', 'Error', `Error al subir la entrega: ${error.message}`);
+        } finally {
+            const formulario = document.getElementById('formularioEntrega');
+            GestorInterfaz.mostrarCargando(formulario, false);
         }
     }
-
-    confirmDelete(id, title) {
-        // ✅ MEJORA: Modal de confirmación más informativo
-        const modal = this.createDeleteModal(id, title);
-        document.body.appendChild(modal);
-        
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-        
-        // Limpiar modal cuando se cierre
-        modal.addEventListener('hidden.bs.modal', () => {
-            document.body.removeChild(modal);
-        });
-    }
-
-    createDeleteModal(id, title) {
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                            Confirmar eliminación
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>¿Estás seguro de que quieres eliminar la siguiente entrega?</p>
-                        <div class="alert alert-warning">
-                            <strong>Título:</strong> ${this.escapeHtml(title)}
-                        </div>
-                        <p class="text-danger small">
-                            <i class="fas fa-exclamation-circle me-1"></i>
-                            Esta acción no se puede deshacer.
-                        </p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="studentArea.deleteSubmission(${id})" data-bs-dismiss="modal">
-                            <i class="fas fa-trash me-1"></i>
-                            Eliminar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        return modal;
-    }
-
-    async deleteSubmission(id) {
+    
+    static async eliminarEntrega(id) {
         try {
-            console.log('🗑️ Eliminando entrega:', id);
+            const resultado = await ClienteAPI.eliminarEntrega(id);
             
-            const result = await this.api.deleteSubmission(id);
-            
-            console.log('✅ Entrega eliminada:', result);
-            
-            UIUtils.showAlert('Entrega eliminada exitosamente', 'success');
-            
-                        // ✅ MEJORA: Actualizar lista sin recargar completamente
-            await this.loadSubmissions();
+            if (resultado && resultado.success !== false) {
+                mostrarNotificacion('success', 'Eliminado', MENSAJES.ARCHIVO_ELIMINADO);
+                
+                // Remover de la lista local
+                this.entregas = this.entregas.filter(entrega => entrega.id !== id);
+                this.aplicarFiltros();
+                
+                // Recargar estadísticas
+                await GestorEstadisticas.cargarEstadisticas();
+                
+            } else {
+                throw new Error(resultado?.message || 'Error eliminando entrega');
+            }
             
         } catch (error) {
             console.error('❌ Error eliminando entrega:', error);
-            this.handleDeleteError(error);
+            mostrarNotificacion('error', 'Error', `Error al eliminar la entrega: ${error.message}`);
         }
     }
-
-    handleDeleteError(error) {
-        let message = 'Error al eliminar la entrega';
+    
+    static filtrarEntregas(termino) {
+        if (!termino.trim()) {
+            this.entregasFiltradas = [...this.entregas];
+        } else {
+            const terminoLower = termino.toLowerCase();
+            this.entregasFiltradas = this.entregas.filter(entrega => 
+                entrega.title.toLowerCase().includes(terminoLower) ||
+                (entrega.description && entrega.description.toLowerCase().includes(terminoLower)) ||
+                (entrega.original_name && entrega.original_name.toLowerCase().includes(terminoLower))
+            );
+        }
         
-        if (error instanceof APIError) {
-            switch (error.code) {
-                case 'NOT_FOUND_OR_UNAUTHORIZED':
-                    message = 'No tienes permisos para eliminar esta entrega';
+        this.renderizarEntregas();
+    }
+    
+    static ordenarEntregas(criterio) {
+        const [campo, direccion] = criterio.split('-');
+        
+        this.entregasFiltradas.sort((a, b) => {
+            let valorA, valorB;
+            
+            switch (campo) {
+                case 'fecha':
+                    valorA = new Date(a.submitted_at);
+                    valorB = new Date(b.submitted_at);
                     break;
-                case 'DATABASE_ERROR':
-                    message = 'Error en la base de datos. Inténtalo de nuevo.';
+                case 'titulo':
+                    valorA = a.title.toLowerCase();
+                    valorB = b.title.toLowerCase();
+                    break;
+                case 'tamano':
+                    valorA = a.file_size || 0;
+                    valorB = b.file_size || 0;
                     break;
                 default:
-                    message = error.message || message;
+                    return 0;
             }
-        }
-
-        UIUtils.showAlert(message, 'danger');
-    }
-
-    // ✅ MEJORA: Método para refrescar datos automáticamente
-    startAutoRefresh(intervalMinutes = 5) {
-        setInterval(() => {
-            if (!AppState.isLoading && !AppState.uploadInProgress) {
-                console.log('🔄 Auto-refresh de entregas');
-                this.loadSubmissions();
+            
+            if (direccion === 'asc') {
+                return valorA > valorB ? 1 : -1;
+            } else {
+                return valorA < valorB ? 1 : -1;
             }
-        }, intervalMinutes * 60 * 1000);
+        });
+        
+        this.renderizarEntregas();
     }
+    
+    static aplicarFiltros() {
+        const termino = document.getElementById('campoBusqueda').value;
+        const orden = document.getElementById('selectorOrden').value;
+        
+        this.filtrarEntregas(termino);
+        this.ordenarEntregas(orden);
+    }
+    
+    static mostrarErrorCarga() {
+        const contenedor = document.getElementById('contenedorEntregas');
+        contenedor.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h4 class="text-muted">Error al cargar las entregas</h4>
+                <p class="text-muted">Hubo un problema al conectar con el servidor</p>
+                <button class="btn btn-primary" onclick="cargarEntregas()">
+                    <i class="fas fa-redo"></i> Intentar de nuevo
+                </button>
+            </div>
+        `;
+    }
+}
 
-    // ✅ MEJORA: Método para verificar conectividad
-    async checkConnectivity() {
+// 👤 GESTOR DE USUARIO
+class GestorUsuario {
+    static async cargarDatosUsuario() {
         try {
-            await fetch('/api/health', { method: 'HEAD' });
-            return true;
+            const token = GestorAutenticacion.obtenerToken();
+            if (!token) return;
+            
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const nombreUsuario = payload.name || payload.email || 'Usuario';
+            
+            // Actualizar interfaz
+            document.getElementById('userName').textContent = nombreUsuario;
+            document.getElementById('userNameNav').textContent = nombreUsuario;
+            
+            // Guardar datos del usuario
+            localStorage.setItem('userData', JSON.stringify({
+                name: nombreUsuario,
+                email: payload.email,
+                userId: payload.userId
+            }));
+            
         } catch (error) {
-            return false;
+            console.error('❌ Error cargando datos del usuario:', error);
         }
     }
+}
 
-    // ✅ MEJORA: Manejo de eventos de conectividad
-    setupConnectivityHandlers() {
-        window.addEventListener('online', () => {
-            UIUtils.showAlert('Conexión restaurada', 'success', 3000);
-            this.loadSubmissions();
-        });
-
-        window.addEventListener('offline', () => {
-            UIUtils.showAlert('Sin conexión a internet', 'warning', 5000);
-        });
-    }
-
-    // ✅ MEJORA: Método para exportar datos del usuario
-    exportUserData() {
-        if (AppState.submissions.length === 0) {
-            UIUtils.showAlert('No hay entregas para exportar', 'info');
+// 📤 FUNCIONES DE EXPORTACIÓN
+async function exportarDatosUsuario() {
+    try {
+        mostrarNotificacion('info', 'Exportando', 'Preparando datos para exportación...');
+        
+        const entregas = await ClienteAPI.obtenerEntregas();
+        if (!entregas || entregas.length === 0) {
+            mostrarNotificacion('warning', 'Sin Datos', MENSAJES.SIN_ENTREGAS);
             return;
         }
-
-        const data = {
-            exportDate: new Date().toISOString(),
-            totalSubmissions: AppState.submissions.length,
-            submissions: AppState.submissions.map(s => ({
-                id: s.id,
-                title: s.title,
-                description: s.description,
-                originalName: s.original_name,
-                fileSize: s.file_size,
-                mimeType: s.mime_type,
-                submittedAt: s.submitted_at
-            }))
-        };
-
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
         
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `mis_entregas_${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        UIUtils.showAlert('Datos exportados exitosamente', 'success');
+        const datosCSV = generarCSV(entregas);
+        descargarArchivo(datosCSV, 'mis-entregas-informatica-medica.csv', 'text/csv');
+        
+        mostrarNotificacion('success', 'Exportado', MENSAJES.EXPORTACION_EXITOSA);
+        
+    } catch (error) {
+        console.error('❌ Error exportando datos:', error);
+        mostrarNotificacion('error', 'Error', 'No se pudieron exportar los datos');
     }
+}
 
-    // ✅ MEJORA: Método para buscar entregas
-    searchSubmissions(query) {
-        if (!query || query.trim().length === 0) {
-            this.renderSubmissions(AppState.submissions);
+function generarCSV(entregas) {
+    const encabezados = [
+        'ID',
+        'Título',
+        'Descripción',
+        'Nombre del Archivo',
+        'Tamaño (Bytes)',
+        'Tamaño Formateado',
+        'Fecha de Entrega',
+        'Tipo de Archivo'
+    ];
+    
+    const filas = entregas.map(entrega => [
+        entrega.id,
+        `"${entrega.title.replace(/"/g, '""')}"`,
+        `"${(entrega.description || '').replace(/"/g, '""')}"`,
+        `"${(entrega.original_name || entrega.filename).replace(/"/g, '""')}"`,
+        entrega.file_size || 0,
+        GestorInterfaz.formatearTamano(entrega.file_size || 0),
+        GestorInterfaz.formatearFecha(entrega.submitted_at),
+        (entrega.original_name || entrega.filename).split('.').pop().toUpperCase()
+    ]);
+    
+    const csvContent = [encabezados.join(','), ...filas.map(fila => fila.join(','))].join('\n');
+    return '\uFEFF' + csvContent; // BOM para UTF-8
+}
+
+function descargarArchivo(contenido, nombreArchivo, tipoMIME) {
+    const blob = new Blob([contenido], { type: tipoMIME });
+    const url = window.URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    
+    enlace.href = url;
+    enlace.download = nombreArchivo;
+    enlace.style.display = 'none';
+    
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    
+    window.URL.revokeObjectURL(url);
+}
+
+// 🔍 FUNCIONES DE PREVISUALIZACIÓN
+async function previsualizarEntrega(id) {
+    try {
+        const entrega = GestorEntregas.entregas.find(e => e.id === id);
+        if (!entrega) {
+            mostrarNotificacion('error', 'Error', 'Entrega no encontrada');
             return;
         }
-
-        const searchTerm = query.toLowerCase().trim();
-        const filtered = AppState.submissions.filter(submission => 
-            submission.title.toLowerCase().includes(searchTerm) ||
-            submission.description?.toLowerCase().includes(searchTerm) ||
-            submission.original_name.toLowerCase().includes(searchTerm)
-        );
-
-        this.renderSubmissions(filtered);
         
-        // Mostrar resultado de búsqueda
-        const resultText = filtered.length === 1 ? '1 resultado' : `${filtered.length} resultados`;
-        UIUtils.showAlert(`Búsqueda: "${query}" - ${resultText}`, 'info', 3000);
+        const contenido = generarHTMLPrevisualizacion(entrega);
+        document.getElementById('contenidoPrevisualizacion').innerHTML = contenido;
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalPrevisualizacion'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('❌ Error en previsualización:', error);
+        mostrarNotificacion('error', 'Error', 'No se pudo previsualizar el archivo');
     }
+}
 
-    // ✅ MEJORA: Método para ordenar entregas
-    sortSubmissions(criteria = 'date', order = 'desc') {
-        const sorted = [...AppState.submissions].sort((a, b) => {
-            let comparison = 0;
-            
-            switch (criteria) {
-                case 'date':
-                    comparison = new Date(a.submitted_at) - new Date(b.submitted_at);
-                    break;
-                case 'title':
-                    comparison = a.title.localeCompare(b.title);
-                    break;
-                case 'size':
-                    comparison = a.file_size - b.file_size;
-                    break;
-                case 'type':
-                    comparison = a.mime_type.localeCompare(b.mime_type);
-                    break;
-            }
-            
-            return order === 'desc' ? -comparison : comparison;
-        });
-
-        this.renderSubmissions(sorted);
-    }
-
-    // ✅ MEJORA: Método para obtener estadísticas del usuario
-    getUserStats() {
-        if (AppState.submissions.length === 0) {
-            return {
-                totalSubmissions: 0,
-                totalSize: 0,
-                averageSize: 0,
-                fileTypes: {},
-                oldestSubmission: null,
-                newestSubmission: null
-            };
-        }
-
-        const totalSize = AppState.submissions.reduce((sum, s) => sum + (s.file_size || 0), 0);
-        const fileTypes = AppState.submissions.reduce((types, s) => {
-            types[s.mime_type] = (types[s.mime_type] || 0) + 1;
-            return types;
-        }, {});
-
-        const dates = AppState.submissions.map(s => new Date(s.submitted_at)).sort();
-
-        return {
-            totalSubmissions: AppState.submissions.length,
-            totalSize,
-            averageSize: totalSize / AppState.submissions.length,
-            fileTypes,
-            oldestSubmission: dates[0],
-            newestSubmission: dates[dates.length - 1]
-        };
-    }
-
-    // ✅ MEJORA: Método para mostrar estadísticas
-    showUserStats() {
-        const stats = this.getUserStats();
-        
-        if (stats.totalSubmissions === 0) {
-            UIUtils.showAlert('No hay entregas para mostrar estadísticas', 'info');
-            return;
-        }
-
-        const modal = this.createStatsModal(stats);
-        document.body.appendChild(modal);
-        
-        const bsModal = new bootstrap.Modal(modal);
-        bsModal.show();
-        
-        modal.addEventListener('hidden.bs.modal', () => {
-            document.body.removeChild(modal);
-        });
-    }
-
-    createStatsModal(stats) {
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        
-        const fileTypesHtml = Object.entries(stats.fileTypes)
-            .map(([type, count]) => {
-                const icon = UIUtils.getFileIcon(type);
-                const percentage = ((count / stats.totalSubmissions) * 100).toFixed(1);
-                return `
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span><i class="${icon} me-2"></i>${type}</span>
-                        <span class="badge bg-primary">${count} (${percentage}%)</span>
+function generarHTMLPrevisualizacion(entrega) {
+    const fechaFormateada = GestorInterfaz.formatearFecha(entrega.submitted_at);
+    const tamanoFormateado = GestorInterfaz.formatearTamano(entrega.file_size || 0);
+    const iconoArchivo = GestorInterfaz.obtenerIconoArchivo(entrega.original_name || entrega.filename);
+    
+    return `
+        <div class="medical-stat-card">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4 class="medical-gradient-text mb-3">
+                        <i class="${iconoArchivo} me-2"></i>
+                        ${entrega.title}
+                    </h4>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-align-left text-primary"></i> Descripción:</h6>
+                        <p class="text-muted">${entrega.description || 'Sin descripción proporcionada'}</p>
                     </div>
-                `;
-            }).join('');
-
-        modal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-chart-bar me-2"></i>
-                            Mis Estadísticas
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-file fa-2x text-primary mb-2"></i>
-                                        <h4>${stats.totalSubmissions}</h4>
-                                        <small class="text-muted">Total de Entregas</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-hdd fa-2x text-success mb-2"></i>
-                                        <h4>${UIUtils.formatFileSize(stats.totalSize)}</h4>
-                                        <small class="text-muted">Espacio Utilizado</small>
-                                    </div>
-                                </div>
-                            </div>
+                    
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h6><i class="fas fa-file text-info"></i> Archivo:</h6>
+                            <p class="text-muted">${entrega.original_name || entrega.filename}</p>
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-calendar-plus fa-2x text-info mb-2"></i>
-                                        <h6>${UIUtils.formatDate(stats.oldestSubmission)}</h6>
-                                        <small class="text-muted">Primera Entrega</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-calendar-check fa-2x text-warning mb-2"></i>
-                                        <h6>${UIUtils.formatDate(stats.newestSubmission)}</h6>
-                                        <small class="text-muted">Última Entrega</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-file-alt me-2"></i>
-                                    Tipos de Archivo
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                ${fileTypesHtml}
-                            </div>
+                        <div class="col-sm-6">
+                            <h6><i class="fas fa-weight text-success"></i> Tamaño:</h6>
+                            <p class="text-muted">${tamanoFormateado}</p>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-primary" onclick="studentArea.exportUserData()">
-                            <i class="fas fa-download me-1"></i>
-                            Exportar Datos
+                    
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h6><i class="fas fa-calendar text-warning"></i> Fecha de entrega:</h6>
+                            <p class="text-muted">${fechaFormateada}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <h6><i class="fas fa-hashtag text-secondary"></i> ID de entrega:</h6>
+                            <p class="text-muted">#${entrega.id}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 text-center">
+                    <div class="medical-stat-icon mb-3" style="width: 100px; height: 100px; margin: 0 auto; font-size: 40px;">
+                        <i class="${iconoArchivo.split(' ')[1]}"></i>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" onclick="descargarEntrega(${entrega.id})">
+                            <i class="fas fa-download"></i> Descargar
                         </button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            Cerrar
+                        <button class="btn btn-outline-danger" onclick="confirmarEliminacion(${entrega.id}, '${entrega.title}')">
+                            <i class="fas fa-trash-alt"></i> Eliminar
                         </button>
                     </div>
                 </div>
             </div>
-        `;
-        
-        return modal;
-    }
+        </div>
+    `;
+}
 
-    // ✅ MEJORA: Método para inicializar funcionalidades adicionales
-    initializeAdvancedFeatures() {
-        // Auto-refresh cada 5 minutos
-        this.startAutoRefresh(5);
-        
-        // Manejo de conectividad
-        this.setupConnectivityHandlers();
-        
-        // Atajos de teclado
-        this.setupKeyboardShortcuts();
-        
-        // Tooltips de Bootstrap
-        this.initializeTooltips();
+function previsualizarArchivo() {
+    const inputArchivo = document.getElementById('archivo');
+    const archivo = inputArchivo.files[0];
+    
+    if (!archivo) {
+        mostrarNotificacion('warning', 'Sin Archivo', 'Por favor selecciona un archivo primero');
+        return;
     }
+    
+    const contenido = `
+        <div class="medical-stat-card">
+            <div class="text-center">
+                <i class="${GestorInterfaz.obtenerIconoArchivo(archivo.name)} fa-4x mb-3"></i>
+                <h4>${archivo.name}</h4>
+                <p class="text-muted">
+                    <strong>Tamaño:</strong> ${GestorInterfaz.formatearTamano(archivo.size)}<br>
+                    <strong>Tipo:</strong> ${archivo.type || 'Desconocido'}<br>
+                    <strong>Última modificación:</strong> ${new Date(archivo.lastModified).toLocaleDateString('es-ES')}
+                </p>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Este archivo está listo para ser enviado. Asegúrate de completar el título y la descripción antes de enviar.
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('contenidoPrevisualizacion').innerHTML = contenido;
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalPrevisualizacion'));
+    modal.show();
+}
 
-    setupKeyboardShortcuts() {
-        document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + R: Refrescar entregas
-            if ((e.ctrlKey || e.metaKey) && e.key === 'r' && !e.shiftKey) {
-                e.preventDefault();
-                this.loadSubmissions();
-                UIUtils.showAlert('Entregas actualizadas', 'info', 2000);
-            }
-            
-            // Ctrl/Cmd + U: Enfocar campo de subida
-            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
-                e.preventDefault();
-                this.elements.fileInput?.focus();
-            }
-            
-            // Escape: Limpiar formulario
-            if (e.key === 'Escape' && !AppState.uploadInProgress) {
-                this.resetForm();
-            }
-        });
-    }
-
-    initializeTooltips() {
-        // Inicializar tooltips de Bootstrap si están disponibles
-        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        }
-    }
-
-    // ✅ MEJORA: Método para cleanup al salir
-    cleanup() {
-        // Cancelar uploads en progreso
-        if (AppState.uploadInProgress) {
-            console.log('🛑 Cancelando upload en progreso...');
-        }
+// 📥 FUNCIONES DE DESCARGA
+async function descargarEntrega(id) {
+    try {
+        const token = GestorAutenticacion.obtenerToken();
+        const url = `${CONFIG.API_BASE}/submissions/download/${id}?token=${token}`;
         
-        // Limpiar intervalos
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-        }
+        mostrarNotificacion('info', 'Descargando', 'Iniciando descarga del archivo...');
         
-        // Limpiar event listeners
-        window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        // Crear enlace temporal para descarga
+        const enlace = document.createElement('a');
+        enlace.href = url;
+        enlace.style.display = 'none';
+        
+        document.body.appendChild(enlace);
+        enlace.click();
+        document.body.removeChild(enlace);
+        
+        setTimeout(() => {
+            mostrarNotificacion('success', 'Descarga Iniciada', 'El archivo se está descargando');
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Error descargando archivo:', error);
+        mostrarNotificacion('error', 'Error', 'No se pudo descargar el archivo');
     }
 }
 
-// ✅ MEJORA: Funciones globales para compatibilidad con HTML inline events
-let studentArea;
+// 🗑️ FUNCIONES DE ELIMINACIÓN
+function confirmarEliminacion(id, titulo) {
+    document.getElementById('tituloEliminar').textContent = titulo;
+    
+    const btnConfirmar = document.getElementById('btnConfirmarEliminacion');
+    btnConfirmar.onclick = () => eliminarEntrega(id);
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminacion'));
+    modal.show();
+}
 
-// ✅ MEJORA: Inicialización con manejo de errores robusto
-document.addEventListener('DOMContentLoaded', function() {
+async function eliminarEntrega(id) {
     try {
-        console.log('🚀 Inicializando Student Area...');
+        // Cerrar modal de confirmación
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminacion'));
+        modal.hide();
         
-        // Verificar dependencias
-        if (typeof bootstrap === 'undefined') {
-            console.warn('⚠️ Bootstrap no detectado. Algunas funcionalidades pueden no funcionar.');
-        }
+        await GestorEntregas.eliminarEntrega(id);
         
-        // Verificar token de autenticación
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('❌ No hay token de autenticación');
-            UIUtils.showAlert('Sesión no válida. Redirigiendo al login...', 'danger');
-            setTimeout(() => {
-                window.location.href = '/login.html';
-            }, 2000);
+    } catch (error) {
+        console.error('❌ Error eliminando entrega:', error);
+    }
+}
+
+// 📊 FUNCIONES DE ESTADÍSTICAS
+async function mostrarEstadisticasUsuario() {
+    await GestorEstadisticas.mostrarEstadisticasDetalladas();
+}
+
+async function exportarEstadisticas() {
+    try {
+        const entregas = await ClienteAPI.obtenerEntregas();
+        if (!entregas || entregas.length === 0) {
+            mostrarNotificacion('warning', 'Sin Datos', MENSAJES.SIN_ENTREGAS);
             return;
         }
         
-        // Inicializar aplicación
-        studentArea = new StudentArea();
-        studentArea.initializeAdvancedFeatures();
+        const estadisticas = GestorEstadisticas.calcularEstadisticas(entregas);
+        const datosJSON = JSON.stringify(estadisticas, null, 2);
         
-        console.log('✅ Student Area inicializado correctamente');
-        
-        // Mostrar mensaje de bienvenida
-        setTimeout(() => {
-            UIUtils.showAlert('¡Bienvenido! Área de estudiante cargada correctamente.', 'success', 3000);
-        }, 500);
+        descargarArchivo(datosJSON, 'estadisticas-informatica-medica.json', 'application/json');
+        mostrarNotificacion('success', 'Exportado', 'Estadísticas exportadas exitosamente');
         
     } catch (error) {
-        console.error('❌ Error inicializando Student Area:', error);
-        UIUtils.showAlert('Error inicializando la aplicación. Por favor recarga la página.', 'danger');
+        console.error('❌ Error exportando estadísticas:', error);
+        mostrarNotificacion('error', 'Error', 'No se pudieron exportar las estadísticas');
     }
-});
+}
 
-// ✅ MEJORA: Cleanup al salir de la página
-window.addEventListener('beforeunload', function() {
-    if (studentArea) {
-        studentArea.cleanup();
+// 🔄 FUNCIONES DE ACTUALIZACIÓN
+function limpiarFiltros() {
+    document.getElementById('campoBusqueda').value = '';
+    document.getElementById('selectorOrden').value = 'fecha-desc';
+    GestorEntregas.aplicarFiltros();
+    
+    mostrarNotificacion('info', 'Filtros Limpiados', 'Se han restablecido todos los filtros');
+}
+
+async function actualizarEntregas() {
+    mostrarNotificacion('info', 'Actualizando', 'Cargando entregas más recientes...');
+    await GestorEntregas.cargarEntregas();
+    mostrarNotificacion('success', 'Actualizado', 'Lista de entregas actualizada');
+}
+
+// 🚪 FUNCIÓN DE CERRAR SESIÓN
+function cerrarSesion() {
+    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+        GestorAutenticacion.cerrarSesion();
     }
+}
+
+// 📋 CONFIGURACIÓN DE EVENTOS
+function configurarEventos() {
+    // Formulario de entrega
+    const formulario = document.getElementById('formularioEntrega');
+    formulario.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(formulario);
+        
+        // Validar campos requeridos
+        const titulo = formData.get('title');
+        const archivo = formData.get('file');
+        
+        if (!titulo || !archivo || archivo.size === 0) {
+            mostrarNotificacion('warning', 'Campos Requeridos', MENSAJES.CAMPOS_REQUERIDOS);
+            return;
+        }
+        
+        await GestorEntregas.subirEntrega(formData);
+    });
+    
+    // Búsqueda en tiempo real
+    const campoBusqueda = document.getElementById('campoBusqueda');
+    let timeoutBusqueda;
+    campoBusqueda.addEventListener('input', (e) => {
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(() => {
+            GestorEntregas.aplicarFiltros();
+        }, 300);
+    });
+    
+    // Selector de orden
+    const selectorOrden = document.getElementById('selectorOrden');
+    selectorOrden.addEventListener('change', () => {
+        GestorEntregas.aplicarFiltros();
+    });
+    
+    // Configurar drag and drop
+    GestorArchivos.configurarDragAndDrop();
+    
+    // Actualización automática cada 30 segundos
+    setInterval(async () => {
+        try {
+            await GestorEstadisticas.cargarEstadisticas();
+        } catch (error) {
+            console.log('🔄 Actualización automática fallida:', error.message);
+        }
+    }, CONFIG.REFRESH_INTERVAL);
+    
+    // Detectar cuando la ventana vuelve a estar activa
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            actualizarEntregas();
+        }
+    });
+    
+    // Atajos de teclado
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + R para actualizar
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            actualizarEntregas();
+        }
+        
+        // Escape para cerrar modales
+        if (e.key === 'Escape') {
+            const modalesAbiertos = document.querySelectorAll('.modal.show');
+            modalesAbiertos.forEach(modal => {
+                const instancia = bootstrap.Modal.getInstance(modal);
+                if (instancia) instancia.hide();
+            });
+        }
+    });
+}
+
+// 🚀 FUNCIONES DE INICIALIZACIÓN
+async function verificarAutenticacion() {
+    if (!GestorAutenticacion.verificarToken()) {
+        return false;
+    }
+    return true;
+}
+
+async function cargarDatosUsuario() {
+    await GestorUsuario.cargarDatosUsuario();
+}
+
+async function cargarEntregas() {
+    await GestorEntregas.cargarEntregas();
+}
+
+// 🎯 FUNCIONES GLOBALES PARA COMPATIBILIDAD
+window.mostrarEstadisticasUsuario = mostrarEstadisticasUsuario;
+window.exportarDatosUsuario = exportarDatosUsuario;
+window.cerrarSesion = cerrarSesion;
+window.descargarEntrega = descargarEntrega;
+window.previsualizarEntrega = previsualizarEntrega;
+window.confirmarEliminacion = confirmarEliminacion;
+window.eliminarEntrega = eliminarEntrega;
+window.limpiarFiltros = limpiarFiltros;
+window.actualizarEntregas = actualizarEntregas;
+window.previsualizarArchivo = previsualizarArchivo;
+window.exportarEstadisticas = exportarEstadisticas;
+window.mostrarEstadisticasDetalladas = () => GestorEstadisticas.mostrarEstadisticasDetalladas();
+window.verificarAutenticacion = verificarAutenticacion;
+window.cargarDatosUsuario = cargarDatosUsuario;
+window.cargarEntregas = cargarEntregas;
+window.configurarEventos = configurarEventos;
+
+// 🎉 MENSAJE DE BIENVENIDA
+console.log(`
+🏥 ===================================
+   SISTEMA DE INFORMÁTICA MÉDICA
+   Área del Estudiante v2.0
+   
+   ✅ Sistema cargado correctamente
+   🇪🇸 Interfaz en español
+   🎨 Tema médico aplicado
+   🔐 Autenticación verificada
+   
+   Prof. Gabriel Álvarez
+===================================
+`);
+
+// 📱 DETECCIÓN DE DISPOSITIVO MÓVIL
+const esMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+if (esMobile) {
+    document.body.classList.add('mobile-device');
+    console.log('📱 Dispositivo móvil detectado - Optimizaciones aplicadas');
+}
+
+// 🌐 DETECCIÓN DE CONEXIÓN
+window.addEventListener('online', () => {
+    mostrarNotificacion('success', 'Conexión Restaurada', 'La conexión a internet se ha restablecido');
+    actualizarEntregas();
 });
 
-// ✅ MEJORA: Manejo de errores globales
-window.addEventListener('error', function(event) {
-    console.error('❌ Error global:', event.error);
-    UIUtils.showAlert('Ha ocurrido un error inesperado. Si persiste, recarga la página.', 'danger');
+window.addEventListener('offline', () => {
+    mostrarNotificacion('warning', 'Sin Conexión', 'Se ha perdido la conexión a internet');
 });
 
-// ✅ MEJORA: Manejo de promesas rechazadas
-window.addEventListener('unhandledrejection', function(event) {
-    console.error('❌ Promesa rechazada:', event.reason);
-    UIUtils.showAlert('Error de conexión. Verifica tu internet e inténtalo de nuevo.', 'warning');
+// 🔄 MANEJO DE ERRORES GLOBALES
+window.addEventListener('error', (e) => {
+    console.error('❌ Error global capturado:', e.error);
+    mostrarNotificacion('error', 'Error del Sistema', 'Se ha producido un error inesperado');
 });
 
-// ✅ MEJORA: Funciones de utilidad globales para el HTML
-window.StudentAreaUtils = {
-    refreshSubmissions: () => studentArea?.loadSubmissions(),
-    showStats: () => studentArea?.showUserStats(),
-    exportData: () => studentArea?.exportUserData(),
-    searchSubmissions: (query) => studentArea?.searchSubmissions(query),
-    sortSubmissions: (criteria, order) => studentArea?.sortSubmissions(criteria, order)
-};
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('❌ Promesa rechazada no manejada:', e.reason);
+    mostrarNotificacion('error', 'Error de Conexión', 'Error en la comunicación con el servidor');
+});
+
+// 💾 AUTOGUARDADO DE FORMULARIO
+let autoguardadoInterval;
+
+function iniciarAutoguardado() {
+    autoguardadoInterval = setInterval(() => {
+        const titulo = document.getElementById('titulo').value;
+        const descripcion = document.getElementById('descripcion').value;
+        
+        if (titulo || descripcion) {
+            localStorage.setItem('formulario_borrador', JSON.stringify({
+                titulo,
+                descripcion,
+                timestamp: Date.now()
+            }));
+        }
+    }, 10000); // Cada 10 segundos
+}
+
+function cargarBorrador() {
+    const borrador = localStorage.getItem('formulario_borrador');
+    if (borrador) {
+        try {
+            const datos = JSON.parse(borrador);
+            const tiempoTranscurrido = Date.now() - datos.timestamp;
             
+            // Si el borrador es de menos de 1 hora
+            if (tiempoTranscurrido < 3600000) {
+                if (confirm('Se encontró un borrador guardado. ¿Deseas recuperarlo?')) {
+                    document.getElementById('titulo').value = datos.titulo || '';
+                    document.getElementById('descripcion').value = datos.descripcion || '';
+                    
+                    mostrarNotificacion('info', 'Borrador Recuperado', 'Se ha restaurado el contenido del formulario');
+                }
+            }
+            
+            localStorage.removeItem('formulario_borrador');
+        } catch (error) {
+            console.error('❌ Error cargando borrador:', error);
+        }
+    }
+}
+
+// Iniciar autoguardado cuando se carga la página
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(cargarBorrador, 1000);
+    iniciarAutoguardado();
+});
+
+// Limpiar autoguardado al enviar formulario
+document.getElementById('formularioEntrega').addEventListener('submit', () => {
+    localStorage.removeItem('formulario_borrador');
+    clearInterval(autoguardadoInterval);
+});

@@ -3,133 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración - Informática Médica</title>
+    <title>Panel de Administración - Informática Médica</title>
+    
+    <!-- 🎨 Estilos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    
+    <!-- 📊 Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    
+    <!-- 🔗 Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👨‍⚕️</text></svg>">
+    
+    <!-- 📊 Meta tags -->
+    <meta name="description" content="Panel de administración para el sistema de entregas de Informática Médica">
+    <meta name="keywords" content="administración, informática médica, panel, gestión">
+    <meta name="author" content="Prof. Gabriel Álvarez">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">
-                <i class="fas fa-laptop-medical me-2"></i>
-                Informática Médica - Admin
+    <!-- 🏥 NAVEGACIÓN DE ADMINISTRACIÓN -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-user-md me-2"></i>
+                Panel de Administración
             </a>
             
-            <div class="d-flex">
-                <div id="admin-user-info" class="text-light"></div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarAdmin">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#entregas">
+                            <i class="fas fa-file-medical"></i> Entregas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#estudiantes">
+                            <i class="fas fa-user-graduate"></i> Estudiantes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reportes">
+                            <i class="fas fa-chart-bar"></i> Reportes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#configuracion">
+                            <i class="fas fa-cogs"></i> Configuración
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield"></i> <span id="adminNameNav">Administrador</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="mostrarPerfilAdmin()">
+                                    <i class="fas fa-user-circle text-primary"></i> Mi Perfil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="mostrarConfiguracionSistema()">
+                                    <i class="fas fa-tools text-warning"></i> Configuración del Sistema
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="mostrarLogsSeguridad()">
+                                    <i class="fas fa-shield-alt text-info"></i> Logs de Seguridad
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="cerrarSesionAdmin()">
+                                    <i class="fas fa-sign-out-alt text-danger"></i> Cerrar Sesión
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-12">
-                <h2>📊 Panel de Administración</h2>
-                <p class="text-muted">Gestión de entregas y estudiantes</p>
-            </div>
-        </div>
-
-        <!-- Estadísticas -->
-        <div class="row mt-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 id="total-students">-</h4>
-                                <p class="mb-0">Estudiantes</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-users fa-2x"></i>
-                            </div>
+    <!-- 📊 DASHBOARD PRINCIPAL -->
+    <div class="container-fluid mt-5 pt-4" id="dashboard">
+        <!-- 🎯 Encabezado del Dashboard -->
+        <div class="hero-section rounded-3 mb-4">
+            <div class="container py-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-5 fw-bold mb-3">
+                            <i class="fas fa-stethoscope me-3"></i>
+                            Panel de Control - Informática Médica
+                        </h1>
+                        <p class="lead mb-4">
+                            Gestiona las entregas académicas, supervisa el progreso de los estudiantes 
+                            y administra el sistema de manera eficiente.
+                        </p>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <button class="btn btn-primary btn-lg" onclick="actualizarDashboard()">
+                                <i class="fas fa-sync-alt"></i> Actualizar Datos
+                            </button>
+                            <button class="btn btn-outline-primary btn-lg" onclick="exportarReporteCompleto()">
+                                <i class="fas fa-download"></i> Exportar Reporte
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 id="total-submissions">-</h4>
-                                <p class="mb-0">Entregas</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-file-upload fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 id="submissions-today">-</h4>
-                                <p class="mb-0">Hoy</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-calendar-day fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 id="email-status">-</h4>
-                                <p class="mb-0">Email</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-envelope fa-2x"></i>
-                            </div>
+                    <div class="col-lg-4 text-center">
+                        <div class="medical-stat-icon" style="width: 100px; height: 100px; font-size: 50px; margin: 0 auto;">
+                            <i class="fas fa-hospital-user"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filtros y búsqueda -->
-        <div class="row mt-4">
-            <div class="col-12">
+        <!-- 📈 ESTADÍSTICAS PRINCIPALES -->
+        <div class="medical-stats mb-4">
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                </div>
+                <h3 class="medical-stat-value" id="totalEstudiantes">0</h3>
+                <p class="medical-stat-label">Estudiantes Registrados</p>
+                <div class="mt-2">
+                    <small class="text-success">
+                        <i class="fas fa-arrow-up"></i> 
+                        <span id="nuevosEstudiantes">0</span> nuevos esta semana
+                    </small>
+                </div>
+            </div>
+            
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                </div>
+                <h3 class="medical-stat-value" id="totalEntregas">0</h3>
+                <p class="medical-stat-label">Total de Entregas</p>
+                <div class="mt-2">
+                    <small class="text-info">
+                        <i class="fas fa-calendar-day"></i> 
+                        <span id="entregasHoy">0</span> hoy
+                    </small>
+                </div>
+            </div>
+            
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                </div>
+                <h3 class="medical-stat-value" id="entregasSemana">0</h3>
+                <p class="medical-stat-label">Esta Semana</p>
+                <div class="mt-2">
+                    <small class="text-warning">
+                        <i class="fas fa-percentage"></i> 
+                        <span id="porcentajeCambio">0%</span> vs semana anterior
+                    </small>
+                </div>
+            </div>
+            
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                </div>
+                <h3 class="medical-stat-value" id="espacioTotal">0 GB</h3>
+                <p class="medical-stat-label">Espacio Utilizado</p>
+                <div class="mt-2">
+                    <small class="text-primary">
+                        <i class="fas fa-server"></i> 
+                        <span id="porcentajeEspacio">0%</span> del total
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📊 GRÁFICOS Y ANÁLISIS -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-filter text-primary me-2"></i>
-                            Filtros y Búsqueda
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line text-primary"></i>
+                                Entregas por Día (Últimos 30 días)
+                            </h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active" onclick="cambiarPeriodoGrafico('30')">30 días</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="cambiarPeriodoGrafico('7')">7 días</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="cambiarPeriodoGrafico('90')">90 días</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="graficoEntregas" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie text-success"></i>
+                            Tipos de Archivo
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <label for="search-student" class="form-label">Buscar Estudiante</label>
-                                <input type="text" class="form-control" id="search-student" 
-                                       placeholder="Nombre, email o RA...">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="filter-date" class="form-label">Fecha</label>
-                                <input type="date" class="form-control" id="filter-date">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="filter-title" class="form-label">Título del Trabajo</label>
-                                <input type="text" class="form-control" id="filter-title" 
-                                       placeholder="Buscar por título...">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">&nbsp;</label>
-                                <div class="d-grid">
-                                    <button class="btn btn-primary" onclick="applyFilters()">
-                                        <i class="fas fa-search me-1"></i>
-                                        Buscar
-                                    </button>
-                                </div>
+                        <canvas id="graficoTiposArchivo" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- �� FILTROS Y BÚSQUEDA AVANZADA -->
+        <div class="card mb-4" id="entregas">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search text-primary"></i>
+                    Búsqueda y Filtros Avanzados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label" for="buscarEstudiante">
+                                <i class="fas fa-user-search"></i> Buscar Estudiante
+                            </label>
+                            <input type="text" class="form-control" id="buscarEstudiante" 
+                                   placeholder="Nombre o email...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label" for="filtroFecha">
+                                <i class="fas fa-calendar"></i> Fecha
+                            </label>
+                            <input type="date" class="form-control" id="filtroFecha">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label" for="filtroTitulo">
+                                <i class="fas fa-heading"></i> Título
+                            </label>
+                            <input type="text" class="form-control" id="filtroTitulo" 
+                                   placeholder="Buscar por título...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" onclick="aplicarFiltrosAdmin()">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="limpiarFiltrosAdmin()">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -137,33 +289,201 @@
             </div>
         </div>
 
-        <!-- Lista de entregas -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-list text-success me-2"></i>
-                            Todas las Entregas
-                        </h5>
-                        <div>
-                            <button class="btn btn-outline-secondary btn-sm me-2" onclick="exportData()">
-                                <i class="fas fa-download me-1"></i>
-                                Exportar
-                            </button>
-                            <button class="btn btn-outline-primary btn-sm" onclick="loadAllSubmissions()">
-                                <i class="fas fa-refresh me-1"></i>
-                                Actualizar
+        <!-- 📋 TABLA DE ENTREGAS -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list-alt text-primary"></i>
+                        Gestión de Entregas Académicas
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success btn-sm" onclick="exportarEntregasCSV()">
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="mostrarEstadisticasAvanzadas()">
+                            <i class="fas fa-chart-bar"></i> Estadísticas
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="actualizarTablaEntregas()">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table medical-table" id="tablaEntregas">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> ID</th>
+                                <th><i class="fas fa-user"></i> Estudiante</th>
+                                <th><i class="fas fa-heading"></i> Título</th>
+                                <th><i class="fas fa-file"></i> Archivo</th>
+                                <th><i class="fas fa-weight"></i> Tamaño</th>
+                                <th><i class="fas fa-calendar"></i> Fecha</th>
+                                <th><i class="fas fa-cogs"></i> Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTablaEntregas">
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Cargando entregas...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 📄 Paginación -->
+                <nav aria-label="Paginación de entregas">
+                    <ul class="pagination justify-content-center" id="paginacionEntregas">
+                        <!-- Generado dinámicamente -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- 👥 GESTIÓN DE ESTUDIANTES -->
+        <div class="card mb-4" id="estudiantes">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-graduate text-success"></i>
+                        Gestión de Estudiantes
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm" onclick="mostrarModalNuevoEstudiante()">
+                            <i class="fas fa-user-plus"></i> Nuevo Estudiante
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="importarEstudiantes()">
+                            <i class="fas fa-upload"></i> Importar CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row" id="contenedorEstudiantes">
+                    <!-- Generado dinámicamente -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 📊 REPORTES AVANZADOS -->
+        <div class="card mb-4" id="reportes">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar text-warning"></i>
+                    Reportes y Análisis Avanzados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="medical-stat-card text-center">
+                            <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                            <h5>Reporte de Participación</h5>
+                            <p class="text-muted">Análisis detallado de la participación estudiantil</p>
+                            <button class="btn btn-primary" onclick="generarReporteParticipacion()">
+                                <i class="fas fa-file-alt"></i> Generar
                             </button>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div id="submissions-list">
-                            <div class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 text-muted">Cargando entregas...</p>
+                    <div class="col-md-4">
+                        <div class="medical-stat-card text-center">
+                            <i class="fas fa-chart-pie fa-3x text-success mb-3"></i>
+                            <h5>Análisis de Entregas</h5>
+                            <p class="text-muted">Estadísticas por tipo de archivo y fechas</p>
+                            <button class="btn btn-success" onclick="generarAnalisisEntregas()">
+                                <i class="fas fa-analytics"></i> Analizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="medical-stat-card text-center">
+                            <i class="fas fa-chart-bar fa-3x text-info mb-3"></i>
+                            <h5>Reporte Académico</h5>
+                            <p class="text-muted">Resumen completo para coordinación</p>
+                            <button class="btn btn-info" onclick="generarReporteAcademico()">
+                                <i class="fas fa-graduation-cap"></i> Crear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ⚙️ CONFIGURACIÓN DEL SISTEMA -->
+        <div class="card mb-4" id="configuracion">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs text-secondary"></i>
+                    Configuración del Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="medical-stat-card">
+                            <h6><i class="fas fa-database text-primary"></i> Base de Datos</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Estado de la BD:</span>
+                                <span class="badge badge-success" id="estadoBD">Conectada</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Última verificación:</span>
+                                <span id="ultimaVerificacion">-</span>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="verificarBaseDatos()">
+                                <i class="fas fa-check-circle"></i> Verificar BD
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="optimizarBaseDatos()">
+                                <i class="fas fa-tools"></i> Optimizar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="medical-stat-card">
+                            <h6><i class="fas fa-server text-success"></i> Sistema</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Versión:</span>
+                                <span class="badge badge-primary">v2.0</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Uptime:</span>
+                                <span id="tiempoActividad">-</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Memoria:</span>
+                                <span id="usoMemoria">-</span>
+                            </div>
+                            <button class="btn btn-outline-info btn-sm" onclick="mostrarInfoSistema()">
+                                <i class="fas fa-info-circle"></i> Info Sistema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="medical-stat-card">
+                            <h6><i class="fas fa-shield-alt text-warning"></i> Mantenimiento</h6>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-primary" onclick="limpiarCacheArchivos()">
+                                    <i class="fas fa-broom"></i> Limpiar Caché
+                                </button>
+                                <button class="btn btn-outline-success" onclick="crearRespaldoBD()">
+                                    <i class="fas fa-download"></i> Respaldar BD
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="verificarIntegridadArchivos()">
+                                    <i class="fas fa-check-double"></i> Verificar Archivos
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="mostrarLogsErrores()">
+                                    <i class="fas fa-exclamation-triangle"></i> Ver Logs
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -172,7 +492,541 @@
         </div>
     </div>
 
+    <!-- 🎯 MODALES -->
+    
+    <!-- Modal de Detalles de Entrega -->
+    <div class="modal fade" id="modalDetallesEntrega" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-file-alt"></i> Detalles de la Entrega
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="contenidoDetallesEntrega">
+                    <!-- Contenido cargado dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnDescargarEntrega">
+                        <i class="fas fa-download"></i> Descargar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnEliminarEntrega">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nuevo Estudiante -->
+    <div class="modal fade" id="modalNuevoEstudiante" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus"></i> Registrar Nuevo Estudiante
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formularioNuevoEstudiante">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" for="nombreEstudiante">
+                                <i class="fas fa-user"></i> Nombre Completo
+                            </label>
+                            <input type="text" class="form-control" id="nombreEstudiante" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="emailEstudiante">
+                                <i class="fas fa-envelope"></i> Email
+                            </label>
+                            <input type="email" class="form-control" id="emailEstudiante" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="raEstudiante">
+                                <i class="fas fa-id-card"></i> RA (Registro Académico)
+                            </label>
+                            <input type="text" class="form-control" id="raEstudiante">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="passwordEstudiante">
+                                <i class="fas fa-lock"></i> Contraseña Temporal
+                            </label>
+                            <input type="password" class="form-control" id="passwordEstudiante" required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> 
+                                El estudiante deberá cambiar esta contraseña en su primer acceso
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> Registrar Estudiante
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Estadísticas Avanzadas -->
+    <div class="modal fade" id="modalEstadisticasAvanzadas" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-line"></i> Estadísticas Avanzadas del Sistema
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="contenidoEstadisticasAvanzadas">
+                    <!-- Contenido cargado dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="exportarEstadisticasAvanzadas()">
+                        <i class="fas fa-download"></i> Exportar Estadísticas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div class="modal fade" id="modalConfirmarEliminacionAdmin" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                    </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                        <h4>¿Estás seguro?</h4>
+                        <p class="text-muted">
+                            Esta acción eliminará permanentemente la entrega y no se puede deshacer.
+                        </p>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Entrega:</strong> <span id="tituloEliminarAdmin">-</span><br>
+                            <strong>Estudiante:</strong> <span id="estudianteEliminarAdmin">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminacionAdmin">
+                        <i class="fas fa-trash-alt"></i> Sí, Eliminar Definitivamente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Información del Sistema -->
+    <div class="modal fade" id="modalInfoSistema" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-server"></i> Información del Sistema
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="contenidoInfoSistema">
+                    <!-- Contenido cargado dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="actualizarInfoSistema()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Logs de Seguridad -->
+    <div class="modal fade" id="modalLogsSeguridad" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-shield-alt"></i> Logs de Seguridad del Sistema
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" id="filtroTipoLog">
+                                <option value="">Todos los tipos</option>
+                                <option value="LOGIN">Inicios de sesión</option>
+                                <option value="UPLOAD">Subidas de archivos</option>
+                                <option value="DELETE">Eliminaciones</option>
+                                <option value="ERROR">Errores</option>
+                                <option value="ADMIN">Acciones de admin</option>
+                            </select>
+                            <input type="date" class="form-control form-control-sm" id="filtroFechaLog">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="filtrarLogs()">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="exportarLogs()">
+                                <i class="fas fa-download"></i> Exportar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table class="table table-sm medical-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha/Hora</th>
+                                    <th>Tipo</th>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>IP</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaLogs">
+                                <!-- Contenido cargado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔔 NOTIFICACIONES TOAST -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toastNotificacionAdmin" class="toast" role="alert">
+            <div class="toast-header">
+                <i id="iconoToastAdmin" class="fas fa-info-circle text-primary me-2"></i>
+                <strong class="me-auto" id="tituloToastAdmin">Notificación</strong>
+                <small id="tiempoToastAdmin">ahora</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="mensajeToastAdmin">
+                Mensaje de notificación
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 INDICADOR DE ESTADO DEL SISTEMA -->
+    <div class="position-fixed bottom-0 start-0 p-3">
+        <div class="card" style="width: 250px;">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center">
+                    <div class="me-2">
+                        <div class="spinner-border spinner-border-sm text-success" role="status" id="indicadorConexion">
+                            <span class="visually-hidden">Conectado</span>
+                        </div>
+                    </div>
+                    <div>
+                        <small class="fw-bold">Estado del Sistema</small><br>
+                        <small class="text-muted" id="textoEstadoSistema">Conectado y funcionando</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔗 Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="js/admin-area.js"></script>
+    
+    <!-- 📊 Script de inicialización -->
+    <script>
+        // Variables globales para gráficos
+        let graficoEntregas = null;
+        let graficoTiposArchivo = null;
+        
+        // Inicializar la aplicación cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('👨‍⚕️ Iniciando Panel de Administración - Informática Médica...');
+            
+            // Verificar autenticación de administrador
+            verificarAutenticacionAdmin();
+            
+            // Cargar datos del administrador
+            cargarDatosAdmin();
+            
+            // Cargar dashboard
+            cargarDashboardAdmin();
+            
+            // Configurar eventos
+            configurarEventosAdmin();
+            
+            // Inicializar gráficos
+            inicializarGraficos();
+            
+            // Configurar actualización automática
+            configurarActualizacionAutomatica();
+            
+            console.log('✅ Panel de administración inicializado correctamente');
+        });
+        
+        // Función para verificar el estado del sistema cada 30 segundos
+        function verificarEstadoSistema() {
+            fetch('/api/admin/health-check', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            .then(response => {
+                const indicador = document.getElementById('indicadorConexion');
+                const texto = document.getElementById('textoEstadoSistema');
+                
+                if (response.ok) {
+                    indicador.className = 'spinner-border spinner-border-sm text-success';
+                    texto.textContent = 'Sistema operativo';
+                } else {
+                    indicador.className = 'spinner-border spinner-border-sm text-warning';
+                    texto.textContent = 'Problemas detectados';
+                }
+            })
+            .catch(error => {
+                const indicador = document.getElementById('indicadorConexion');
+                const texto = document.getElementById('textoEstadoSistema');
+                
+                indicador.className = 'spinner-border spinner-border-sm text-danger';
+                texto.textContent = 'Sin conexión';
+            });
+        }
+        
+        // Verificar estado cada 30 segundos
+        setInterval(verificarEstadoSistema, 30000);
+        verificarEstadoSistema(); // Verificación inicial
+    </script>
+    
+    <!-- 🎨 Estilos adicionales específicos para admin -->
+    <style>
+        /* Estilos específicos para el panel de administración */
+        .admin-sidebar {
+            background: var(--medical-gradient-primary);
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .admin-sidebar.show {
+            transform: translateX(0);
+        }
+        
+        .admin-content {
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .admin-content.with-sidebar {
+            margin-left: 250px;
+        }
+        
+        .admin-stat-card {
+            background: white;
+            border-radius: var(--border-radius-large);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-medium);
+            border-left: 4px solid var(--medical-primary);
+            transition: var(--transition);
+            height: 100%;
+        }
+        
+        .admin-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-medical);
+        }
+        
+        .admin-action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: var(--transition);
+        }
+        
+        .admin-action-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .status-online {
+            background-color: var(--medical-success);
+            box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.3);
+        }
+        
+        .status-offline {
+            background-color: var(--medical-danger);
+            box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.3);
+        }
+        
+        .status-warning {
+            background-color: var(--medical-warning);
+            box-shadow: 0 0 0 2px rgba(255, 149, 0, 0.3);
+        }
+        
+        /* Animaciones para gráficos */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .chart-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        /* Responsive para admin */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 100%;
+            }
+            
+            .admin-content.with-sidebar {
+                margin-left: 0;
+            }
+            
+            .medical-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+        
+        /* Estilos para logs */
+        .log-entry {
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            background: var(--light-gray);
+            border-radius: var(--border-radius-small);
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid var(--medical-primary);
+        }
+        
+        .log-error {
+            border-left-color: var(--medical-danger);
+            background: rgba(255, 59, 48, 0.1);
+        }
+        
+        .log-warning {
+            border-left-color: var(--medical-warning);
+            background: rgba(255, 149, 0, 0.1);
+        }
+        
+        .log-success {
+            border-left-color: var(--medical-success);
+            background: rgba(52, 199, 89, 0.1);
+        }
+        
+        /* Efectos de hover para tablas */
+        .medical-table tbody tr {
+            transition: var(--transition);
+        }
+        
+        .medical-table tbody tr:hover {
+            background: rgba(0, 122, 255, 0.05);
+            transform: scale(1.01);
+        }
+        
+        /* Badges personalizados */
+        .badge-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .badge-online {
+            background: rgba(52, 199, 89, 0.1);
+            color: var(--medical-success);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+        
+        .badge-offline {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--medical-danger);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+        
+        /* Efectos de carga */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: var(--border-radius);
+        }
+        
+        /* Animación de pulso para indicadores */
+        @keyframes pulse-admin {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 122, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 122, 255, 0);
+            }
+        }
+        
+        .pulse-indicator {
+            animation: pulse-admin 2s infinite;
+        }
+    </style>
 </body>
 </html>

@@ -8,7 +8,7 @@ const router = express.Router();
 // ✅ CORRECCIÓN: Configuración correcta de base de datos
 const dbPath = process.env.NODE_ENV === 'production' 
     ? '/app/backend/database/database.db'
-    : path.join(__dirname, '..', 'database', 'database.db');
+    : path.join(__dirname, '..', 'database', 'database.db');    
 
 console.log('🔧 Ruta de BD configurada:', dbPath);
 

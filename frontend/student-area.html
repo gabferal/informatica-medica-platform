@@ -3,104 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Área del Estudiante - Sistema de Entregas</title>
+    <title>Área del Estudiante - Informática Médica</title>
     
-    <!-- Bootstrap CSS -->
+    <!-- 🎨 Estilos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link href="/css/style.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
     
-    <style>
-        .submission-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        
-        .submission-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .drag-drop-zone {
-            border: 2px dashed #dee2e6;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .drag-drop-zone.drag-over {
-            border-color: #0d6efd;
-            background-color: #f8f9fa;
-        }
-        
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-        
-        .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .search-box {
-            border-radius: 25px;
-        }
-        
-        .alert-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            max-width: 400px;
-        }
-        
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
-        
-        .submission-meta small {
-            font-size: 0.8rem;
-        }
-        
-        .btn-group .btn {
-            font-size: 0.875rem;
-        }
-        
-        @media (max-width: 768px) {
-            .btn-group {
-                flex-direction: column;
-            }
-            
-            .btn-group .btn {
-                border-radius: 0.375rem !important;
-                margin-bottom: 0.25rem;
-            }
-        }
-    </style>
+    <!-- 🔗 Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+    
+    <!-- 📊 Meta tags para SEO -->
+    <meta name="description" content="Sistema de entregas académicas para Informática Médica - Área del Estudiante">
+    <meta name="keywords" content="informática médica, entregas, estudiantes, sistema académico">
+    <meta name="author" content="Prof. Gabriel Álvarez">
 </head>
 <body>
-    <!-- Alert Container -->
-    <div id="alert-container" class="alert-container"></div>
-
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <!-- 🏥 NAVEGACIÓN MÉDICA -->
+    <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-graduation-cap me-2"></i>
-                Sistema de Entregas
+                Informática Médica
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -108,32 +31,38 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/student-area.html">
-                            <i class="fas fa-home me-1"></i>
-                            Área del Estudiante
+                        <a class="nav-link active" href="#inicio">
+                            <i class="fas fa-home"></i> Inicio
                         </a>
                     </li>
-                </ul>
-                
-                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#entregas">
+                            <i class="fas fa-file-medical"></i> Mis Entregas
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i>
-                            <span id="userEmail">Cargando...</span>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i> <span id="userNameNav">Cargando...</span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="StudentAreaUtils.showStats()">
-                                <i class="fas fa-chart-bar me-2"></i>Mis Estadísticas
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="StudentAreaUtils.exportData()">
-                                <i class="fas fa-download me-2"></i>Exportar Datos
-                            </a></li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="mostrarEstadisticasUsuario()">
+                                    <i class="fas fa-chart-bar text-primary"></i> Mis Estadísticas
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="exportarDatosUsuario()">
+                                    <i class="fas fa-download text-success"></i> Exportar Datos
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" onclick="logout()">
-                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                            </a></li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="cerrarSesion()">
+                                    <i class="fas fa-sign-out-alt text-danger"></i> Cerrar Sesión
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 </ul>
@@ -141,222 +70,394 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <div class="container mt-4">
-        <!-- Header -->
-        <div class="row mb-4">
-            <div class="col">
-                <h1 class="h3 mb-3">
-                    <i class="fas fa-upload me-2 text-primary"></i>
-                    Área del Estudiante
-                </h1>
-                <p class="text-muted">Sube y gestiona tus entregas académicas</p>
+    <!-- 📊 DASHBOARD PRINCIPAL -->
+    <div class="container mt-5 pt-4" id="inicio">
+        <!-- 🎯 Mensaje de Bienvenida -->
+        <div class="hero-section rounded-3 mb-4">
+            <div class="container py-5">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-4 fw-bold mb-3">
+                            ¡Bienvenido, <span id="userName">Estudiante</span>! 👋
+                        </h1>
+                        <p class="lead mb-4">
+                            Sistema de entregas académicas para la materia de Informática Médica. 
+                            Aquí puedes subir tus trabajos, consultar tus entregas anteriores y 
+                            revisar tus estadísticas de participación.
+                        </p>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <a href="#nueva-entrega" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus-circle"></i> Nueva Entrega
+                            </a>
+                            <a href="#entregas" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-list"></i> Ver Entregas
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <div class="medical-stat-icon" style="width: 120px; height: 120px; font-size: 60px; margin: 0 auto;">
+                            <i class="fas fa-laptop-medical"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Upload Form -->
-        <div class="row mb-5">
-            <div class="col-lg-8 mx-auto">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-cloud-upload-alt me-2"></i>
-                            Nueva Entrega
-                        </h5>
+        <!-- 📈 Estadísticas Rápidas -->
+        <div class="medical-stats">
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-file-upload"></i>
                     </div>
-                    <div class="card-body">
-                        <form id="uploadForm" enctype="multipart/form-data">
-                            <!-- File Upload -->
+                </div>
+                <h3 class="medical-stat-value" id="totalEntregas">0</h3>
+                <p class="medical-stat-label">Total de Entregas</p>
+            </div>
+            
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                </div>
+                <h3 class="medical-stat-value" id="entregasSemana">0</h3>
+                <p class="medical-stat-label">Esta Semana</p>
+            </div>
+            
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                </div>
+                <h3 class="medical-stat-value" id="espacioTotal">0 MB</h3>
+                <p class="medical-stat-label">Espacio Utilizado</p>
+            </div>
+            
+            <div class="medical-stat-card">
+                <div class="medical-stat-header">
+                    <div class="medical-stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <h3 class="medical-stat-value" id="ultimaEntrega">-</h3>
+                <p class="medical-stat-label">Última Entrega</p>
+            </div>
+        </div>
+
+        <!-- 📝 NUEVA ENTREGA -->
+        <div class="card mb-4" id="nueva-entrega">
+            <div class="card-header">
+                <h2 class="card-title mb-0">
+                    <i class="fas fa-plus-circle text-primary"></i>
+                    Nueva Entrega Académica
+                </h2>
+            </div>
+            <div class="card-body">
+                <form id="formularioEntrega" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="file" class="form-label">
-                                    <i class="fas fa-file me-1"></i>
-                                    Archivo *
+                                <label class="form-label" for="titulo">
+                                    <i class="fas fa-heading"></i> Título de la Entrega
                                 </label>
-                                <div class="drag-drop-zone">
-                                    <input type="file" class="form-control" id="file" name="file" required>
-                                    <div class="mt-2">
-                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-                                        <p class="text-muted mb-1">Arrastra y suelta tu archivo aquí o haz clic para seleccionar</p>
-                                        <small class="text-muted">
-                                            Formatos: PDF, DOC, DOCX, TXT, ZIP, PNG, JPG (Máx. 10MB)
-                                        </small>
-                                    </div>
+                                <input type="text" class="form-control" id="titulo" name="title" 
+                                       placeholder="Ej: Análisis de Sistemas de Información Hospitalaria" 
+                                       required maxlength="200">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Describe brevemente el contenido de tu trabajo
                                 </div>
-                                
-                                <!-- File Info Display -->
-                                <div id="fileInfo" style="display: none;" class="mt-2"></div>
-                                
-                                <!-- File Error Display -->
-                                <div id="fileError" style="display: none;" class="mt-2"></div>
                             </div>
-
-                            <!-- Title -->
+                        </div>
+                        <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="title" class="form-label">
-                                    <i class="fas fa-heading me-1"></i>
-                                    Título *
+                                <label class="form-label" for="archivo">
+                                    <i class="fas fa-file-medical"></i> Archivo
                                 </label>
-                                <input type="text" class="form-control" id="title" name="title" 
-                                       placeholder="Título de la entrega" maxlength="200" required>
-                                <div class="form-text">Máximo 200 caracteres</div>
+                                <input type="file" class="form-control" id="archivo" name="file" 
+                                       accept=".pdf,.doc,.docx,.txt,.zip,.rar" required>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Formatos permitidos: PDF, DOC, DOCX, TXT, ZIP, RAR (máx. 10MB)
+                                </div>
                             </div>
-
-                            <!-- Description -->
-                            <div class="mb-4">
-                                <label for="description" class="form-label">
-                                    <i class="fas fa-align-left me-1"></i>
-                                    Descripción (Opcional)
-                                </label>
-                                <textarea class="form-control" id="description" name="description" 
-                                          rows="3" placeholder="Descripción adicional de la entrega"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label" for="descripcion">
+                            <i class="fas fa-comment-medical"></i> Descripción
+                        </label>
+                        <textarea class="form-control" id="descripcion" name="description" rows="4"
+                                  placeholder="Describe el contenido de tu entrega, metodología utilizada, objetivos alcanzados, etc."
+                                  maxlength="1000"></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> 
+                            Proporciona detalles que ayuden a entender el contexto de tu trabajo
+                        </div>
+                    </div>
+                    
+                    <!-- �� Zona de Arrastrar y Soltar -->
+                    <div class="medical-dropzone mb-4" id="zonaArrastre">
+                        <div class="medical-dropzone-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="medical-dropzone-text">
+                            <strong>Arrastra y suelta tu archivo aquí</strong><br>
+                            o haz clic para seleccionar desde tu dispositivo
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt"></i> 
+                                Tus archivos están protegidos y solo serán visibles para el profesor
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- 📋 Información del Archivo Seleccionado -->
+                    <div id="infoArchivo" class="alert alert-info d-none">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-alt fa-2x me-3"></i>
+                            <div>
+                                <strong id="nombreArchivo">-</strong><br>
+                                <small>
+                                    Tamaño: <span id="tamanoArchivo">-</span> | 
+                                    Tipo: <span id="tipoArchivo">-</span>
+                                </small>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane"></i> Enviar Entrega
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo"></i> Limpiar Formulario
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="previsualizarArchivo()">
+                            <i class="fas fa-eye"></i> Previsualizar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                            <!-- Submit Button -->
-                            <div class="d-grid">
-                                <button type="submit" id="uploadBtn" class="btn btn-primary btn-lg" disabled>
-                                    <i class="fas fa-upload me-2"></i>
-                                    Subir Entrega
+        <!-- 🔍 FILTROS Y BÚSQUEDA -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="card-title mb-0">
+                    <i class="fas fa-search text-primary"></i>
+                    Buscar y Filtrar Entregas
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label" for="campoBusqueda">
+                                <i class="fas fa-search"></i> Buscar por título
+                            </label>
+                            <input type="text" class="form-control" id="campoBusqueda" 
+                                   placeholder="Escribe para buscar...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label" for="selectorOrden">
+                                <i class="fas fa-sort"></i> Ordenar por
+                            </label>
+                            <select class="form-control" id="selectorOrden">
+                                <option value="fecha-desc">Fecha (Más reciente)</option>
+                                <option value="fecha-asc">Fecha (Más antiguo)</option>
+                                <option value="titulo-asc">Título (A-Z)</option>
+                                <option value="titulo-desc">Título (Z-A)</option>
+                                <option value="tamano-desc">Tamaño (Mayor)</option>
+                                <option value="tamano-asc">Tamaño (Menor)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                                    <i class="fas fa-eraser"></i> Limpiar
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="actualizarEntregas()">
+                                    <i class="fas fa-sync-alt"></i> Actualizar
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Search and Controls -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="fas fa-search"></i>
-                    </span>
-                    <input type="text" class="form-control search-box" id="searchInput" 
-                           placeholder="Buscar en mis entregas...">
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="d-flex gap-2 justify-content-md-end">
-                    <button class="btn btn-outline-primary" onclick="StudentAreaUtils.refreshSubmissions()" title="Actualizar">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-sort me-1"></i>Ordenar
+        <!-- 📋 LISTA DE ENTREGAS -->
+        <div class="card" id="entregas">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="card-title mb-0">
+                        <i class="fas fa-list-alt text-primary"></i>
+                        Mis Entregas Académicas
+                    </h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success btn-sm" onclick="exportarEntregas()">
+                            <i class="fas fa-download"></i> Exportar
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="StudentAreaUtils.sortSubmissions('date', 'desc')">
-                                <i class="fas fa-calendar me-2"></i>Más recientes
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="StudentAreaUtils.sortSubmissions('date', 'asc')">
-                                <i class="fas fa-calendar me-2"></i>Más antiguos
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="StudentAreaUtils.sortSubmissions('title', 'asc')">
-                                <i class="fas fa-sort-alpha-down me-2"></i>Título A-Z
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="StudentAreaUtils.sortSubmissions('size', 'desc')">
-                                <i class="fas fa-hdd me-2"></i>Mayor tamaño
-                            </a></li>
-                        </ul>
+                        <button class="btn btn-outline-primary btn-sm" onclick="mostrarEstadisticasDetalladas()">
+                            <i class="fas fa-chart-pie"></i> Estadísticas
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="text-center py-5" style="display: none;">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
+            <div class="card-body">
+                <div id="contenedorEntregas">
+                    <div class="text-center py-5 medical-loading">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="text-muted">Cargando tus entregas académicas...</p>
+                    </div>
+                </div>
+                
+                <!-- 📊 Mensaje cuando no hay entregas -->
+                <div id="sinEntregas" class="text-center py-5 d-none">
+                    <div class="medical-stat-icon mb-3" style="width: 80px; height: 80px; margin: 0 auto; opacity: 0.5;">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h4 class="text-muted">No tienes entregas aún</h4>
+                    <p class="text-muted">Comienza subiendo tu primera entrega académica</p>
+                    <a href="#nueva-entrega" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Crear Primera Entrega
+                    </a>
+                </div>
             </div>
-            <p class="mt-3 text-muted">Cargando entregas...</p>
-        </div>
-
-        <!-- Submissions List -->
-        <div id="submissionsList" class="row" style="display: none;">
-            <!-- Las entregas se cargarán aquí dinámicamente -->
-        </div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="text-center py-5" style="display: none;">
-            <div class="mb-4">
-                <i class="fas fa-inbox fa-4x text-muted"></i>
-            </div>
-            <h4 class="text-muted">No tienes entregas aún</h4>
-            <p class="text-muted mb-4">Comienza subiendo tu primera entrega usando el formulario de arriba.</p>
-            <button class="btn btn-primary" onclick="document.getElementById('file').click()">
-                <i class="fas fa-plus me-2"></i>
-                Subir Primera Entrega
-            </button>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 🎯 MODALES -->
     
-    <!-- Custom Scripts -->
-    <script src="/js/auth.js"></script>
-    <script src="/js/student-area.js"></script>
+    <!-- Modal de Estadísticas Detalladas -->
+    <div class="modal fade" id="modalEstadisticas" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-line"></i> Mis Estadísticas Detalladas
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="contenidoEstadisticas">
+                    <!-- Contenido cargado dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="exportarEstadisticas()">
+                        <i class="fas fa-download"></i> Exportar Estadísticas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Modal de Confirmación de Eliminación -->
+    <div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                        <h4>¿Estás seguro?</h4>
+                        <p class="text-muted">
+                            Esta acción eliminará permanentemente la entrega 
+                            "<strong id="tituloEliminar">-</strong>" y no se puede deshacer.
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminacion">
+                        <i class="fas fa-trash-alt"></i> Sí, Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Previsualización -->
+    <div class="modal fade" id="modalPrevisualizacion" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-eye"></i> Previsualización del Archivo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="contenidoPrevisualizacion">
+                    <!-- Contenido de previsualización -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- �� NOTIFICACIONES TOAST -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toastNotificacion" class="toast" role="alert">
+            <div class="toast-header">
+                <i id="iconoToast" class="fas fa-info-circle text-primary me-2"></i>
+                <strong class="me-auto" id="tituloToast">Notificación</strong>
+                <small id="tiempoToast">ahora</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="mensajeToast">
+                Mensaje de notificación
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔗 Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/student-area.js"></script>
+    
+    <!-- 📊 Script de inicialización -->
     <script>
-        // ✅ Verificación de autenticación específica para estudiantes
+        // Inicializar la aplicación cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔐 Verificando autenticación de estudiante...');
+            console.log('🏥 Iniciando Sistema de Informática Médica...');
             
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.log('❌ No hay token, redirigiendo al login...');
-                window.location.href = '/login.html';
-                return;
-            }
-
-            // Verificar que el token sea válido y obtener info del usuario
-            fetch('/api/auth/verify', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid && data.user) {
-                    console.log('✅ Acceso de estudiante verificado');
-                    
-                    // Mostrar email del usuario en la navbar
-                    const userEmailElement = document.getElementById('userEmail');
-                    if (userEmailElement) {
-                        userEmailElement.textContent = data.user.email;
-                    }
-                } else {
-                    console.log('❌ Token inválido, redirigiendo al login...');
-                    localStorage.removeItem('token');
-                    window.location.href = '/login.html';
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error verificando autenticación:', error);
-                window.location.href = '/login.html';
-            });
-        });
-
-        // ✅ Función de logout
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
-        }
-
-        // ✅ Setup de búsqueda en tiempo real
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                let searchTimeout;
-                searchInput.addEventListener('input', function(e) {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        if (window.StudentAreaUtils) {
-                            StudentAreaUtils.searchSubmissions(e.target.value);
-                        }
-                    }, 300);
-                });
-            }
+            // Verificar autenticación
+            verificarAutenticacion();
+            
+            // Cargar datos del usuario
+            cargarDatosUsuario();
+            
+            // Cargar entregas
+            cargarEntregas();
+            
+            // Configurar eventos
+            configurarEventos();
+            
+            console.log('✅ Sistema inicializado correctamente');
         });
     </script>
 </body>
