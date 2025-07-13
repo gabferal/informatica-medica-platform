@@ -1,0 +1,5043 @@
+=== CÓDIGO COMPLETO ===
+
+
+========== backend/routes/admin.js ==========
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
+const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middleware/auth');
+
+const router = express.Router();
+const dbPath = path.join(__dirname, '../database.db');
+
+// Usar los middlewares de autenticación
+const authenticateToken = authMiddleware.authenticateToken;
+const authenticateAdmin = authMiddleware.authenticateAdmin;
+
+// Middleware personalizado para descargas que acepta token por parámetro o header
+function authenticateDownload(req, res, next) {
+    let token = null;
+    
+    // Intentar obtener token del header Authorization
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+    }
+    
+    // Si no hay token en header, intentar obtenerlo del parámetro de consulta
+    if (!token && req.query.token) {
+        token = req.query.token;
+    }
+
+    if (!token) {
+        return res.status(401).json({ error: 'Token de acceso requerido' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET || 'informatica_medica_secret_key_2024', (err, user) => {
+        if (err) {
+            return res.status(403).json({ error: 'Token inválido' });
+        }
+
+        // Verificar que sea admin
+        if (user.role !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado. Se requieren privilegios de administrador.' });
+        }
+
+        req.user = user;
+        next();
+    });
+}
+
+// Obtener estadísticas del dashboard
+router.get('/stats', authenticateAdmin, (req, res) => {
+    console.log('📊 Solicitando estadísticas del dashboard');
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    // Obtener estadísticas en paralelo
+    const stats = {};
+    let completed = 0;
+    const totalQueries = 4;
+    
+    function checkComplete() {
+        completed++;
+        if (completed === totalQueries) {
+            db.close();
+            console.log('📊 Estadísticas enviadas:', stats);
+            res.json(stats);
+        }
+    }
+    
+    function handleError(operation, err) {
+        console.error(`❌ Error en ${operation}:`, err);
+        checkComplete();
+    }
+    
+    // Total de estudiantes
+    db.get('SELECT COUNT(*) as count FROM users WHERE role = "student"', (err, row) => {
+        if (err) {
+            handleError('conteo de estudiantes', err);
+            stats.totalStudents = 0;
+        } else {
+            stats.totalStudents = row.count;
+            console.log('✅ Total estudiantes:', row.count);
+            checkComplete();
+        }
+    });
+    
+    // Total de entregas
+    db.get('SELECT COUNT(*) as count FROM submissions', (err, row) => {
+        if (err) {
+            handleError('conteo de entregas', err);
+            stats.totalSubmissions = 0;
+        } else {
+            stats.totalSubmissions = row.count;
+            console.log('✅ Total entregas:', row.count);
+            checkComplete();
+        }
+    });
+    
+    // Entregas de hoy
+    const today = new Date().toISOString().split('T')[0];
+    db.get(
+        'SELECT COUNT(*) as count FROM submissions WHERE DATE(submitted_at) = ?',
+        [today],
+        (err, row) => {
+            if (err) {
+                handleError('entregas de hoy', err);
+                stats.submissionsToday = 0;
+            } else {
+                stats.submissionsToday = row.count;
+                console.log('✅ Entregas hoy:', row.count);
+                checkComplete();
+            }
+        }
+    );
+    
+    // Entregas de la última semana
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    db.get(
+        'SELECT COUNT(*) as count FROM submissions WHERE submitted_at >= ?',
+        [weekAgo.toISOString()],
+        (err, row) => {
+            if (err) {
+                handleError('entregas de la semana', err);
+                stats.submissionsWeek = 0;
+            } else {
+                stats.submissionsWeek = row.count;
+                console.log('✅ Entregas semana:', row.count);
+                checkComplete();
+            }
+        }
+    );
+});
+
+// Obtener todas las entregas con información del estudiante
+router.get('/submissions', authenticateAdmin, (req, res) => {
+    console.log('�� Solicitando todas las entregas para admin');
+    
+    const { search, date, title } = req.query;
+    console.log('🔍 Filtros recibidos:', { search, date, title });
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    let query = `
+        SELECT 
+            s.*,
+            u.name as student_name,
+            u.email as student_email,
+            u.ra as student_ra
+        FROM submissions s
+        JOIN users u ON s.user_id = u.id
+        WHERE 1=1
+    `;
+    
+    const params = [];
+    
+    // Aplicar filtros
+    if (search) {
+        query += ` AND (u.name LIKE ? OR u.email LIKE ? OR u.ra LIKE ?)`;
+        const searchParam = `%${search}%`;
+        params.push(searchParam, searchParam, searchParam);
+    }
+    
+    if (date) {
+        query += ` AND DATE(s.submitted_at) = ?`;
+        params.push(date);
+    }
+    
+    if (title) {
+        query += ` AND s.title LIKE ?`;
+        params.push(`%${title}%`);
+    }
+    
+    query += ` ORDER BY s.submitted_at DESC`;
+    
+    console.log('🔍 Query SQL:', query);
+    console.log('🔍 Parámetros:', params);
+    
+    db.all(query, params, (err, rows) => {
+        db.close();
+        
+        if (err) {
+            console.error('❌ Error obteniendo entregas:', err);
+            return res.status(500).json({ error: 'Error al obtener entregas: ' + err.message });
+        }
+        
+        console.log(`✅ Encontradas ${rows.length} entregas para admin`);
+        console.log('📋 Primeras entregas:', rows.slice(0, 2));
+        res.json(rows);
+    });
+});
+
+// Obtener detalles de una entrega específica
+router.get('/submission/:id', authenticateAdmin, (req, res) => {
+    const submissionId = req.params.id;
+    console.log('🔍 Solicitando detalles de entrega:', submissionId);
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    db.get(
+        `SELECT 
+            s.*,
+            u.name as student_name,
+            u.email as student_email,
+            u.ra as student_ra
+        FROM submissions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.id = ?`,
+        [submissionId],
+        (err, row) => {
+            db.close();
+            
+            if (err) {
+                console.error('❌ Error obteniendo detalles de entrega:', err);
+                return res.status(500).json({ error: 'Error al obtener detalles' });
+            }
+            
+            if (!row) {
+                return res.status(404).json({ error: 'Entrega no encontrada' });
+            }
+            
+            console.log('✅ Detalles de entrega obtenidos:', row.title);
+            res.json(row);
+        }
+    );
+});
+
+// Descargar archivo de entrega (admin)
+router.get('/download/:id', authenticateDownload, (req, res) => {
+    const submissionId = req.params.id;
+    console.log('📥 Descarga admin solicitada para entrega:', submissionId);
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    db.get(
+        'SELECT * FROM submissions WHERE id = ?',
+        [submissionId],
+        (err, submission) => {
+            db.close();
+            
+            if (err) {
+                console.error('❌ Error obteniendo entrega:', err);
+                return res.status(500).json({ error: 'Error al obtener la entrega' });
+            }
+            
+            if (!submission) {
+                return res.status(404).json({ error: 'Entrega no encontrada' });
+            }
+            
+            const filePath = submission.file_path;
+            
+            if (!filePath || !fs.existsSync(filePath)) {
+                console.error('❌ Archivo no encontrado:', filePath);
+                return res.status(404).json({ error: 'Archivo no encontrado en el servidor' });
+            }
+            
+            const downloadName = submission.original_name || submission.filename || `submission_${submission.id}`;
+            
+            res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+            res.setHeader('Content-Type', 'application/octet-stream');
+            
+            res.sendFile(path.resolve(filePath), (err) => {
+                if (err) {
+                    console.error('❌ Error enviando archivo:', err);
+                    if (!res.headersSent) {
+                        res.status(500).json({ error: 'Error al descargar el archivo' });
+                    }
+                } else {
+                    console.log('✅ Archivo descargado por admin:', downloadName);
+                }
+            });
+        }
+    );
+});
+
+// Eliminar entrega (admin)
+router.delete('/submissions/:id', authenticateAdmin, (req, res) => {
+    const submissionId = req.params.id;
+    console.log('🗑️ Admin eliminando entrega:', submissionId);
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    // Primero obtener info del archivo
+    db.get('SELECT * FROM submissions WHERE id = ?', [submissionId], (err, submission) => {
+        if (err) {
+            db.close();
+            console.error('❌ Error obteniendo entrega:', err);
+            return res.status(500).json({ error: 'Error al obtener la entrega' });
+        }
+        
+        if (!submission) {
+            db.close();
+            return res.status(404).json({ error: 'Entrega no encontrada' });
+        }
+        
+        // Eliminar de la base de datos
+        db.run('DELETE FROM submissions WHERE id = ?', [submissionId], function(err) {
+            db.close();
+            
+            if (err) {
+                console.error('❌ Error eliminando entrega:', err);
+                return res.status(500).json({ error: 'Error al eliminar la entrega' });
+            }
+            
+            // Eliminar archivo físico
+            if (submission.file_path && fs.existsSync(submission.file_path)) {
+                try {
+                    fs.unlinkSync(submission.file_path);
+                    console.log('✅ Archivo físico eliminado:', submission.file_path);
+                } catch (fileErr) {
+                    console.error('⚠️ Error eliminando archivo físico:', fileErr);
+                }
+            }
+            
+            console.log('✅ Admin eliminó entrega:', submission.title);
+            res.json({ 
+                message: 'Entrega eliminada exitosamente',
+                id: submissionId,
+                title: submission.title
+            });
+        });
+    });
+});
+
+// Exportar datos a CSV
+router.get('/export', authenticateDownload, (req, res) => {
+    console.log('📊 Exportando datos a CSV');
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    db.all(
+        `SELECT 
+            s.id,
+            s.title,
+            s.description,
+            s.original_name,
+            s.file_size,
+            s.submitted_at,
+            u.name as student_name,
+            u.email as student_email,
+            u.ra as student_ra
+        FROM submissions s
+        JOIN users u ON s.user_id = u.id
+        ORDER BY s.submitted_at DESC`,
+        (err, rows) => {
+            db.close();
+            
+            if (err) {
+                console.error('❌ Error exportando datos:', err);
+                return res.status(500).json({ error: 'Error al exportar datos' });
+            }
+            
+            // Generar CSV con más información
+            const csvHeader = 'ID,Título,Descripción,Archivo,Tamaño (MB),Fecha,Estudiante,Email,RA\n';
+            const csvRows = rows.map(row => {
+                const fileSize = row.file_size ? (row.file_size / 1024 / 1024).toFixed(2) : '0';
+                return [
+                    row.id,
+                    `"${(row.title || '').replace(/"/g, '""')}"`,
+                    `"${(row.description || '').replace(/"/g, '""')}"`,
+                    `"${(row.original_name || '').replace(/"/g, '""')}"`,
+                    fileSize,
+                    `"${new Date(row.submitted_at).toLocaleString('es-ES')}"`,
+                    `"${(row.student_name || '').replace(/"/g, '""')}"`,
+                    `"${(row.student_email || '').replace(/"/g, '""')}"`,
+                    `"${(row.student_ra || '').replace(/"/g, '""')}"`
+                ].join(',');
+            }).join('\n');
+            
+            const csvContent = csvHeader + csvRows;
+            
+            res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="entregas_${new Date().toISOString().split('T')[0]}.csv"`);
+            
+            console.log('✅ CSV generado con', rows.length, 'registros');
+            res.send(csvContent);
+        }
+    );
+});
+
+module.exports = router;
+
+========== backend/routes/auth.js ==========
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
+const router = express.Router();
+
+// Intentar cargar la base de datos
+let db;
+try {
+    db = require('../database/init');
+} catch (error) {
+    console.error('❌ Error cargando base de datos en auth.js:', error);
+}
+
+// ✅ Configuración desde variables de entorno
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// ✅ Validación estricta de configuración crítica
+if (!JWT_SECRET) {
+    console.error('❌ CRÍTICO: JWT_SECRET no está definido en variables de entorno');
+    console.log('💡 Verifica tu archivo .env y asegúrate de que JWT_SECRET esté configurado');
+}
+
+// ✅ Rate limiting configurado para Railway
+const authLimiter = rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 5,
+    message: {
+        error: 'Demasiados intentos de autenticación. Intenta en 15 minutos.',
+        retryAfter: Math.floor((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000)
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: NODE_ENV === 'production' ? 1 : true,
+    skip: (req) => {
+        return NODE_ENV === 'development' && (req.ip === '::1' || req.ip === '127.0.0.1');
+    },
+    onLimitReached: (req) => {
+        console.warn(`⚠️ Rate limit alcanzado para IP: ${req.ip} en ruta de autenticación`);
+    }
+});
+
+const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: parseInt(process.env.REGISTER_RATE_LIMIT_MAX) || 3,
+    message: {
+        error: 'Demasiados registros desde esta IP. Intenta en 1 hora.',
+        retryAfter: 60 * 60
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: NODE_ENV === 'production' ? 1 : true,
+    skip: (req) => {
+        return NODE_ENV === 'development' && (req.ip === '::1' || req.ip === '127.0.0.1');
+    },
+    onLimitReached: (req) => {
+        console.warn(`⚠️ Rate limit de registro alcanzado para IP: ${req.ip}`);
+    }
+});
+
+// ✅ Función de validación robusta
+const validateRegistrationData = (data) => {
+    const { name, email, ra, password } = data;
+    const errors = [];
+
+    // Validar nombre
+    if (!name || typeof name !== 'string') {
+        errors.push('Nombre es obligatorio');
+    } else {
+        const trimmedName = name.trim();
+        if (trimmedName.length < 2) {
+            errors.push('Nombre debe tener al menos 2 caracteres');
+        }
+        if (trimmedName.length > 100) {
+            errors.push('Nombre no puede exceder 100 caracteres');
+        }
+        if (!/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s'-]+$/.test(trimmedName)) {
+            errors.push('Nombre solo puede contener letras, espacios, apostrofes y guiones');
+        }
+    }
+
+    // Validar email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email || typeof email !== 'string') {
+        errors.push('Email es obligatorio');
+    } else {
+        const trimmedEmail = email.trim().toLowerCase();
+        if (!emailRegex.test(trimmedEmail)) {
+            errors.push('Formato de email inválido');
+        }
+        if (trimmedEmail.length > 255) {
+            errors.push('Email no puede exceder 255 caracteres');
+        }
+    }
+
+    // Validar RA
+    const raRegex = /^[0-9]{6,10}$/;
+    if (!ra || typeof ra !== 'string') {
+        errors.push('RA (Registro Académico) es obligatorio');
+    } else {
+        const trimmedRA = ra.trim();
+        if (!raRegex.test(trimmedRA)) {
+            errors.push('RA debe contener solo números (6-10 dígitos)');
+        }
+    }
+
+    // Validar contraseña
+    if (!password || typeof password !== 'string') {
+        errors.push('Contraseña es obligatoria');
+    } else {
+        if (password.length < 8) {
+            errors.push('Contraseña debe tener al menos 8 caracteres');
+        }
+        if (password.length > 128) {
+            errors.push('Contraseña no puede exceder 128 caracteres');
+        }
+        
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        
+        if (!hasUpperCase) {
+            errors.push('Contraseña debe contener al menos una letra mayúscula');
+        }
+        if (!hasLowerCase) {
+            errors.push('Contraseña debe contener al menos una letra minúscula');
+        }
+        if (!hasNumbers) {
+            errors.push('Contraseña debe contener al menos un número');
+        }
+    }
+
+    return errors;
+};
+
+// ✅ Función de logging seguro
+const logSafeData = (data, excludeFields = ['password']) => {
+    if (!data || typeof data !== 'object') return data;
+    
+    const safe = { ...data };
+    excludeFields.forEach(field => {
+        if (safe[field]) {
+            safe[field] = '[PROTEGIDO]';
+        }
+    });
+    return safe;
+};
+
+// ✅ Función para sanitizar entrada
+const sanitizeInput = (str) => {
+    if (typeof str !== 'string') return str;
+    return str.trim()
+        .replace(/[<>]/g, '')
+        .replace(/javascript:/gi, '')
+        .replace(/on\w+=/gi, '');
+};
+
+// ✅ Función para generar timestamp ISO
+const getCurrentTimestamp = () => {
+    return new Date().toISOString();
+};
+
+// ✅ Función para log de eventos de seguridad
+const logSecurityEvent = (event, details, req) => {
+    const timestamp = getCurrentTimestamp();
+    const ip = req.ip || req.connection.remoteAddress;
+    const userAgent = req.get('User-Agent') || 'Unknown';
+    
+    console.log(`🔒 [SECURITY] ${timestamp} - ${event}`, {
+        ip,
+        userAgent: userAgent.substring(0, 100),
+        details: logSafeData(details),
+        url: req.originalUrl
+    });
+};
+
+// ✅ REGISTRO DE USUARIO - COMPATIBLE CON TU ESQUEMA
+router.post('/register', registerLimiter, async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+        logSecurityEvent('REGISTER_ATTEMPT', { email: req.body.email }, req);
+        
+        if (!db) {
+            console.error('❌ Base de datos no disponible');
+            return res.status(503).json({ 
+                error: 'Servicio temporalmente no disponible',
+                code: 'SERVICE_UNAVAILABLE'
+            });
+        }
+
+        const validationErrors = validateRegistrationData(req.body);
+        if (validationErrors.length > 0) {
+            logSecurityEvent('REGISTER_VALIDATION_FAILED', { 
+                errors: validationErrors,
+                email: req.body.email 
+            }, req);
+            
+            return res.status(400).json({ 
+                error: 'Datos de registro inválidos',
+                details: validationErrors,
+                code: 'VALIDATION_ERROR'
+            });
+        }
+
+        const { name, email, ra, password } = req.body;
+        const sanitizedData = {
+            name: sanitizeInput(name).trim(),
+            email: sanitizeInput(email).trim().toLowerCase(),
+            ra: sanitizeInput(ra).trim(),
+            password: password
+        };
+
+        // ✅ COMPATIBLE: Usar solo columnas que existen en tu esquema
+        db.get('SELECT id, email, ra FROM users WHERE email = ? OR ra = ?', 
+            [sanitizedData.email, sanitizedData.ra], async (err, existingUser) => {
+            
+            if (err) {
+                console.error('❌ Error verificando usuario existente:', err.message);
+                logSecurityEvent('REGISTER_DB_ERROR', { error: err.message }, req);
+                return res.status(500).json({ 
+                    error: 'Error interno del servidor',
+                    code: 'DATABASE_ERROR'
+                });
+            }
+
+            if (existingUser) {
+                const duplicateField = existingUser.email === sanitizedData.email ? 'email' : 'ra';
+                logSecurityEvent('REGISTER_DUPLICATE_ATTEMPT', { 
+                    field: duplicateField,
+                    email: sanitizedData.email,
+                    ra: sanitizedData.ra
+                }, req);
+                
+                return res.status(409).json({ 
+                    error: 'Usuario ya existe con ese email o RA',
+                    code: 'USER_EXISTS',
+                    field: duplicateField
+                });
+            }
+
+            try {
+                console.log('✅ Creando nuevo usuario...');
+                const hashedPassword = await bcrypt.hash(sanitizedData.password, BCRYPT_ROUNDS);
+                
+                // ✅ EXACTAMENTE TU ESQUEMA: name, email, ra, password, role (created_at es automático)
+                db.run('INSERT INTO users (name, email, ra, password, role) VALUES (?, ?, ?, ?, ?)',
+                    [sanitizedData.name, sanitizedData.email, sanitizedData.ra, hashedPassword, 'student'], 
+                    function(err) {
+                        if (err) {
+                            console.error('❌ Error creando usuario:', err.message);
+                            logSecurityEvent('REGISTER_CREATE_ERROR', { 
+                                error: err.message,
+                                email: sanitizedData.email 
+                            }, req);
+                            
+                            return res.status(500).json({ 
+                                error: 'Error creando usuario',
+                                code: 'CREATE_ERROR'
+                            });
+                        }
+
+                        const processingTime = Date.now() - startTime;
+                        logSecurityEvent('REGISTER_SUCCESS', { 
+                            userId: this.lastID,
+                            email: sanitizedData.email,
+                            processingTime: `${processingTime}ms`
+                        }, req);
+
+                        res.status(201).json({ 
+                            message: 'Usuario registrado exitosamente',
+                            userId: this.lastID,
+                            email: sanitizedData.email
+                        });
+                    });
+                    
+            } catch (hashError) {
+                console.error('❌ Error en hash de contraseña:', hashError.message);
+                logSecurityEvent('REGISTER_HASH_ERROR', { error: hashError.message }, req);
+                return res.status(500).json({ 
+                    error: 'Error procesando registro',
+                    code: 'HASH_ERROR'
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error general en registro:', error.message);
+        logSecurityEvent('REGISTER_GENERAL_ERROR', { error: error.message }, req);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ✅ LOGIN DE USUARIO - COMPATIBLE CON TU ESQUEMA
+router.post('/login', authLimiter, async (req, res) => {
+    const startTime = Date.now();
+    
+    try {
+        logSecurityEvent('LOGIN_ATTEMPT', { email: req.body.email }, req);
+        
+        if (!db) {
+            return res.status(503).json({ 
+                error: 'Servicio temporalmente no disponible',
+                code: 'SERVICE_UNAVAILABLE'
+            });
+        }
+
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            logSecurityEvent('LOGIN_VALIDATION_FAILED', { missingFields: { email: !email, password: !password } }, req);
+            return res.status(400).json({ 
+                error: 'Email y contraseña son obligatorios',
+                code: 'VALIDATION_ERROR'
+            });
+        }
+
+        const sanitizedEmail = sanitizeInput(email).trim().toLowerCase();
+        
+        if (!sanitizedEmail) {
+            logSecurityEvent('LOGIN_INVALID_EMAIL', { originalEmail: email }, req);
+            return res.status(400).json({ 
+                error: 'Email inválido',
+                code: 'INVALID_EMAIL'
+            });
+        }
+
+        // ✅ EXACTAMENTE TU ESQUEMA: id, name, email, password, role, created_at
+        db.get('SELECT id, name, email, password, role, created_at FROM users WHERE email = ?', 
+            [sanitizedEmail], async (err, user) => {
+            
+            if (err) {
+                console.error('❌ Error buscando usuario:', err.message);
+                logSecurityEvent('LOGIN_DB_ERROR', { error: err.message }, req);
+                return res.status(500).json({ 
+                    error: 'Error interno del servidor',
+                    code: 'DATABASE_ERROR'
+                });
+            }
+
+            if (!user) {
+                logSecurityEvent('LOGIN_USER_NOT_FOUND', { email: sanitizedEmail }, req);
+                return res.status(401).json({ 
+                    error: 'Credenciales inválidas',
+                    code: 'INVALID_CREDENTIALS'
+                });
+            }
+
+            try {
+                const validPassword = await bcrypt.compare(password, user.password);
+                if (!validPassword) {
+                    logSecurityEvent('LOGIN_INVALID_PASSWORD', { 
+                        email: sanitizedEmail,
+                        userId: user.id 
+                    }, req);
+                    
+                    return res.status(401).json({ 
+                        error: 'Credenciales inválidas',
+                        code: 'INVALID_CREDENTIALS'
+                    });
+                }
+
+                const tokenPayload = {
+                    userId: user.id,
+                    email: user.email,
+                    role: user.role || 'student',
+                    name: user.name,
+                    iat: Math.floor(Date.now() / 1000)
+                };
+
+                const token = jwt.sign(
+                    tokenPayload,
+                    JWT_SECRET,
+                    { 
+                        expiresIn: JWT_EXPIRES_IN,
+                        issuer: 'informatica-medica-platform',
+                        audience: 'students',
+                        subject: user.id.toString()
+                    }
+                );
+
+                const processingTime = Date.now() - startTime;
+                logSecurityEvent('LOGIN_SUCCESS', { 
+                    userId: user.id,
+                    email: sanitizedEmail,
+                    role: user.role,
+                    processingTime: `${processingTime}ms`
+                }, req);
+                
+                res.json({
+                    message: 'Login exitoso',
+                    token,
+                    expiresIn: JWT_EXPIRES_IN,
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role || 'student',
+                        memberSince: user.created_at
+                    }
+                });
+                
+            } catch (compareError) {
+                console.error('❌ Error comparando contraseña:', compareError.message);
+                logSecurityEvent('LOGIN_COMPARE_ERROR', { 
+                    error: compareError.message,
+                    email: sanitizedEmail 
+                }, req);
+                
+                return res.status(500).json({ 
+                    error: 'Error interno del servidor',
+                    code: 'COMPARE_ERROR'
+                });
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error general en login:', error.message);
+        logSecurityEvent('LOGIN_GENERAL_ERROR', { error: error.message }, req);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ✅ NUEVA RUTA: Verificar token
+router.get('/verify', (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ 
+                error: 'Token no proporcionado o formato inválido',
+                code: 'NO_TOKEN'
+            });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) {
+                logSecurityEvent('TOKEN_VERIFICATION_FAILED', { 
+                    error: err.message,
+                    tokenPresent: !!token 
+                }, req);
+                
+                let errorMessage = 'Token inválido';
+                let errorCode = 'INVALID_TOKEN';
+                
+                if (err.name === 'TokenExpiredError') {
+                    errorMessage = 'Token expirado';
+                    errorCode = 'TOKEN_EXPIRED';
+                } else if (err.name === 'JsonWebTokenError') {
+                    errorMessage = 'Token malformado';
+                    errorCode = 'MALFORMED_TOKEN';
+                }
+                
+                return res.status(401).json({ 
+                    error: errorMessage,
+                    code: errorCode
+                });
+            }
+
+            logSecurityEvent('TOKEN_VERIFICATION_SUCCESS', { 
+                userId: decoded.userId,
+                email: decoded.email,
+                role: decoded.role 
+            }, req);
+
+            res.json({ 
+                valid: true, 
+                user: {
+                    userId: decoded.userId,
+                    email: decoded.email,
+                    role: decoded.role,
+                    name: decoded.name
+                },
+                issuedAt: new Date(decoded.iat * 1000).toISOString(),
+                expiresAt: new Date(decoded.exp * 1000).toISOString()
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ Error verificando token:', error.message);
+        logSecurityEvent('TOKEN_VERIFICATION_ERROR', { error: error.message }, req);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ✅ NUEVA RUTA: Información del usuario autenticado
+router.get('/me', (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ 
+                error: 'Token no proporcionado',
+                code: 'NO_TOKEN'
+            });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ 
+                    error: 'Token inválido',
+                    code: 'INVALID_TOKEN'
+                });
+            }
+
+            // ✅ COMPATIBLE: Buscar información usando tu esquema
+            db.get('SELECT id, name, email, role, created_at FROM users WHERE id = ?', 
+                [decoded.userId], (dbErr, user) => {
+                
+                if (dbErr) {
+                    console.error('❌ Error buscando usuario:', dbErr.message);
+                    return res.status(500).json({ 
+                        error: 'Error interno del servidor',
+                        code: 'DATABASE_ERROR'
+                    });
+                }
+
+                if (!user) {
+                    return res.status(404).json({ 
+                        error: 'Usuario no encontrado',
+                        code: 'USER_NOT_FOUND'
+                    });
+                }
+
+                res.json({
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        memberSince: user.created_at
+                    }
+                });
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo información del usuario:', error.message);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+module.exports = router;
+
+========== backend/routes/materials.js ==========
+const express = require('express');
+const router = express.Router();
+
+// Obtener todos los materiales (público)
+router.get('/', (req, res) => {
+    console.log('📚 Solicitando materiales del curso');
+    
+    // Materiales de ejemplo para probar
+    const sampleMaterials = [
+        {
+            id: 1,
+            title: "Introducción a la Informática Médica",
+            description: "Conceptos básicos y fundamentos",
+            category: "Teórico",
+            uploaded_at: new Date().toISOString()
+        },
+        {
+            id: 2,
+            title: "Sistemas de Información Hospitalaria",
+            description: "Análisis de sistemas HIS",
+            category: "Práctico",
+            uploaded_at: new Date().toISOString()
+        }
+    ];
+    
+    res.json(sampleMaterials);
+});
+
+module.exports = router;
+
+========== backend/routes/submissions.js ==========
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const sqlite3 = require('sqlite3').verbose();
+const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middleware/auth');
+const emailService = require('../services/emailService');
+
+const router = express.Router();
+const dbPath = path.join(__dirname, '../database.db'); // ← CORREGIDO: ruta simplificada
+
+// Usar el middleware de autenticación
+const authenticateToken = authMiddleware.authenticateToken;
+
+// Middleware personalizado para descargas que acepta token por parámetro o header
+function authenticateDownload(req, res, next) {
+    let token = null;
+    
+    // Intentar obtener token del header Authorization
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+    }
+    
+    // Si no hay token en header, intentar obtenerlo del parámetro de consulta
+    if (!token && req.query.token) {
+        token = req.query.token;
+    }
+
+    if (!token) {
+        return res.status(401).json({ error: 'Token de acceso requerido' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET || 'informatica_medica_secret_key_2024', (err, user) => {
+        if (err) {
+            return res.status(403).json({ error: 'Token inválido' });
+        }
+
+        req.user = user;
+        next();
+    });
+}
+
+// Configuración de multer para subida de archivos
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadPath = 'uploads/submissions';
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+        const timestamp = Date.now();
+        const userId = req.user.userId;
+        const extension = path.extname(file.originalname);
+        const nameWithoutExt = path.basename(file.originalname, extension);
+        const uniqueName = `${timestamp}_${userId}_${nameWithoutExt}${extension}`;
+        cb(null, uniqueName);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'application/zip',
+        'application/x-zip-compressed'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Tipo de archivo no permitido. Solo se permiten: PDF, DOC, DOCX, TXT, ZIP'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024
+    }
+});
+
+// Obtener entregas del usuario autenticado
+router.get('/my-submissions', authenticateToken, (req, res) => {
+    console.log('📋 Obteniendo entregas para usuario:', req.user.userId);
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    db.all(
+        'SELECT * FROM submissions WHERE user_id = ? ORDER BY submitted_at DESC',
+        [req.user.userId],
+        (err, rows) => {
+            db.close();
+            
+            if (err) {
+                console.error('Error obteniendo entregas:', err);
+                return res.status(500).json({ error: 'Error al obtener entregas' });
+            }
+            
+            console.log(`✅ Encontradas ${rows.length} entregas para usuario ${req.user.userId}`);
+            res.json(rows);
+        }
+    );
+});
+
+// Subir nuevo trabajo con notificación por email
+router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
+    console.log('📤 Subida de trabajo por usuario:', req.user.userId);
+    
+    if (!req.file) {
+        return res.status(400).json({ error: 'No se ha seleccionado ningún archivo' });
+    }
+    
+    const { title, description } = req.body;
+    
+    if (!title || title.trim() === '') {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'El título es obligatorio' });
+    }
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    // ✅ CORREGIDO: Usar los nombres de columna correctos
+    db.run(
+        `INSERT INTO submissions (user_id, filename, original_name, file_path, file_size, mime_type, title, description) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+            req.user.userId,
+            req.file.filename,
+            req.file.originalname,  // ← CORREGIDO: ahora coincide con la columna de la DB
+            req.file.path,
+            req.file.size,          // ← AGREGADO
+            req.file.mimetype,      // ← AGREGADO
+            title.trim(),
+            description ? description.trim() : null
+        ],
+        async function(err) {
+            db.close();
+            
+            if (err) {
+                console.error('Error guardando entrega:', err);
+                fs.unlinkSync(req.file.path);
+                return res.status(500).json({ error: 'Error al guardar la entrega' });
+            }
+            
+            console.log('✅ Entrega guardada:', title, 'ID:', this.lastID);
+            
+            // Preparar información para el email
+            const submissionInfo = {
+                id: this.lastID,
+                title: title,
+                description: description,
+                filename: req.file.filename,
+                originalName: req.file.originalname,
+                size: req.file.size,
+                submitted_at: new Date().toISOString()
+            };
+
+            const studentInfo = {
+                userId: req.user.userId,
+                email: req.user.email,
+                nombre: req.user.nombre || req.user.email,
+                ra: req.user.ra
+            };
+
+            // Enviar notificación por email (no bloquear la respuesta)
+            try {
+                const emailResult = await emailService.sendSubmissionNotification(studentInfo, submissionInfo);
+                if (emailResult.success) {
+                    console.log('📧 Notificaciones enviadas exitosamente');
+                } else {
+                    console.log('⚠️ Error en notificaciones:', emailResult.error);
+                }
+            } catch (emailError) {
+                console.error('❌ Error enviando notificaciones:', emailError);
+            }
+            
+            res.status(201).json({
+                message: 'Trabajo subido exitosamente',
+                submission: submissionInfo,
+                emailNotification: 'Notificaciones enviadas'
+            });
+        }
+    );
+});
+
+// Descargar archivo de entrega
+router.get('/download/:id', authenticateDownload, (req, res) => {
+    const submissionId = req.params.id;
+    console.log('📥 Descarga solicitada para entrega:', submissionId, 'por usuario:', req.user.userId);
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    db.get(
+        'SELECT * FROM submissions WHERE id = ? AND user_id = ?',
+        [submissionId, req.user.userId],
+        (err, submission) => {
+            db.close();
+            
+            if (err) {
+                console.error('Error obteniendo entrega:', err);
+                return res.status(500).json({ error: 'Error al obtener la entrega' });
+            }
+            
+            if (!submission) {
+                return res.status(404).json({ error: 'Entrega no encontrada' });
+            }
+            
+            const filePath = submission.file_path;
+            
+            if (!fs.existsSync(filePath)) {
+                console.error('Archivo no encontrado:', filePath);
+                return res.status(404).json({ error: 'Archivo no encontrado en el servidor' });
+            }
+            
+            res.setHeader('Content-Disposition', `attachment; filename="${submission.original_name}"`);
+            res.setHeader('Content-Type', 'application/octet-stream');
+            
+            res.sendFile(path.resolve(filePath), (err) => {
+                if (err) {
+                    console.error('Error enviando archivo:', err);
+                    if (!res.headersSent) {
+                        res.status(500).json({ error: 'Error al descargar el archivo' });
+                    }
+                } else {
+                    console.log('✅ Archivo descargado:', submission.original_name);
+                }
+            });
+        }
+    );
+});
+
+// Eliminar entrega
+router.delete('/delete/:id', authenticateToken, (req, res) => {
+    const submissionId = req.params.id;
+    console.log('��️ Eliminación solicitada para entrega:', submissionId, 'por usuario:', req.user.userId);
+    
+    const db = new sqlite3.Database(dbPath);
+    
+    db.get(
+        'SELECT * FROM submissions WHERE id = ? AND user_id = ?',
+        [submissionId, req.user.userId],
+        (err, submission) => {
+            if (err) {
+                db.close();
+                console.error('Error obteniendo entrega:', err);
+                return res.status(500).json({ error: 'Error al obtener la entrega' });
+            }
+            
+            if (!submission) {
+                db.close();
+                return res.status(404).json({ error: 'Entrega no encontrada' });
+            }
+            
+            db.run(
+                'DELETE FROM submissions WHERE id = ? AND user_id = ?',
+                [submissionId, req.user.userId],
+                function(err) {
+                    db.close();
+                    
+                    if (err) {
+                        console.error('Error eliminando entrega de BD:', err);
+                        return res.status(500).json({ error: 'Error al eliminar la entrega' });
+                    }
+                    
+                    if (fs.existsSync(submission.file_path)) {
+                        try {
+                            fs.unlinkSync(submission.file_path);
+                            console.log('✅ Archivo físico eliminado:', submission.file_path);
+                        } catch (fileErr) {
+                            console.error('Error eliminando archivo físico:', fileErr);
+                        }
+                    }
+                    
+                    console.log('✅ Entrega eliminada:', submission.title);
+                    res.json({ message: 'Entrega eliminada exitosamente' });
+                }
+            );
+        }
+    );
+});
+
+// Ruta para probar configuración de email
+router.get('/test-email', authenticateToken, async (req, res) => {
+    try {
+        const testResult = await emailService.testConnection();
+        res.json({
+            message: 'Test de configuración de email',
+            result: testResult
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Error en test de email',
+            details: error.message
+        });
+    }
+});
+
+module.exports = router;
+
+========== backend/middleware/auth.js ==========
+const jwt = require('jsonwebtoken');
+
+// ✅ MEJORA: Configuración segura desde variables de entorno
+const JWT_SECRET = process.env.JWT_SECRET;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// ✅ MEJORA: Validación crítica de configuración
+if (!JWT_SECRET) {
+    console.error('❌ CRÍTICO: JWT_SECRET no está definido en variables de entorno');
+    if (NODE_ENV === 'production') {
+        console.error('🚨 APLICACIÓN NO PUEDE INICIAR EN PRODUCCIÓN SIN JWT_SECRET');
+        process.exit(1);
+    }
+    console.warn('⚠️ Usando configuración insegura para desarrollo');
+}
+
+// ✅ MEJORA: Función para logging de eventos de seguridad
+const logSecurityEvent = (event, details, req) => {
+    const timestamp = new Date().toISOString();
+    const ip = req.ip || req.connection.remoteAddress;
+    const userAgent = req.get('User-Agent') || 'Unknown';
+    const method = req.method;
+    const url = req.originalUrl;
+    
+    console.log(`🔒 [MIDDLEWARE] ${timestamp} - ${event}`, {
+        ip,
+        method,
+        url,
+        userAgent: userAgent.substring(0, 100),
+        details
+    });
+};
+
+// ✅ MEJORA: Validación robusta del payload del token
+const validateTokenPayload = (payload) => {
+    const requiredFields = ['userId', 'email', 'role'];
+    const errors = [];
+    
+    for (const field of requiredFields) {
+        if (!payload[field]) {
+            errors.push(`Campo requerido faltante: ${field}`);
+        }
+    }
+    
+    // Validar tipos de datos
+    if (payload.userId && typeof payload.userId !== 'number') {
+        errors.push('userId debe ser un número');
+    }
+    
+    if (payload.email && typeof payload.email !== 'string') {
+        errors.push('email debe ser una cadena');
+    }
+    
+    if (payload.role && typeof payload.role !== 'string') {
+        errors.push('role debe ser una cadena');
+    }
+    
+    // Validar roles válidos
+    const validRoles = ['admin', 'student'];
+    if (payload.role && !validRoles.includes(payload.role)) {
+        errors.push(`Rol inválido: ${payload.role}`);
+    }
+    
+    return errors;
+};
+
+// ✅ MEJORA: Función principal de autenticación mejorada
+function authenticateToken(req, res, next) {
+    try {
+        const authHeader = req.headers['authorization'];
+        
+        // ✅ MEJORA: Validación más robusta del header
+        if (!authHeader) {
+            logSecurityEvent('AUTH_NO_HEADER', {}, req);
+            return res.status(401).json({ 
+                error: 'Token de acceso requerido',
+                code: 'NO_AUTH_HEADER'
+            });
+        }
+        
+        if (!authHeader.startsWith('Bearer ')) {
+            logSecurityEvent('AUTH_INVALID_FORMAT', { authHeader: authHeader.substring(0, 20) }, req);
+            return res.status(401).json({ 
+                error: 'Formato de autorización inválido. Use: Bearer <token>',
+                code: 'INVALID_AUTH_FORMAT'
+            });
+        }
+        
+        const token = authHeader.split(' ')[1];
+        
+        if (!token || token.trim() === '') {
+            logSecurityEvent('AUTH_EMPTY_TOKEN', {}, req);
+            return res.status(401).json({ 
+                error: 'Token vacío',
+                code: 'EMPTY_TOKEN'
+            });
+        }
+
+        // ✅ MEJORA: Verificación JWT con manejo detallado de errores
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (err) {
+                let errorMessage = 'Token inválido';
+                let errorCode = 'INVALID_TOKEN';
+                let logEvent = 'AUTH_TOKEN_INVALID';
+                
+                // ✅ MEJORA: Manejo específico de diferentes tipos de errores JWT
+                switch (err.name) {
+                    case 'TokenExpiredError':
+                        errorMessage = 'Token expirado';
+                        errorCode = 'TOKEN_EXPIRED';
+                        logEvent = 'AUTH_TOKEN_EXPIRED';
+                        break;
+                    case 'JsonWebTokenError':
+                        errorMessage = 'Token malformado';
+                        errorCode = 'MALFORMED_TOKEN';
+                        logEvent = 'AUTH_TOKEN_MALFORMED';
+                        break;
+                    case 'NotBeforeError':
+                        errorMessage = 'Token no válido aún';
+                        errorCode = 'TOKEN_NOT_ACTIVE';
+                        logEvent = 'AUTH_TOKEN_NOT_ACTIVE';
+                        break;
+                    default:
+                        logEvent = 'AUTH_TOKEN_ERROR';
+                }
+                
+                logSecurityEvent(logEvent, { 
+                    error: err.message,
+                    tokenLength: token.length 
+                }, req);
+                
+                return res.status(403).json({ 
+                    error: errorMessage,
+                    code: errorCode
+                });
+            }
+
+            // ✅ MEJORA: Validar estructura del payload
+            const validationErrors = validateTokenPayload(decoded);
+            if (validationErrors.length > 0) {
+                logSecurityEvent('AUTH_INVALID_PAYLOAD', { 
+                    errors: validationErrors,
+                    userId: decoded.userId 
+                }, req);
+                
+                return res.status(403).json({ 
+                    error: 'Token con estructura inválida',
+                    code: 'INVALID_TOKEN_PAYLOAD',
+                    details: validationErrors
+                });
+            }
+
+            // ✅ MEJORA: Verificar que el token no esté próximo a expirar (opcional)
+            const now = Math.floor(Date.now() / 1000);
+            const timeUntilExpiry = decoded.exp - now;
+            
+            if (timeUntilExpiry < 300) { // Menos de 5 minutos
+                console.warn(`⚠️ Token próximo a expirar para usuario ${decoded.email}: ${timeUntilExpiry}s restantes`);
+                // Agregar header para que el frontend sepa que debe renovar
+                res.set('X-Token-Expiry-Warning', 'true');
+                res.set('X-Token-Expires-In', timeUntilExpiry.toString());
+            }
+
+            logSecurityEvent('AUTH_SUCCESS', { 
+                userId: decoded.userId,
+                email: decoded.email,
+                role: decoded.role,
+                expiresIn: timeUntilExpiry
+            }, req);
+
+            // ✅ MEJORA: Agregar información adicional al objeto user
+            req.user = {
+                ...decoded,
+                tokenExpiresIn: timeUntilExpiry,
+                tokenIssuedAt: new Date(decoded.iat * 1000).toISOString(),
+                tokenExpiresAt: new Date(decoded.exp * 1000).toISOString()
+            };
+            
+            next();
+        });
+        
+    } catch (error) {
+        console.error('❌ Error general en autenticación:', error.message);
+        logSecurityEvent('AUTH_GENERAL_ERROR', { error: error.message }, req);
+        
+        return res.status(500).json({ 
+            error: 'Error interno del servidor',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+}
+
+// ✅ MEJORA: Middleware de autenticación admin mejorado
+function authenticateAdmin(req, res, next) {
+    authenticateToken(req, res, (err) => {
+        if (err) return; // El error ya fue manejado por authenticateToken
+        
+        try {
+            // ✅ MEJORA: Verificación más robusta del rol admin
+            if (!req.user || !req.user.role) {
+                logSecurityEvent('ADMIN_AUTH_NO_ROLE', { 
+                    userId: req.user?.userId,
+                    email: req.user?.email 
+                }, req);
+                
+                return res.status(403).json({ 
+                    error: 'Información de rol no disponible',
+                    code: 'NO_ROLE_INFO'
+                });
+            }
+            
+            if (req.user.role !== 'admin') {
+                logSecurityEvent('ADMIN_AUTH_DENIED', { 
+                    userId: req.user.userId,
+                    email: req.user.email,
+                    role: req.user.role,
+                    attemptedResource: req.originalUrl
+                }, req);
+                
+                return res.status(403).json({ 
+                    error: 'Acceso denegado. Se requieren privilegios de administrador.',
+                    code: 'INSUFFICIENT_PRIVILEGES',
+                    requiredRole: 'admin',
+                    currentRole: req.user.role
+                });
+            }
+            
+            logSecurityEvent('ADMIN_AUTH_SUCCESS', { 
+                userId: req.user.userId,
+                email: req.user.email,
+                resource: req.originalUrl
+            }, req);
+            
+            next();
+            
+        } catch (error) {
+            console.error('❌ Error en autenticación admin:', error.message);
+            logSecurityEvent('ADMIN_AUTH_ERROR', { error: error.message }, req);
+            
+            return res.status(500).json({ 
+                error: 'Error interno del servidor',
+                code: 'INTERNAL_ERROR'
+            });
+        }
+    });
+}
+
+// ✅ NUEVA FUNCIÓN: Middleware para verificar roles específicos
+function requireRole(allowedRoles) {
+    return (req, res, next) => {
+        authenticateToken(req, res, (err) => {
+            if (err) return;
+            
+            try {
+                if (!req.user || !req.user.role) {
+                    logSecurityEvent('ROLE_CHECK_NO_ROLE', { 
+                        userId: req.user?.userId,
+                        requiredRoles: allowedRoles 
+                    }, req);
+                    
+                    return res.status(403).json({ 
+                        error: 'Información de rol no disponible',
+                        code: 'NO_ROLE_INFO'
+                    });
+                }
+                
+                if (!allowedRoles.includes(req.user.role)) {
+                    logSecurityEvent('ROLE_CHECK_DENIED', { 
+                        userId: req.user.userId,
+                        email: req.user.email,
+                        currentRole: req.user.role,
+                        requiredRoles: allowedRoles,
+                        resource: req.originalUrl
+                    }, req);
+                    
+                    return res.status(403).json({ 
+                        error: 'Acceso denegado. Rol insuficiente.',
+                        code: 'INSUFFICIENT_ROLE',
+                        requiredRoles: allowedRoles,
+                        currentRole: req.user.role
+                    });
+                }
+                
+                logSecurityEvent('ROLE_CHECK_SUCCESS', { 
+                    userId: req.user.userId,
+                    email: req.user.email,
+                    role: req.user.role,
+                    resource: req.originalUrl
+                }, req);
+                
+                next();
+                
+            } catch (error) {
+                console.error('❌ Error en verificación de rol:', error.message);
+                logSecurityEvent('ROLE_CHECK_ERROR', { error: error.message }, req);
+                
+                return res.status(500).json({ 
+                    error: 'Error interno del servidor',
+                    code: 'INTERNAL_ERROR'
+                });
+            }
+        });
+    };
+}
+
+// ✅ NUEVA FUNCIÓN: Middleware opcional (no falla si no hay token)
+function optionalAuth(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        // No hay token, continuar sin autenticación
+        req.user = null;
+        return next();
+    }
+    
+    // Hay token, intentar autenticar
+    authenticateToken(req, res, next);
+}
+
+// ✅ NUEVA FUNCIÓN: Middleware para verificar ownership de recursos
+function requireOwnership(getResourceUserId) {
+    return async (req, res, next) => {
+        authenticateToken(req, res, async (err) => {
+            if (err) return;
+            
+            try {
+                // Si es admin, permitir acceso
+                if (req.user.role === 'admin') {
+                    return next();
+                }
+                
+                // Obtener el ID del usuario propietario del recurso
+                const resourceUserId = await getResourceUserId(req);
+                
+                if (resourceUserId !== req.user.userId) {
+                    logSecurityEvent('OWNERSHIP_CHECK_DENIED', { 
+                        userId: req.user.userId,
+                        email: req.user.email,
+                        resourceUserId: resourceUserId,
+                        resource: req.originalUrl
+                    }, req);
+                    
+                    return res.status(403).json({ 
+                        error: 'Acceso denegado. Solo puedes acceder a tus propios recursos.',
+                        code: 'RESOURCE_ACCESS_DENIED'
+                    });
+                }
+                
+                logSecurityEvent('OWNERSHIP_CHECK_SUCCESS', { 
+                    userId: req.user.userId,
+                    email: req.user.email,
+                    resource: req.originalUrl
+                }, req);
+                
+                next();
+                
+            } catch (error) {
+                console.error('❌ Error en verificación de ownership:', error.message);
+                logSecurityEvent('OWNERSHIP_CHECK_ERROR', { error: error.message }, req);
+                
+                return res.status(500).json({ 
+                    error: 'Error interno del servidor',
+                    code: 'INTERNAL_ERROR'
+                });
+            }
+        });
+    };
+}
+
+// Alias para compatibilidad
+const requireAdmin = authenticateAdmin;
+
+module.exports = {
+    authenticateToken,
+    authenticateAdmin,
+    requireAdmin,
+    requireRole,
+    optionalAuth,
+    requireOwnership
+};
+
+========== frontend/admin-panel.html ==========
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Informática Médica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-laptop-medical me-2"></i>
+                Informática Médica - Admin
+            </a>
+            
+            <div class="d-flex">
+                <div id="admin-user-info" class="text-light"></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>📊 Panel de Administración</h2>
+                <p class="text-muted">Gestión de entregas y estudiantes</p>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="total-students">-</h4>
+                                <p class="mb-0">Estudiantes</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="total-submissions">-</h4>
+                                <p class="mb-0">Entregas</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-file-upload fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="submissions-today">-</h4>
+                                <p class="mb-0">Hoy</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-day fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="email-status">-</h4>
+                                <p class="mb-0">Email</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-envelope fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-filter text-primary me-2"></i>
+                            Filtros y Búsqueda
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="search-student" class="form-label">Buscar Estudiante</label>
+                                <input type="text" class="form-control" id="search-student" 
+                                       placeholder="Nombre, email o RA...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter-date" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="filter-date">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter-title" class="form-label">Título del Trabajo</label>
+                                <input type="text" class="form-control" id="filter-title" 
+                                       placeholder="Buscar por título...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-grid">
+                                    <button class="btn btn-primary" onclick="applyFilters()">
+                                        <i class="fas fa-search me-1"></i>
+                                        Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de entregas -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list text-success me-2"></i>
+                            Todas las Entregas
+                        </h5>
+                        <div>
+                            <button class="btn btn-outline-secondary btn-sm me-2" onclick="exportData()">
+                                <i class="fas fa-download me-1"></i>
+                                Exportar
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadAllSubmissions()">
+                                <i class="fas fa-refresh me-1"></i>
+                                Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="submissions-list">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando entregas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
+
+========== frontend/admin.html ==========
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Informática Médica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-laptop-medical me-2"></i>
+                Informática Médica - Admin
+            </a>
+            
+            <div class="d-flex">
+                <div id="admin-user-info" class="text-light me-3"></div>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alert container para mensajes -->
+    <div class="container mt-3">
+        <div id="alert-container"></div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>📊 Panel de Administración</h2>
+                <p class="text-muted">Gestión de entregas y estudiantes</p>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="total-students">-</h4>
+                                <p class="mb-0">Estudiantes</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="total-submissions">-</h4>
+                                <p class="mb-0">Entregas</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-file-upload fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="submissions-today">-</h4>
+                                <p class="mb-0">Hoy</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-day fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="email-status">-</h4>
+                                <p class="mb-0">Email</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-envelope fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-filter text-primary me-2"></i>
+                            Filtros y Búsqueda
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="search-student" class="form-label">Buscar Estudiante</label>
+                                <input type="text" class="form-control" id="search-student" 
+                                       placeholder="Nombre, email o RA...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter-date" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="filter-date">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filter-title" class="form-label">Título del Trabajo</label>
+                                <input type="text" class="form-control" id="filter-title" 
+                                       placeholder="Buscar por título...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-grid">
+                                    <button class="btn btn-primary" onclick="applyFilters()">
+                                        <i class="fas fa-search me-1"></i>
+                                        Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de entregas -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list text-success me-2"></i>
+                            Todas las Entregas
+                        </h5>
+                        <div>
+                            <button class="btn btn-outline-secondary btn-sm me-2" onclick="exportData()">
+                                <i class="fas fa-download me-1"></i>
+                                Exportar
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadAllSubmissions()">
+                                <i class="fas fa-refresh me-1"></i>
+                                Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="submissions-list">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando entregas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>  <!-- ← AGREGADO: Referencia a auth.js -->
+    <script src="js/admin.js"></script>
+    
+    <script>
+        // Verificar permisos de admin al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔐 Verificando permisos de administrador...');
+            
+            // Usar función de auth.js para verificar admin
+            if (!window.authFunctions.requireAdmin()) {
+                return; // requireAdmin ya maneja la redirección
+            }
+            
+            // Mostrar información del usuario admin
+            const user = window.authFunctions.getUser();
+            if (user) {
+                document.getElementById('admin-user-info').innerHTML = `
+                    <span class="navbar-text">
+                        <i class="fas fa-user-shield me-1"></i>
+                        ${user.name} (${user.email})
+                    </span>
+                `;
+            }
+            
+            console.log('✅ Acceso de administrador verificado');
+        });
+        
+        // Función logout usando auth.js
+        function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                window.authFunctions.logout();
+            }
+        }
+    </script>
+</body>
+</html>
+
+========== frontend/index.html ==========
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informática Médica - Plataforma de Entregas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-heartbeat me-2"></i>Informática Médica
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="login.html">Iniciar Sesión</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="register.html">Registrarse</a>
+                    </li>
+                </ul>
+                <div id="user-info" class="d-flex align-items-center"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section bg-primary text-white py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        <i class="fas fa-laptop-medical me-3"></i>
+                        Plataforma de Informática Médica
+                    </h1>
+                    <p class="lead mb-4">
+                        Sistema de entrega de trabajos prácticos para estudiantes de medicina. 
+                        Sube tus trabajos de forma segura y organizada.
+                    </p>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="register.html" class="btn btn-light btn-lg me-md-2">
+                            <i class="fas fa-user-plus me-2"></i>Registrarse
+                        </a>
+                        <a href="login.html" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <i class="fas fa-file-medical-alt" style="font-size: 12rem; opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col">
+                    <h2 class="display-5 fw-bold">Características del Sistema</h2>
+                    <p class="lead text-muted">Todo lo que necesitas para gestionar tus entregas académicas</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-upload text-primary mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="card-title">Subida Fácil</h5>
+                            <p class="card-text">
+                                Sube tus trabajos en formatos PDF, DOCX, PNG y JPG de manera rápida y segura.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock text-success mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="card-title">Historial Completo</h5>
+                            <p class="card-text">
+                                Mantén un registro detallado de todas tus entregas con fecha y hora exacta.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shield-alt text-warning mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="card-title">Seguro y Confiable</h5>
+                            <p class="card-text">
+                                Tus archivos están protegidos con autenticación segura y almacenamiento confiable.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instructions Section -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="text-center mb-5">¿Cómo usar la plataforma?</h2>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>1</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Regístrate</h5>
+                                    <p class="text-muted">Crea tu cuenta con tu email institucional y datos académicos.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>2</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Inicia Sesión</h5>
+                                    <p class="text-muted">Accede a tu área personal con tus credenciales.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>3</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Sube tu Trabajo</h5>
+                                    <p class="text-muted">Selecciona el archivo y completa la información requerida.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <strong>4</strong>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5>Confirma la Entrega</h5>
+                                    <p class="text-muted">Verifica que tu trabajo se haya subido correctamente.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-heartbeat me-2"></i>Informática Médica</h5>
+                    <p class="text-muted">Plataforma de entregas académicas para estudiantes de medicina.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6>Soporte Técnico</h6>
+                    <p class="text-muted">
+                        <i class="fas fa-envelope me-2"></i>
+                        ec.gabrielalvarez@gmail.com
+                    </p>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="text-center">
+                <small class="text-muted">
+                    © 2024 Informática Médica - Desarrollado por Gabriel Álvarez
+                </small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    
+    <!-- Auth JS - RUTA CORRECTA -->
+    <script src="js/auth.js"></script>
+</body>
+</html>
+
+
+========== frontend/login.html ==========
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Informática Médica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-heartbeat me-2"></i>Informática Médica
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Inicio</a>
+                <a class="nav-link" href="register.html">Registrarse</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="alert-container"></div>
+                        
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                                <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                            </button>
+                        </form>
+                        
+                        <div class="text-center mt-3">
+                            <p>¿No tienes cuenta? <a href="register.html">Registrarse</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    <script src="js/auth.js"></script>  <!-- ← AGREGADO: Referencia a auth.js -->
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Iniciando...';
+                
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                    showAlert('Email y contraseña son obligatorios', 'danger');
+                    resetButton();
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        localStorage.setItem('token', result.token);
+                        localStorage.setItem('user', JSON.stringify(result.user));
+                        
+                        showAlert('¡Login exitoso! Redirigiendo...', 'success');
+                        
+                        setTimeout(() => {
+                            if (result.user.role === 'admin') {
+                                window.location.href = 'admin-panel.html';
+                            } else {
+                                window.location.href = 'student-area.html';
+                            }
+                        }, 1500);
+                    } else {
+                        showAlert(result.error || 'Error en el login', 'danger');
+                        resetButton();
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('Error de conexión', 'danger');
+                    resetButton();
+                }
+            });
+            
+            function resetButton() {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión';
+            }
+            
+            function showAlert(message, type) {
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
+
+========== frontend/register.html ==========
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Informática Médica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-heartbeat me-2"></i>Informática Médica
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Inicio</a>
+                <a class="nav-link" href="login.html">Iniciar Sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-user-plus me-2"></i>Registro de Usuario
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="alert-container"></div>
+                        
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nombre Completo *</label>
+                                <input type="text" class="form-control" id="name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="ra" class="form-label">RA (Registro Académico) *</label>
+                                <input type="text" class="form-control" id="ra" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña *</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">Confirmar Contraseña *</label>
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                                <i class="fas fa-user-plus me-2"></i>Registrarse
+                            </button>
+                        </form>
+                        
+                        <div class="text-center mt-3">
+                            <p>¿Ya tienes cuenta? <a href="login.html">Iniciar Sesión</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    <script src="js/auth.js"></script>  <!-- ← AGREGADO: Referencia a auth.js -->
+    
+    <script>
+        console.log('🚀 Script de registro cargado');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registerForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                console.log('📝 Formulario enviado');
+                
+                // Deshabilitar botón
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Registrando...';
+                
+                // Obtener valores
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const ra = document.getElementById('ra').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                console.log('📋 Datos capturados:', { 
+                    name: name ? 'OK' : 'VACÍO', 
+                    email: email ? 'OK' : 'VACÍO', 
+                    ra: ra ? 'OK' : 'VACÍO', 
+                    password: password ? 'OK' : 'VACÍO' 
+                });
+                
+                // Validaciones
+                if (!name || !email || !ra || !password) {
+                    showAlert('Todos los campos son obligatorios', 'danger');
+                    resetButton();
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showAlert('Las contraseñas no coinciden', 'danger');
+                    resetButton();
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showAlert('La contraseña debe tener al menos 6 caracteres', 'danger');
+                    resetButton();
+                    return;
+                }
+                
+                // Datos para enviar
+                const userData = {
+                    name: name,
+                    email: email,
+                    ra: ra,
+                    password: password
+                };
+                
+                console.log('📤 Enviando datos:', userData);
+                
+                try {
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    console.log('📥 Respuesta recibida:', response.status, response.statusText);
+                    
+                    const result = await response.json();
+                    console.log('📋 Datos de respuesta:', result);
+                    
+                    if (response.ok) {
+                        showAlert('¡Usuario registrado exitosamente! Redirigiendo al login...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                    } else {
+                        showAlert(result.error || 'Error en el registro', 'danger');
+                        resetButton();
+                    }
+                } catch (error) {
+                    console.error('❌ Error de conexión:', error);
+                    showAlert('Error de conexión. Verifica tu internet e intenta nuevamente.', 'danger');
+                    resetButton();
+                }
+            });
+            
+            function resetButton() {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Registrarse';
+            }
+            
+            function showAlert(message, type) {
+                const alertContainer = document.getElementById('alert-container');
+                alertContainer.innerHTML = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                // Scroll al alert
+                alertContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>
+
+========== frontend/student-area.html ==========
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área de Estudiantes - Informática Médica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-laptop-medical me-2"></i>
+                Informática Médica
+            </a>
+            
+            <div class="d-flex">
+                <div id="user-info" class="text-light me-3">
+                    <!-- Info del usuario se carga aquí -->
+                </div>
+                <button class="btn btn-outline-light" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alert container para mensajes -->
+    <div class="container mt-3">
+        <div id="alert-container"></div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>📚 Área de Estudiantes</h2>
+                <p class="text-muted">Gestiona tus entregas de trabajos prácticos</p>
+            </div>
+        </div>
+
+        <!-- Formulario de subida -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload text-primary me-2"></i>
+                            Subir Nuevo Trabajo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="upload-form" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Título del Trabajo *</label>
+                                <input type="text" class="form-control" id="title" required 
+                                       placeholder="Ej: Trabajo Práctico 1 - Sistemas HIS">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descripción (opcional)</label>
+                                <textarea class="form-control" id="description" rows="3" 
+                                          placeholder="Describe brevemente el contenido del trabajo..."></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Archivo *</label>
+                                <input type="file" class="form-control" id="file" required 
+                                       accept=".pdf,.doc,.docx,.txt,.zip,.png,.jpg,.jpeg">
+                                <div class="form-text">
+                                    Formatos permitidos: PDF, DOC, DOCX, TXT, ZIP, PNG, JPG. Tamaño máximo: 10MB
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" id="upload-btn">
+                                <i class="fas fa-upload me-2"></i>
+                                Subir Trabajo
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            Instrucciones
+                        </h6>
+                        <ul class="small mb-0">
+                            <li>Usa un título descriptivo para tu trabajo</li>
+                            <li>Asegúrate de que el archivo esté completo</li>
+                            <li>Puedes subir múltiples versiones</li>
+                            <li>Guarda una copia de seguridad local</li>
+                            <li>Revisa que el archivo no supere 10MB</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Estadísticas del estudiante -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-chart-bar text-success me-2"></i>
+                            Mis Estadísticas
+                        </h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 id="student-total-submissions" class="text-primary">-</h4>
+                                <small class="text-muted">Entregas</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 id="student-last-submission" class="text-success">-</h4>
+                                <small class="text-muted">Última</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de entregas -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list text-success me-2"></i>
+                            Mis Entregas
+                        </h5>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadSubmissions()">
+                            <i class="fas fa-refresh me-1"></i>
+                            Actualizar
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="submissions-list">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando entregas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres eliminar esta entrega?</p>
+                    <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirm-delete-btn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>  <!-- ← AGREGADO: Referencia a auth.js -->
+    <script src="js/student-area.js"></script>
+    
+    <script>
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔐 Verificando autenticación de estudiante...');
+            
+            // Usar función de auth.js para verificar autenticación
+            if (!window.authFunctions.requireAuth()) {
+                return; // requireAuth ya maneja la redirección
+            }
+            
+            // Mostrar información del usuario
+            const user = window.authFunctions.getUser();
+            if (user) {
+                document.getElementById('user-info').innerHTML = `
+                    <span class="navbar-text">
+                        <i class="fas fa-user me-1"></i>
+                        ${user.name} (${user.ra})
+                    </span>
+                `;
+                
+                // Actualizar estadísticas del estudiante
+                updateStudentStats();
+            }
+            
+            console.log('✅ Acceso de estudiante verificado');
+        });
+        
+        // Función logout usando auth.js
+        function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                window.authFunctions.logout();
+            }
+        }
+        
+        // Función para actualizar estadísticas del estudiante
+        function updateStudentStats() {
+            // Esta función se puede implementar para mostrar estadísticas
+            // Por ahora, mostrar valores por defecto
+            document.getElementById('student-total-submissions').textContent = '0';
+            document.getElementById('student-last-submission').textContent = '-';
+        }
+        
+        // Mejorar el manejo del formulario de subida
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const uploadBtn = document.getElementById('upload-btn');
+            const originalText = uploadBtn.innerHTML;
+            
+            // Validar que hay un token
+            if (!window.authFunctions.getToken()) {
+                window.authFunctions.showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'danger');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+            
+            // Deshabilitar botón durante la subida
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subiendo...';
+            
+            // Aquí se ejecutará la función de student-area.js
+            // Restaurar botón después de un tiempo si no se maneja en student-area.js
+            setTimeout(() => {
+                if (uploadBtn.disabled) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = originalText;
+                }
+            }, 30000); // 30 segundos timeout
+        });
+    </script>
+</body>
+</html>
+
+========== frontend/js/admin.js ==========
+class AdminPanel {
+    constructor() {
+        this.token = localStorage.getItem('token');
+        this.user = JSON.parse(localStorage.getItem('user') || 'null');
+        this.submissions = [];
+        this.filteredSubmissions = [];
+        this.init();
+    }
+
+    init() {
+        // VERIFICAR AUTENTICACIÓN ANTES DE CONTINUAR
+        if (!this.checkAuthentication()) {
+            return; // No continuar si no está autenticado
+        }
+
+        this.updateUserInfo();
+        this.loadDashboardStats();
+        this.loadAllSubmissions();
+        this.setupEventListeners();
+    }
+
+    checkAuthentication() {
+        if (!this.token || !this.user) {
+            this.showUnauthorizedAccess();
+            return false;
+        }
+
+        // Verificar que el usuario sea admin
+        if (this.user.role !== 'admin') {
+            this.showUnauthorizedAccess();
+            return false;
+        }
+
+        // Verificar que el token no haya expirado
+        try {
+            const tokenPayload = JSON.parse(atob(this.token.split('.')[1]));
+            const currentTime = Date.now() / 1000;
+            
+            if (tokenPayload.exp < currentTime) {
+                console.log('Token expirado');
+                this.clearAuthAndRedirect();
+                return false;
+            }
+        } catch (error) {
+            console.log('Token inválido');
+            this.clearAuthAndRedirect();
+            return false;
+        }
+
+        return true;
+    }
+
+    showUnauthorizedAccess() {
+        document.body.innerHTML = `
+            <div class="container mt-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card border-danger">
+                            <div class="card-header bg-danger text-white text-center">
+                                <h4><i class="fas fa-lock me-2"></i>Acceso Restringido</h4>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="mb-4">
+                                    <i class="fas fa-shield-alt fa-4x text-danger mb-3"></i>
+                                    <h5>Panel de Administración</h5>
+                                    <p class="text-muted">
+                                        Necesitas permisos de administrador para acceder a esta área.
+                                    </p>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Área Protegida:</strong> Solo administradores pueden acceder.
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <a href="login.html" class="btn btn-primary">
+                                        <i class="fas fa-sign-in-alt me-2"></i>
+                                        Ir a Iniciar Sesión
+                                    </a>
+                                    <a href="index.html" class="btn btn-outline-secondary">
+                                        <i class="fas fa-home me-2"></i>
+                                        Volver al Inicio
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    clearAuthAndRedirect() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        this.showUnauthorizedAccess();
+    }
+
+    updateUserInfo() {
+        const userInfo = document.getElementById('admin-user-info');
+        if (userInfo) {
+            // ✅ CORREGIDO: usar this.user.name en lugar de this.user.nombre
+            const userName = this.user.name || this.user.nombre || this.user.email || 'Admin';
+            userInfo.innerHTML = `
+                <span class="me-3">👨‍�� ${userName} (${this.user.role.toUpperCase()})</span>
+                <button class="btn btn-outline-light btn-sm" onclick="adminPanel.logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    Cerrar Sesión
+                </button>
+            `;
+        }
+    }
+
+    logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
+
+    setupEventListeners() {
+        // Filtros
+        const searchStudent = document.getElementById('search-student');
+        const filterDate = document.getElementById('filter-date');
+        const filterTitle = document.getElementById('filter-title');
+
+        if (searchStudent) {
+            searchStudent.addEventListener('input', () => {
+                this.applyFilters();
+            });
+        }
+        
+        if (filterDate) {
+            filterDate.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
+        
+        if (filterTitle) {
+            filterTitle.addEventListener('input', () => {
+                this.applyFilters();
+            });
+        }
+
+        // Botón de refrescar
+        const refreshBtn = document.getElementById('refresh-submissions');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadAllSubmissions();
+            });
+        }
+    }
+
+    async loadDashboardStats() {
+        try {
+            const response = await fetch('/api/admin/stats', {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.status === 401 || response.status === 403) {
+                this.clearAuthAndRedirect();
+                return;
+            }
+            
+            if (response.ok) {
+                const stats = await response.json();
+                this.updateDashboard(stats);
+            } else {
+                console.error('Error cargando estadísticas:', response.status);
+                this.updateDashboard({
+                    totalStudents: '-',
+                    totalSubmissions: '-',
+                    submissionsToday: '-',
+                    submissionsWeek: '-'
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.updateDashboard({
+                totalStudents: 'Error',
+                totalSubmissions: 'Error',
+                submissionsToday: 'Error',
+                submissionsWeek: 'Error'
+            });
+        }
+    }
+
+    updateDashboard(stats) {
+        const elements = {
+            'total-students': stats.totalStudents,
+            'total-submissions': stats.totalSubmissions,
+            'submissions-today': stats.submissionsToday,
+            'submissions-week': stats.submissionsWeek || '-'
+        };
+
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        });
+
+        // Actualizar el estado del email
+        const emailStatus = document.getElementById('email-status');
+        if (emailStatus) {
+            emailStatus.textContent = '✓ Activo';
+            emailStatus.parentElement.parentElement.className = 'card bg-success text-white';
+        }
+    }
+
+    async loadAllSubmissions() {
+        try {
+            this.showLoading();
+            
+            const response = await fetch('/api/admin/submissions', {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.status === 401 || response.status === 403) {
+                this.clearAuthAndRedirect();
+                return;
+            }
+            
+            if (response.ok) {
+                this.submissions = await response.json();
+                this.filteredSubmissions = [...this.submissions];
+                this.renderSubmissions(this.filteredSubmissions);
+                console.log(`✅ Cargadas ${this.submissions.length} entregas`);
+            } else {
+                const errorText = await response.text();
+                console.error('Error al cargar entregas:', response.status, errorText);
+                this.showError('Error al cargar entregas');
+            }
+        } catch (error) {
+            console.error('Error cargando entregas:', error);
+            this.showError('Error de conexión');
+        }
+    }
+
+    applyFilters() {
+        const studentSearch = document.getElementById('search-student')?.value.toLowerCase() || '';
+        const dateFilter = document.getElementById('filter-date')?.value || '';
+        const titleFilter = document.getElementById('filter-title')?.value.toLowerCase() || '';
+
+        this.filteredSubmissions = this.submissions.filter(submission => {
+            // ✅ MEJORADO: verificar que las propiedades existan antes de usarlas
+            const studentName = (submission.student_name || '').toLowerCase();
+            const studentEmail = (submission.student_email || '').toLowerCase();
+            const studentRa = (submission.student_ra || '').toLowerCase();
+            const submissionTitle = (submission.title || '').toLowerCase();
+
+            const matchesStudent = !studentSearch || 
+                studentName.includes(studentSearch) ||
+                studentEmail.includes(studentSearch) ||
+                studentRa.includes(studentSearch);
+
+            const matchesDate = !dateFilter || 
+                (submission.submitted_at && submission.submitted_at.split('T')[0] === dateFilter);
+
+            const matchesTitle = !titleFilter || 
+                submissionTitle.includes(titleFilter);
+
+            return matchesStudent && matchesDate && matchesTitle;
+        });
+
+        this.renderSubmissions(this.filteredSubmissions);
+    }
+
+    showLoading() {
+        const container = document.getElementById('submissions-list');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Cargando entregas...</p>
+                </div>
+            `;
+        }
+    }
+
+    showError(message) {
+        const container = document.getElementById('submissions-list');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <p class="text-muted">${message}</p>
+                    <button class="btn btn-outline-primary" onclick="adminPanel.loadAllSubmissions()">
+                        <i class="fas fa-refresh me-1"></i>
+                        Reintentar
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    renderSubmissions(submissions) {
+        const container = document.getElementById('submissions-list');
+        if (!container) return;
+        
+        if (submissions.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No hay entregas que coincidan con los filtros</p>
+                    <button class="btn btn-outline-secondary" onclick="adminPanel.clearFilters()">
+                        <i class="fas fa-times me-1"></i>
+                        Limpiar filtros
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>Trabajo</th>
+                            <th>Archivo</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${submissions.map(submission => `
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>${submission.student_name || 'Sin nombre'}</strong><br>
+                                        <small class="text-muted">${submission.student_email || 'Sin email'}</small><br>
+                                        <span class="badge bg-secondary">${submission.student_ra || 'Sin RA'}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>${submission.title || 'Sin título'}</strong>
+                                    ${submission.description ? `<br><small class="text-muted">${submission.description}</small>` : ''}
+                                </td>
+                                <td>
+                                    <i class="fas fa-file-alt text-primary me-1"></i>
+                                    ${submission.original_name || submission.filename || 'Sin archivo'}<br>
+                                    <small class="text-muted">ID: ${submission.id}</small>
+                                </td>
+                                <td>
+                                    <small>${submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('es-ES') : 'Sin fecha'}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary" 
+                                                onclick="adminPanel.downloadSubmission(${submission.id})"
+                                                title="Descargar">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info" 
+                                                onclick="adminPanel.viewDetails(${submission.id})"
+                                                title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" 
+                                                onclick="adminPanel.deleteSubmission(${submission.id})"
+                                                title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    Mostrando ${submissions.length} de ${this.submissions.length} entregas
+                </small>
+                <div>
+                    <button class="btn btn-outline-success btn-sm" onclick="adminPanel.exportData()">
+                        <i class="fas fa-file-excel me-1"></i>
+                        Exportar CSV
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    clearFilters() {
+        const elements = ['search-student', 'filter-date', 'filter-title'];
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.value = '';
+        });
+        this.applyFilters();
+    }
+
+    downloadSubmission(id) {
+        console.log('Descargando entrega:', id);
+        window.open(`/api/admin/download/${id}?token=${encodeURIComponent(this.token)}`, '_blank');
+    }
+
+    async deleteSubmission(id) {
+        if (!confirm('¿Estás seguro de que quieres eliminar esta entrega? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/admin/submissions/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                this.showAlert('Entrega eliminada exitosamente', 'success');
+                this.loadAllSubmissions(); // Recargar la lista
+            } else {
+                this.showAlert('Error al eliminar la entrega', 'danger');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.showAlert('Error de conexión', 'danger');
+        }
+    }
+
+    async viewDetails(id) {
+        try {
+            const response = await fetch(`/api/admin/submission/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.status === 401 || response.status === 403) {
+                this.clearAuthAndRedirect();
+                return;
+            }
+            
+            if (response.ok) {
+                const submission = await response.json();
+                this.showDetailsModal(submission);
+            } else {
+                this.showAlert('Error al obtener detalles', 'danger');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            this.showAlert('Error de conexión', 'danger');
+        }
+    }
+
+    showDetailsModal(submission) {
+        // Crear modal dinámicamente
+        const modalHtml = `
+            <div class="modal fade" id="detailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-info-circle text-info me-2"></i>
+                                Detalles de la Entrega
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">👤 Información del Estudiante</h6>
+                                    <p><strong>Nombre:</strong> ${submission.student_name || 'Sin nombre'}</p>
+                                    <p><strong>Email:</strong> ${submission.student_email || 'Sin email'}</p>
+                                    <p><strong>RA:</strong> ${submission.student_ra || 'Sin RA'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-success">📋 Información del Trabajo</h6>
+                                    <p><strong>ID:</strong> ${submission.id}</p>
+                                    <p><strong>Título:</strong> ${submission.title || 'Sin título'}</p>
+                                    <p><strong>Fecha:</strong> ${submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('es-ES') : 'Sin fecha'}</p>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6 class="text-info">📄 Archivo</h6>
+                            <p><strong>Nombre original:</strong> ${submission.original_name || 'Sin nombre'}</p>
+                            <p><strong>Nombre en servidor:</strong> ${submission.filename || 'Sin archivo'}</p>
+                            ${submission.file_size ? `<p><strong>Tamaño:</strong> ${(submission.file_size / 1024 / 1024).toFixed(2)} MB</p>` : ''}
+                            
+                            ${submission.description ? `
+                                <hr>
+                                <h6 class="text-warning">📝 Descripción</h6>
+                                <p>${submission.description}</p>
+                            ` : ''}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="adminPanel.downloadSubmission(${submission.id})">
+                                <i class="fas fa-download me-1"></i>
+                                Descargar Archivo
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="adminPanel.deleteSubmission(${submission.id}); bootstrap.Modal.getInstance(document.getElementById('detailsModal')).hide();">
+                                <i class="fas fa-trash me-1"></i>
+                                Eliminar
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remover modal anterior si existe
+        const existingModal = document.getElementById('detailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Agregar nuevo modal
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        modal.show();
+    }
+
+    async exportData() {
+        try {
+            console.log('Exportando datos...');
+            window.open(`/api/admin/export?token=${encodeURIComponent(this.token)}`, '_blank');
+            this.showAlert('Exportación iniciada', 'success');
+        } catch (error) {
+            console.error('Error exportando:', error);
+            this.showAlert('Error en la exportación', 'danger');
+        }
+    }
+
+    showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+}
+
+// Funciones globales para los botones
+function applyFilters() {
+    if (window.adminPanel) {
+        window.adminPanel.applyFilters();
+    }
+}
+
+function loadAllSubmissions() {
+    if (window.adminPanel) {
+        window.adminPanel.loadAllSubmissions();
+    }
+}
+
+function exportData() {
+    if (window.adminPanel) {
+        window.adminPanel.exportData();
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    window.adminPanel = new AdminPanel();
+});
+
+========== frontend/js/auth.js ==========
+// Funciones de autenticación para Informática Médica
+
+// Configuración de la API
+const API_BASE = window.location.origin;
+
+// Función para mostrar alertas
+function showAlert(message, type = 'info', containerId = 'alert-container') {
+    const alertContainer = document.getElementById(containerId);
+    if (!alertContainer) return;
+    
+    alertContainer.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Scroll al alert
+    alertContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Función para obtener token del localStorage
+function getToken() {
+    return localStorage.getItem('token');
+}
+
+// Función para obtener usuario del localStorage
+function getUser() {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+}
+
+// Función para verificar si el usuario está autenticado
+function isAuthenticated() {
+    const token = getToken();
+    const user = getUser();
+    return token && user;
+}
+
+// Función para logout
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+}
+
+// Función para verificar rol de admin
+function isAdmin() {
+    const user = getUser();
+    return user && user.role === 'admin';
+}
+
+// Función de registro
+async function handleRegister(formData) {
+    try {
+        console.log('📤 Enviando registro:', formData);
+        
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        console.log('📥 Respuesta registro:', result);
+        
+        if (response.ok) {
+            showAlert('¡Usuario registrado exitosamente! Redirigiendo al login...', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        } else {
+            showAlert(result.error || 'Error en el registro', 'danger');
+        }
+        
+        return { success: response.ok, data: result };
+    } catch (error) {
+        console.error('❌ Error en registro:', error);
+        showAlert('Error de conexión. Intenta nuevamente.', 'danger');
+        return { success: false, error: error.message };
+    }
+}
+
+// Función de login
+async function handleLogin(email, password) {
+    try {
+        console.log('📤 Enviando login para:', email);
+        
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const result = await response.json();
+        console.log('📥 Respuesta login:', result);
+        
+        if (response.ok) {
+            // Guardar token y usuario
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
+            
+            showAlert('¡Login exitoso! Redirigiendo...', 'success');
+            
+            // Redireccionar según el rol
+            setTimeout(() => {
+                if (result.user.role === 'admin') {
+                    window.location.href = 'admin-panel.html';
+                } else {
+                    window.location.href = 'student-area.html';
+                }
+            }, 1500);
+        } else {
+            showAlert(result.error || 'Credenciales inválidas', 'danger');
+        }
+        
+        return { success: response.ok, data: result };
+    } catch (error) {
+        console.error('❌ Error en login:', error);
+        showAlert('Error de conexión. Verifica tu internet.', 'danger');
+        return { success: false, error: error.message };
+    }
+}
+
+// Función para hacer peticiones autenticadas
+async function authenticatedFetch(url, options = {}) {
+    const token = getToken();
+    
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    const defaultOptions = {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    };
+    
+    const finalOptions = { ...defaultOptions, ...options };
+    
+    try {
+        const response = await fetch(url, finalOptions);
+        
+        // Si el token expiró, redireccionar al login
+        if (response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        return response;
+    } catch (error) {
+        console.error('❌ Error en petición autenticada:', error);
+        throw error;
+    }
+}
+
+// Función para proteger páginas (llamar al inicio de páginas que requieren auth)
+function requireAuth() {
+    if (!isAuthenticated()) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
+
+// Función para proteger páginas de admin
+function requireAdmin() {
+    if (!requireAuth()) return false;
+    
+    if (!isAdmin()) {
+        showAlert('Acceso denegado. Se requieren permisos de administrador.', 'danger');
+        setTimeout(() => {
+            window.location.href = 'student-area.html';
+        }, 2000);
+        return false;
+    }
+    return true;
+}
+
+// Función para mostrar información del usuario en la navbar
+function displayUserInfo() {
+    const user = getUser();
+    if (!user) return;
+    
+    const userInfoElement = document.getElementById('user-info');
+    if (userInfoElement) {
+        userInfoElement.innerHTML = `
+            <span class="navbar-text me-3">
+                <i class="fas fa-user me-1"></i>
+                ${user.name} ${user.role === 'admin' ? '(Admin)' : ''}
+            </span>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-1"></i>Salir
+            </button>
+        `;
+    }
+}
+
+// Inicialización cuando el DOM está listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Auth.js cargado correctamente');
+    
+    // Mostrar info del usuario si está autenticado
+    if (isAuthenticated()) {
+        displayUserInfo();
+    }
+});
+
+// Exportar funciones para uso global
+window.authFunctions = {
+    handleRegister,
+    handleLogin,
+    logout,
+    isAuthenticated,
+    isAdmin,
+    requireAuth,
+    requireAdmin,
+    authenticatedFetch,
+    getUser,
+    getToken,
+    showAlert,
+    displayUserInfo
+};
+
+========== frontend/js/main.js ==========
+// Funcionalidad principal de la aplicación
+class AppManager {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.loadMaterials();
+        this.setupSmoothScrolling();
+    }
+
+    setupEventListeners() {
+        // Formulario de entrega de trabajos
+        const submissionForm = document.getElementById('submission-form');
+        if (submissionForm) {
+            submissionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleSubmission();
+            });
+        }
+
+        // Validación de archivo en tiempo real
+        const fileInput = document.getElementById('work-file');
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                this.validateFile(e.target.files[0]);
+            });
+        }
+    }
+
+    async loadMaterials() {
+        const container = document.getElementById('materials-container');
+        
+        try {
+            const response = await fetch('/api/materials');
+            
+            if (response.ok) {
+                const materials = await response.json();
+                this.displayMaterials(materials);
+            } else {
+                container.innerHTML = `
+                    <div class="text-center">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No se pudieron cargar los materiales en este momento
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error cargando materiales:', error);
+            container.innerHTML = `
+                <div class="text-center">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>
+                        Error de conexión al cargar materiales
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    displayMaterials(materials) {
+        const container = document.getElementById('materials-container');
+        
+        if (materials.length === 0) {
+            container.innerHTML = `
+                <div class="text-center">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body py-5">
+                            <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay materiales disponibles</h5>
+                            <p class="text-muted">Los materiales del curso se publicarán próximamente</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Agrupar materiales por categoría
+        const categorizedMaterials = this.groupByCategory(materials);
+        
+        let html = '';
+        
+        for (const [category, items] of Object.entries(categorizedMaterials)) {
+            html += `
+                <div class="mb-5">
+                    <h4 class="mb-4">
+                        <i class="fas fa-folder me-2 text-primary"></i>
+                        ${category}
+                    </h4>
+                    <div class="row g-3">
+                        ${items.map(material => this.createMaterialCard(material)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+
+    groupByCategory(materials) {
+        return materials.reduce((groups, material) => {
+            const category = material.category || 'General';
+            if (!groups[category]) {
+                groups[category] = [];
+            }
+            groups[category].push(material);
+            return groups;
+        }, {});
+    }
+
+    createMaterialCard(material) {
+        const fileExtension = material.filename.split('.').pop().toLowerCase();
+        const iconClass = this.getFileIcon(fileExtension);
+        const fileSize = material.file_size ? this.formatFileSize(material.file_size) : '';
+        
+        return `
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm material-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="me-3">
+                                <i class="${iconClass} fa-2x text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="card-title mb-1">${material.title}</h6>
+                                <small class="text-muted">${fileSize}</small>
+                            </div>
+                        </div>
+                        
+                        ${material.description ? `
+                            <p class="card-text text-muted small mb-3">${material.description}</p>
+                        ` : ''}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                ${new Date(material.uploaded_at).toLocaleDateString('es-ES')}
+                            </small>
+                            <a href="/uploads/materials/${material.filename}" 
+                               class="btn btn-outline-primary btn-sm" 
+                               download="${material.original_name || material.filename}"
+                               >
+                                <i class="fas fa-download me-1"></i>
+                                Descargar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    getFileIcon(extension) {
+        const iconMap = {
+            'pdf': 'fas fa-file-pdf',
+            'doc': 'fas fa-file-word',
+            'docx': 'fas fa-file-word',
+            'ppt': 'fas fa-file-powerpoint',
+            'pptx': 'fas fa-file-powerpoint',
+            'xls': 'fas fa-file-excel',
+            'xlsx': 'fas fa-file-excel',
+            'txt': 'fas fa-file-alt',
+            'jpg': 'fas fa-file-image',
+            'jpeg': 'fas fa-file-image',
+            'png': 'fas fa-file-image',
+                        'gif': 'fas fa-file-image',
+            'mp4': 'fas fa-file-video',
+            'avi': 'fas fa-file-video',
+            'mov': 'fas fa-file-video',
+            'mp3': 'fas fa-file-audio',
+            'wav': 'fas fa-file-audio',
+            'zip': 'fas fa-file-archive',
+            'rar': 'fas fa-file-archive'
+        };
+        
+        return iconMap[extension] || 'fas fa-file';
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    validateFile(file) {
+        const fileInput = document.getElementById('work-file');
+        const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        if (!file) return;
+
+        // Validar tipo de archivo
+        if (!allowedTypes.includes(file.type)) {
+            this.showFileError('Tipo de archivo no permitido. Solo se aceptan PDF, DOCX, PNG y JPG.');
+            fileInput.value = '';
+            return false;
+        }
+
+        // Validar tamaño
+        if (file.size > maxSize) {
+            this.showFileError('El archivo es demasiado grande. El tamaño máximo es 10MB.');
+            fileInput.value = '';
+            return false;
+        }
+
+        // Limpiar errores previos
+        this.clearFileError();
+        return true;
+    }
+
+    showFileError(message) {
+        const fileInput = document.getElementById('work-file');
+        let errorDiv = fileInput.parentNode.querySelector('.file-error');
+        
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'file-error text-danger small mt-1';
+            fileInput.parentNode.appendChild(errorDiv);
+        }
+        
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i>${message}`;
+        fileInput.classList.add('is-invalid');
+    }
+
+    clearFileError() {
+        const fileInput = document.getElementById('work-file');
+        const errorDiv = fileInput.parentNode.querySelector('.file-error');
+        
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        fileInput.classList.remove('is-invalid');
+    }
+
+    async handleSubmission() {
+        const title = document.getElementById('work-title').value;
+        const description = document.getElementById('work-description').value;
+        const fileInput = document.getElementById('work-file');
+        const file = fileInput.files[0];
+
+        // Validaciones
+        if (!title.trim()) {
+            this.showAlert('Por favor, ingresa un título para el trabajo', 'danger');
+            return;
+        }
+
+        if (!file) {
+            this.showAlert('Por favor, selecciona un archivo para entregar', 'danger');
+            return;
+        }
+
+        if (!this.validateFile(file)) {
+            return;
+        }
+
+        // Verificar autenticación
+        const token = window.authManager.getToken();
+        if (!token) {
+            this.showAlert('Debes iniciar sesión para entregar trabajos', 'danger');
+            return;
+        }
+
+        try {
+            this.setSubmissionLoading(true);
+
+            // Crear FormData para envío de archivo
+            const formData = new FormData();
+            formData.append('title', title.trim());
+            formData.append('description', description.trim());
+            formData.append('file', file);
+
+            const response = await fetch('/api/submissions/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Mostrar mensaje de éxito
+                this.showAlert('¡Trabajo entregado exitosamente! Recibirás un email de confirmación.', 'success');
+                
+                // Limpiar formulario
+                document.getElementById('submission-form').reset();
+                this.clearFileError();
+                
+                // Recargar lista de entregas
+                if (window.authManager) {
+                    window.authManager.loadUserSubmissions();
+                }
+
+            } else {
+                this.showAlert(data.error || 'Error al entregar el trabajo', 'danger');
+            }
+
+        } catch (error) {
+            console.error('Error en entrega:', error);
+            this.showAlert('Error de conexión. Intenta nuevamente', 'danger');
+        } finally {
+            this.setSubmissionLoading(false);
+        }
+    }
+
+    setSubmissionLoading(isLoading) {
+        const form = document.getElementById('submission-form');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const inputs = form.querySelectorAll('input, textarea');
+        
+        if (isLoading) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Entregando...
+            `;
+            inputs.forEach(input => input.disabled = true);
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <i class="fas fa-paper-plane me-2"></i>
+                Entregar Trabajo
+            `;
+            inputs.forEach(input => input.disabled = false);
+        }
+    }
+
+    setupSmoothScrolling() {
+        // Smooth scrolling para enlaces de navegación
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    }
+
+    showAlert(message, type = 'info') {
+        // Reutilizar la función del AuthManager
+        if (window.authManager) {
+            window.authManager.showAlert(message, type);
+        } else {
+            // Fallback si AuthManager no está disponible
+            console.log(`${type.toUpperCase()}: ${message}`);
+        }
+    }
+}
+
+// Funciones utilitarias globales
+function formatDate(dateString) {
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString('es-ES', options);
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        if (window.authManager) {
+            window.authManager.showAlert('Copiado al portapapeles', 'success');
+        }
+    }).catch(err => {
+        console.error('Error al copiar:', err);
+    });
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    window.appManager = new AppManager();
+    
+    // Agregar efectos de animación a las cards
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in-up');
+            }
+        });
+    }, observerOptions);
+
+    // Observar todas las cards
+    document.querySelectorAll('.card').forEach(card => {
+        observer.observe(card);
+    });
+});
+
+// Manejo de errores globales
+window.addEventListener('error', function(e) {
+    console.error('Error global:', e.error);
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Promise rechazada:', e.reason);
+});
+
+========== frontend/js/student-area.js ==========
+class StudentArea {
+    constructor() {
+        this.token = localStorage.getItem('token');
+        this.user = JSON.parse(localStorage.getItem('user') || 'null');
+        this.deleteSubmissionId = null;
+        
+        this.init();
+    }
+
+    init() {
+        // Verificar autenticación
+        if (!this.token || !this.user) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        this.updateUserInfo();
+        this.setupEventListeners();
+        this.loadStats();        // ← AGREGADO: Cargar estadísticas
+        this.loadSubmissions();
+    }
+
+    updateUserInfo() {
+        const userInfo = document.getElementById('user-info');
+        if (userInfo) {
+            // ✅ CORREGIDO: Usar this.user.name en lugar de this.user.nombre
+            const userName = this.user.name || this.user.nombre || this.user.email;
+            const userRa = this.user.ra || 'Sin RA';
+            userInfo.innerHTML = `👋 Hola, ${userName} (${userRa})`;
+        }
+    }
+
+    // ✅ AGREGADO: Método para cargar estadísticas del estudiante
+    async loadStats() {
+        try {
+            console.log('📊 Cargando estadísticas del estudiante...');
+            
+            const response = await fetch('/api/submissions/my-submissions', {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.ok) {
+                const submissions = await response.json();
+                this.updateStatsDisplay(submissions);
+                console.log(`✅ Estadísticas actualizadas: ${submissions.length} entregas`);
+            } else {
+                console.error('Error cargando estadísticas:', response.status);
+            }
+        } catch (error) {
+            console.error('Error cargando estadísticas:', error);
+        }
+    }
+
+    // ✅ AGREGADO: Actualizar display de estadísticas
+    updateStatsDisplay(submissions) {
+        const totalSubmissions = submissions.length;
+        
+        // Calcular entregas de esta semana
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const thisWeekSubmissions = submissions.filter(sub => 
+            new Date(sub.submitted_at) >= oneWeekAgo
+        ).length;
+
+        // Calcular entregas de hoy
+        const today = new Date().toISOString().split('T')[0];
+        const todaySubmissions = submissions.filter(sub => 
+            sub.submitted_at && sub.submitted_at.split('T')[0] === today
+        ).length;
+
+        // Actualizar elementos en el DOM
+        const elements = {
+            'total-submissions': totalSubmissions,
+            'submissions-week': thisWeekSubmissions,
+            'submissions-today': todaySubmissions,
+            'last-submission': submissions.length > 0 ? 
+                new Date(submissions[0].submitted_at).toLocaleDateString('es-ES') : 
+                'Ninguna'
+        };
+
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        });
+    }
+
+    setupEventListeners() {
+        // Formulario de subida
+        const uploadForm = document.getElementById('upload-form');
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleUpload();
+            });
+        }
+
+        // Modal de eliminación
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', () => {
+                this.deleteSubmission(this.deleteSubmissionId);
+            });
+        }
+    }
+
+    async handleUpload() {
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const fileInput = document.getElementById('file');
+        const file = fileInput.files[0];
+
+        if (!title) {
+            this.showAlert('El título es obligatorio', 'danger');
+            return;
+        }
+
+        if (!file) {
+            this.showAlert('Debes seleccionar un archivo', 'danger');
+            return;
+        }
+
+        // Verificar tamaño del archivo (10MB)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            this.showAlert('El archivo es demasiado grande. Máximo 10MB', 'danger');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('file', file);
+
+        try {
+            this.setUploadLoading(true);
+
+            const response = await fetch('/api/submissions/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showAlert('¡Trabajo subido exitosamente!', 'success');
+                document.getElementById('upload-form').reset();
+                
+                // ✅ AGREGADO: Actualizar estadísticas y lista después de subir
+                this.loadStats();
+                this.loadSubmissions();
+            } else {
+                this.showAlert(data.error || 'Error al subir el archivo', 'danger');
+            }
+
+        } catch (error) {
+            console.error('Error en subida:', error);
+            this.showAlert('Error de conexión. Intenta nuevamente', 'danger');
+        } finally {
+            this.setUploadLoading(false);
+        }
+    }
+
+    async loadSubmissions() {
+        try {
+            console.log('📋 Cargando entregas del estudiante...');
+            
+            const response = await fetch('/api/submissions/my-submissions', {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                // Token inválido, redirigir al login
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const submissions = await response.json();
+
+            if (response.ok) {
+                this.renderSubmissions(submissions);
+                console.log(`✅ Cargadas ${submissions.length} entregas del estudiante`);
+            } else {
+                this.showAlert('Error al cargar entregas', 'danger');
+            }
+
+        } catch (error) {
+            console.error('Error cargando entregas:', error);
+            this.showAlert('Error de conexión', 'danger');
+        }
+    }
+
+    renderSubmissions(submissions) {
+        const container = document.getElementById('submissions-list');
+        
+        if (!container) {
+            console.error('❌ No se encontró el contenedor submissions-list');
+            return;
+        }
+        
+        if (submissions.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No tienes entregas aún</p>
+                    <p class="small text-muted">Sube tu primer trabajo usando el formulario de arriba</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Archivo</th>
+                            <th>Fecha de Entrega</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${submissions.map(submission => `
+                            <tr>
+                                <td>
+                                    <strong>${submission.title || 'Sin título'}</strong>
+                                    ${submission.description ? `<br><small class="text-muted">${submission.description}</small>` : ''}
+                                </td>
+                                <td>
+                                    <i class="fas fa-file-alt text-primary me-1"></i>
+                                    ${submission.original_name || submission.filename || 'Sin archivo'}
+                                </td>
+                                <td>
+                                    <small>${submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('es-ES') : 'Sin fecha'}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary" 
+                                                onclick="studentArea.downloadSubmission(${submission.id})"
+                                                title="Descargar">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" 
+                                                onclick="studentArea.confirmDelete(${submission.id}, '${(submission.title || 'Sin título').replace(/'/g, '\'')}')"
+                                                title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-3">
+                <small class="text-muted">
+                    Total: ${submissions.length} entrega${submissions.length !== 1 ? 's' : ''}
+                </small>
+            </div>
+        `;
+    }
+
+    downloadSubmission(id) {
+        console.log('📥 Iniciando descarga de entrega:', id);
+        
+        // Crear un enlace temporal con el token
+        const downloadUrl = `/api/submissions/download/${id}?token=${encodeURIComponent(this.token)}`;
+        
+        // Crear elemento <a> temporal para forzar la descarga
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.style.display = 'none';
+        
+        // Agregar al DOM, hacer clic y remover
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Mostrar mensaje de confirmación
+        this.showAlert('Descarga iniciada', 'success');
+    }
+
+    confirmDelete(id, title) {
+        this.deleteSubmissionId = id;
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        
+        // Actualizar el texto del modal
+        const modalBody = document.querySelector('#deleteModal .modal-body');
+        if (modalBody) {
+            modalBody.innerHTML = `
+                <p>¿Estás seguro de que quieres eliminar esta entrega?</p>
+                <p><strong>"${title}"</strong></p>
+                <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+            `;
+        }
+        
+        modal.show();
+    }
+
+    async deleteSubmission(id) {
+        try {
+            const response = await fetch(`/api/submissions/delete/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showAlert('Entrega eliminada exitosamente', 'success');
+                
+                // ✅ AGREGADO: Actualizar estadísticas y lista después de eliminar
+                this.loadStats();
+                this.loadSubmissions();
+                
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            } else {
+                this.showAlert(data.error || 'Error al eliminar la entrega', 'danger');
+            }
+
+        } catch (error) {
+            console.error('Error eliminando entrega:', error);
+            this.showAlert('Error de conexión', 'danger');
+        }
+    }
+
+    setUploadLoading(isLoading) {
+        const submitBtn = document.querySelector('#upload-form button[type="submit"]');
+        const form = document.getElementById('upload-form');
+        
+        if (submitBtn) {
+            if (isLoading) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Subiendo...
+                `;
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <i class="fas fa-upload me-2"></i>
+                    Subir Trabajo
+                `;
+            }
+        }
+        
+        if (form) {
+            form.style.opacity = isLoading ? '0.7' : '1';
+        }
+    }
+
+    showAlert(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    window.studentArea = new StudentArea();
+});
+
+========== frontend/css/styles.css ==========
+/* Inspirado en el diseño de iOS/macOS */
+:root {
+    --primary-color: #007AFF;
+    --secondary-color: #5856D6;
+    --success-color: #34C759;
+    --warning-color: #FF9500;
+    --danger-color: #FF3B30;
+    --light-gray: #F2F2F7;
+    --medium-gray: #C7C7CC;
+    --dark-gray: #8E8E93;
+    --text-primary: #000000;
+    --text-secondary: #3C3C43;
+    --background-primary: #FFFFFF;
+    --background-secondary: #F2F2F7;
+    --border-color: #C6C6C8;
+    --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-heavy: 0 10px 25px rgba(0, 0, 0, 0.15);
+    --border-radius: 12px;
+    --border-radius-small: 8px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tipografía global */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--background-primary);
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Navegación */
+.navbar {
+    backdrop-filter: blur(20px);
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--primary-color) !important;
+}
+
+.nav-link {
+    font-weight: 500;
+    color: var(--text-secondary) !important;
+    transition: var(--transition);
+    border-radius: var(--border-radius-small);
+    margin: 0 4px;
+    padding: 8px 16px !important;
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
+    background-color: var(--light-gray);
+}
+
+.btn-outline-primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Sección Hero */
+.hero-section {
+    background: linear-gradient(135deg, var(--background-primary) 0%, var(--light-gray) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23f0f0f0" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.hero-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+.display-4 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.lead {
+    font-size: 1.125rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+/* Botones */
+.btn {
+    font-weight: 500;
+    border-radius: var(--border-radius);
+    padding: 12px 24px;
+    transition: var(--transition);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-lg {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    box-shadow: var(--shadow-light);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-heavy);
+    background: linear-gradient(135deg, #0056CC 0%, #4A47B8 100%);
+}
+
+.btn-outline-secondary {
+    border: 2px solid var(--medium-gray);
+    color: var(--text-secondary);
+    background: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--text-secondary);
+    border-color: var(--text-secondary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color) 0%, #28A745 100%);
+}
+
+.btn-success:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Cards */
+.card {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-heavy);
+}
+
+.card-header {
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--light-gray);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.card-text {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Secciones */
+.bg-light {
+    background-color: var(--background-secondary) !important;
+}
+
+section {
+    scroll-margin-top: 80px;
+}
+
+/* Formularios */
+.form-control {
+    border-radius: var(--border-radius-small);
+    border: 1px solid var(--border-color);
+    padding: 12px 16px;
+    font-size: 16px;
+    transition: var(--transition);
+    background-color: var(--background-primary);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    outline: none;
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.form-text {
+    color: var(--dark-gray);
+    font-size: 0.875rem;
+}
+
+/* Modal */
+.modal-content {
+    border-radius: var(--border-radius);
+    border: none;
+    box-shadow: var(--shadow-heavy);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Tabs */
+.nav-tabs {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-radius: var(--border-radius-small) var(--border-radius-small) 0 0;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 12px 20px;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    background-color: var(--light-gray);
+    border-color: transparent;
+}
+
+/* Dropdown */
+.dropdown-menu {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-medium);
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.dropdown-item:hover {
+    background-color: var(--light-gray);
+    color: var(--text-primary);
+}
+
+/* Spinner */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Footer */
+footer {
+    background: linear-gradient(135deg, #1C1C1E 0%, #2C2C2E 100%);
+    border-top: 1px solid var(--border-color);
+}
+
+footer a {
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+footer a:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2.5rem;
+    }
+    
+    .btn-lg {
+        padding: 14px 28px;
+        font-size: 1rem;
+    }
+    
+    .hero-section .row {
+        text-align: center;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .lead {
+        font-size: 1rem;
+    }
+}
+
+/* Estados de carga */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Alertas personalizadas */
+.alert {
+    border-radius: var(--border-radius);
+    border: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: rgba(52, 199, 89, 0.1);
+    color: var(--success-color);
+}
+
+.alert-danger {
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--danger-color);
+}
+
+.alert-warning {
+    background-color: rgba(255, 149, 0, 0.1);
+    color: var(--warning-color);
+}
+
+/* Lista de entregas */
+.submission-item {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background-color: var(--background-primary);
+    transition: var(--transition);
+}
+
+.submission-item:hover {
+    box-shadow: var(--shadow-light);
+    transform: translateY(-1px);
+}
+
+.submission-meta {
+    font-size: 0.875rem;
+    color: var(--dark-gray);
+}
+
+/* Iconos */
+.fas, .far {
+    color: var(--primary-color);
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Accesibilidad */
+.btn:focus,
+.form-control:focus,
+.nav-link:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Modo oscuro (opcional) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-primary: #FFFFFF;
+        --text-secondary: #EBEBF5;
+        --background-primary: #000000;
+        --background-secondary: #1C1C1E;
+        --border-color: #38383A;
+        --light-gray: #1C1C1E;
+        --medium-gray: #48484A;
+    }
+    
+    .navbar {
+        background-color: rgba(28, 28, 30, 0.95) !important;
+    }
+    
+    .card {
+        background-color: var(--background-secondary);
+        border-color: var(--border-color);
+    }
+    
+    .form-control {
+        background-color: var(--background-secondary);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+    }
+    
+    .modal-content {
+        background-color: var(--background-secondary);
+        color: var(--text-primary);
+    }
+}
+
+========== package.json ==========
+{
+  "name": "informatica-medica-platform",
+  "version": "1.0.0",
+  "description": "Plataforma educativa para el curso de Informática Médica",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "init": "node -e \"require('./backend/database/init.js')()\""
+  },
+  "keywords": [
+    "educacion",
+    "medicina",
+    "informatica",
+    "plataforma"
+  ],
+  "author": "Prof. Gabriel",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.1",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

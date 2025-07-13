@@ -209,7 +209,7 @@ function authenticateDownload(req, res, next) {
     });
 }
 
-// ✅ RUTA: Subir archivo - MEJORADA
+// ✅ RUTA: Subir archivo - MEJORADA Y CORREGIDA
 router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
     const startTime = Date.now();
     
@@ -266,10 +266,10 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
             tipo: req.file.mimetype
         });
 
-        // ✅ MEJORA: Usar función de base de datos con promesas
+        // ✅ CORRECCIÓN: Usar original_filename en lugar de original_name
         try {
             const result = await dbOperation(
-                'INSERT INTO submissions (user_id, title, description, filename, original_name, file_path, file_size, mime_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO submissions (user_id, title, description, filename, original_filename, file_path, file_size, mime_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                     req.user.userId,
                     title.trim(),
@@ -370,7 +370,7 @@ router.post('/upload', authenticateToken, upload.single('file'), async (req, res
     }
 });
 
-// ✅ RUTA: Listar entregas del usuario - MEJORADA
+// ✅ RUTA: Listar entregas del usuario - MEJORADA Y CORREGIDA
 router.get('/my-submissions', authenticateToken, async (req, res) => {
     try {
         logSecurityEvent('LIST_SUBMISSIONS_ATTEMPT', { 
@@ -379,8 +379,9 @@ router.get('/my-submissions', authenticateToken, async (req, res) => {
 
         console.log('📋 Obteniendo entregas para usuario:', req.user.email);
 
+        // ✅ CORRECCIÓN: Usar original_filename con alias as original_name
         const submissions = await dbOperation(
-            'SELECT id, title, description, original_name, file_size, mime_type, submitted_at FROM submissions WHERE user_id = ? ORDER BY submitted_at DESC',
+            'SELECT id, title, description, original_filename as original_name, file_size, mime_type, submitted_at FROM submissions WHERE user_id = ? ORDER BY submitted_at DESC',
             [req.user.userId]
         );
 
@@ -451,13 +452,13 @@ router.get('/download/:id', authenticateDownload, async (req, res) => {
         logSecurityEvent('DOWNLOAD_SUCCESS', { 
             submissionId,
             userId: req.user.userId,
-            filename: submission.original_name 
+            filename: submission.original_filename 
         }, req);
 
-        console.log('✅ Enviando archivo:', submission.original_name);
+        console.log('✅ Enviando archivo:', submission.original_filename);
         
         // ✅ MEJORA: Headers de seguridad para descarga
-        res.setHeader('Content-Disposition', `attachment; filename="${submission.original_name}"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${submission.original_filename}"`);
         res.setHeader('Content-Type', submission.mime_type);
         res.setHeader('Content-Length', submission.file_size);
         
@@ -551,7 +552,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         logSecurityEvent('DELETE_SUBMISSION_SUCCESS', { 
             submissionId,
             userId: req.user.userId,
-            filename: submission.original_name 
+            filename: submission.original_filename 
         }, req);
 
         console.log('✅ Entrega eliminada exitosamente');

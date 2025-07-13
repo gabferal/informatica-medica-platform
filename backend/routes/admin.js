@@ -155,22 +155,22 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
     }
 });
 
-// ✅ RUTA: Listar todas las entregas con filtros - MEJORADA
+// ✅ RUTA: Listar todas las entregas con filtros - MEJORADA Y CORREGIDA
 router.get('/submissions', authenticateAdmin, async (req, res) => {
     try {
         const { search, date, title } = req.query;
         
-        logSecurityEvent('ADMIN_LIST_SUBMISSIONS', { 
-            adminId: req.user,
-                        adminId: req.user.userId,
+                logSecurityEvent('ADMIN_LIST_SUBMISSIONS', { 
+            adminId: req.user.userId,
             filters: { search, date, title }
         }, req);
 
         console.log('📋 Admin solicitando entregas con filtros:', { search, date, title });
 
         // ✅ MEJORA: Construcción dinámica de consulta con validación
+        // ✅ CORRECCIÓN: Usar original_filename con alias as original_name
         let query = `
-            SELECT s.*, u.name as student_name, u.email as student_email 
+            SELECT s.*, s.original_filename as original_name, u.name as student_name, u.email as student_email 
             FROM submissions s 
             JOIN users u ON s.user_id = u.id 
             WHERE 1=1
@@ -243,7 +243,7 @@ router.get('/submissions', authenticateAdmin, async (req, res) => {
     }
 });
 
-// ✅ RUTA: Ver detalles de entrega - MEJORADA
+// ✅ RUTA: Ver detalles de entrega - MEJORADA Y CORREGIDA
 router.get('/submissions/:id', authenticateAdmin, async (req, res) => {
     try {
         const submissionId = req.params.id;
@@ -263,8 +263,9 @@ router.get('/submissions/:id', authenticateAdmin, async (req, res) => {
 
         console.log('👁️ Admin viendo detalles de entrega:', submissionId);
 
+        // ✅ CORRECCIÓN: Usar original_filename con alias as original_name
         const submission = await dbGet(`
-            SELECT s.*, u.name as student_name, u.email as student_email, u.ra as student_ra
+            SELECT s.*, s.original_filename as original_name, u.name as student_name, u.email as student_email, u.ra as student_ra
             FROM submissions s 
             JOIN users u ON s.user_id = u.id 
             WHERE s.id = ?
@@ -363,14 +364,14 @@ router.get('/download/:id', authenticateDownload, async (req, res) => {
         logSecurityEvent('ADMIN_DOWNLOAD_SUCCESS', { 
             adminId: req.user.userId,
             submissionId,
-            filename: submission.original_name,
+            filename: submission.original_filename,
             studentId: submission.user_id 
         }, req);
 
-        console.log('✅ Enviando archivo:', submission.original_name);
+        console.log('✅ Enviando archivo:', submission.original_filename);
         
         // ✅ MEJORA: Headers de seguridad para descarga
-        res.setHeader('Content-Disposition', `attachment; filename="${submission.original_name}"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${submission.original_filename}"`);
         res.setHeader('Content-Type', submission.mime_type);
         res.setHeader('Content-Length', submission.file_size);
         
@@ -490,7 +491,7 @@ router.delete('/submissions/:id', authenticateAdmin, async (req, res) => {
             adminId: req.user.userId,
             submissionId,
             studentId: submission.user_id,
-            filename: submission.original_name 
+            filename: submission.original_filename 
         }, req);
 
         console.log('✅ Entrega eliminada exitosamente por admin');
@@ -498,7 +499,7 @@ router.delete('/submissions/:id', authenticateAdmin, async (req, res) => {
             message: 'Entrega eliminada exitosamente',
             deletedId: submissionId,
             studentId: submission.user_id,
-            filename: submission.original_name
+            filename: submission.original_filename
         });
 
     } catch (error) {
@@ -516,7 +517,7 @@ router.delete('/submissions/:id', authenticateAdmin, async (req, res) => {
     }
 });
 
-// ✅ RUTA: Exportar entregas a CSV - MEJORADA
+// ✅ RUTA: Exportar entregas a CSV - MEJORADA Y CORREGIDA
 router.get('/export/submissions', authenticateAdmin, async (req, res) => {
     try {
         logSecurityEvent('ADMIN_EXPORT_ATTEMPT', { 
@@ -526,12 +527,13 @@ router.get('/export/submissions', authenticateAdmin, async (req, res) => {
 
         console.log('📊 Admin exportando entregas a CSV');
 
+        // ✅ CORRECCIÓN: Usar original_filename con alias as original_name
         const submissions = await dbOperation(`
             SELECT 
                 s.id,
                 s.title,
                 s.description,
-                s.original_name,
+                s.original_filename as original_name,
                 s.file_size,
                 s.mime_type,
                 s.submitted_at,
@@ -711,7 +713,7 @@ router.get('/advanced-stats', authenticateAdmin, async (req, res) => {
             adminId: req.user.userId 
         }, req);
 
-        console.log('📈 Estadísticas avanzadas enviadas');
+        console.log('�� Estadísticas avanzadas enviadas');
         res.json(advancedStats);
 
     } catch (error) {
@@ -727,134 +729,5 @@ router.get('/advanced-stats', authenticateAdmin, async (req, res) => {
         });
     }
 });
-// ✅ AGREGAR AL FINAL DE admin.js (antes del module.exports)
 
-// ✅ RUTA TEMPORAL: Migrar base de datos en producción
-router.post('/migrate-database', authenticateAdmin, async (req, res) => {
-    try {
-        logSecurityEvent('ADMIN_DATABASE_MIGRATION_ATTEMPT', { 
-            adminId: req.user.userId,
-            adminEmail: req.user.email 
-        }, req);
-
-        console.log('🔧 Ejecutando migración de base de datos en producción...');
-        
-        const db = new sqlite3.Database(dbPath);
-        
-        // Verificar columnas existentes
-        const columns = await new Promise((resolve, reject) => {
-            db.all("PRAGMA table_info(submissions)", (err, columns) => {
-                if (err) reject(err);
-                else resolve(columns);
-            });
-        });
-        
-        const columnNames = columns.map(col => col.name);
-        const missingColumns = [];
-        
-        console.log('📋 Columnas actuales:', columnNames);
-        
-        // Verificar columnas requeridas
-        const requiredColumns = [
-            { name: 'original_name', type: 'TEXT' },
-            { name: 'file_path', type: 'TEXT' },
-            { name: 'file_size', type: 'INTEGER' },
-            { name: 'mime_type', type: 'TEXT' }
-        ];
-        
-        for (const col of requiredColumns) {
-            if (!columnNames.includes(col.name)) {
-                missingColumns.push(col);
-            }
-        }
-        
-        if (missingColumns.length === 0) {
-            db.close();
-            logSecurityEvent('ADMIN_DATABASE_MIGRATION_NOT_NEEDED', { 
-                adminId: req.user.userId,
-                currentColumns: columnNames 
-            }, req);
-            
-            return res.json({ 
-                success: true,
-                message: 'Base de datos ya está actualizada',
-                currentColumns: columnNames
-            });
-        }
-        
-        console.log('➕ Columnas faltantes:', missingColumns.map(c => c.name));
-        
-        // Agregar columnas faltantes
-        for (const col of missingColumns) {
-            await new Promise((resolve, reject) => {
-                console.log(`➕ Agregando columna ${col.name} (${col.type})`);
-                db.run(`ALTER TABLE submissions ADD COLUMN ${col.name} ${col.type}`, (err) => {
-                    if (err) {
-                        console.error(`❌ Error agregando ${col.name}:`, err.message);
-                        reject(err);
-                    } else {
-                        console.log(`✅ Columna ${col.name} agregada`);
-                        resolve();
-                    }
-                });
-            });
-        }
-        
-        // Actualizar datos faltantes
-        console.log('🔄 Actualizando datos faltantes...');
-        
-        const updateResults = await Promise.all([
-            new Promise((resolve, reject) => {
-                db.run(`
-                    UPDATE submissions 
-                    SET original_name = filename 
-                    WHERE original_name IS NULL OR original_name = ''
-                `, function(err) {
-                    if (err) reject(err);
-                    else resolve({ field: 'original_name', changes: this.changes });
-                });
-            }),
-            new Promise((resolve, reject) => {
-                db.run(`
-                    UPDATE submissions 
-                    SET file_path = 'uploads/submissions/' || filename 
-                    WHERE file_path IS NULL OR file_path = ''
-                `, function(err) {
-                    if (err) reject(err);
-                    else resolve({ field: 'file_path', changes: this.changes });
-                });
-            })
-        ]);
-        
-        db.close();
-        
-        logSecurityEvent('ADMIN_DATABASE_MIGRATION_SUCCESS', { 
-            adminId: req.user.userId,
-            addedColumns: missingColumns.map(c => c.name),
-            updateResults 
-        }, req);
-        
-        console.log('🎉 Migración en producción completada exitosamente!');
-        
-        res.json({ 
-            success: true,
-            message: 'Migración completada exitosamente',
-            addedColumns: missingColumns.map(c => c.name),
-            updateResults
-        });
-        
-    } catch (error) {
-        console.error('❌ Error en migración:', error);
-        logSecurityEvent('ADMIN_DATABASE_MIGRATION_ERROR', { 
-            adminId: req.user.userId,
-            error: error.message 
-        }, req);
-
-        res.status(500).json({ 
-            success: false,
-            error: 'Error ejecutando migración',
-            details: error.message
-        });
-    }
-});
 module.exports = router;
