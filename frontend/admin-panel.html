@@ -920,412 +920,329 @@
     </div>
 
     <!-- JavaScript Ultra-Optimizado -->
-    <script>
-        // ========================================
-        // PANEL ADMIN ULTRA-OPTIMIZADO
-        // ========================================
-        
-        class AdminPanelLite {
-            constructor() {
-                this.currentSection = 'dashboard';
-                this.isDarkMode = localStorage.getItem('darkMode') === 'true';
-                this.init();
-            }
-            
-            init() {
-                console.log('🚀 Admin Panel Lite iniciado');
-                
-                // Inicializar funcionalidades básicas
-                this.initNavigation();
-                this.initDateTime();
-                this.initCounters();
-                this.hideLoading();
-                
-                // Aplicar tema guardado
-                if (this.isDarkMode) {
-                    this.applyDarkMode();
-                }
-                
-                console.log('✅ Panel cargado en', performance.now().toFixed(2), 'ms');
-            }
-            
-            initNavigation() {
-                // Event delegation para navegación
-                document.addEventListener('click', (e) => {
-                    const navLink = e.target.closest('.nav-link');
-                    if (navLink) {
-                        e.preventDefault();
-                        this.handleNavigation(navLink);
-                    }
-                });
-                
-                // Restaurar estado del sidebar
-                const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                if (sidebarCollapsed) {
-                    this.toggleSidebar();
-                }
-            }
-            
-            handleNavigation(link) {
-                const section = link.dataset.section;
-                if (!section) return;
-                
-                // Actualizar navegación activa
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                
-                // Mostrar sección
-                this.showSection(section);
-                
-                // Actualizar título
-                const title = link.querySelector('.nav-text').textContent;
-                document.querySelector('.page-title').textContent = title;
-                
-                this.currentSection = section;
-            }
-            
-            showSection(sectionName) {
-                // Ocultar todas las secciones
-                document.querySelectorAll('section').forEach(section => {
-                    section.classList.add('d-none');
-                });
-                
-                // Mostrar sección seleccionada
-                const targetSection = document.getElementById(sectionName);
-                if (targetSection) {
-                    targetSection.classList.remove('d-none');
-                }
-            }
-            
-            initDateTime() {
-                const updateDateTime = () => {
-                    const now = new Date();
-                    const dateElement = document.getElementById('currentDate');
-                    const timeElement = document.getElementById('currentTime');
-                    
-                    if (dateElement) {
-                        dateElement.textContent = now.toLocaleDateString('es-ES', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long'
-                        });
-                    }
-                    
-                    if (timeElement) {
-                        timeElement.textContent = now.toLocaleTimeString('es-ES', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                    }
-                };
-                
-                updateDateTime();
-                setInterval(updateDateTime, 60000); // Actualizar cada minuto
-            }
-            
-            initCounters() {
-                const counters = document.querySelectorAll('[data-count]');
-                
-                // Usar Intersection Observer para animar solo cuando sea visible
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            this.animateCounter(entry.target);
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                });
-                
-                counters.forEach(counter => observer.observe(counter));
-            }
-            
-            animateCounter(element) {
-                const target = parseInt(element.dataset.count);
-                const duration = 1000; // Reducido para mejor performance
-                const step = target / (duration / 16);
-                let current = 0;
-                
-                const timer = setInterval(() => {
-                    current += step;
-                    if (current >= target) {
-                        element.textContent = target;
-                        clearInterval(timer);
-                    } else {
-                        element.textContent = Math.floor(current);
-                    }
-                }, 16);
-            }
-            
-            hideLoading() {
-                const loading = document.getElementById('loading');
-                if (loading) {
-                    setTimeout(() => {
-                        loading.style.opacity = '0';
-                        setTimeout(() => {
-                            loading.style.display = 'none';
-                        }, 300);
-                    }, 800); // Reducido para mejor UX
-                }
-            }
-            
-            toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const mainContent = document.getElementById('mainContent');
-                
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-                
-                // Guardar estado
-                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-            }
-            
-            toggleTheme() {
-                this.isDarkMode = !this.isDarkMode;
-                localStorage.setItem('darkMode', this.isDarkMode);
-                
-                if (this.isDarkMode) {
-                    this.applyDarkMode();
-                } else {
-                    this.removeDarkMode();
-                }
-                
-                this.showNotification(`Modo ${this.isDarkMode ? 'oscuro' : 'claro'} activado`, 'success');
-            }
-            
-            applyDarkMode() {
-                document.documentElement.style.setProperty('--white', '#2C2C2E');
-                document.documentElement.style.setProperty('--light', '#1D1D1F');
-                document.documentElement.style.setProperty('--dark', '#FFFFFF');
-                document.body.style.background = '#1D1D1F';
-                document.body.style.color = '#FFFFFF';
-            }
-            
-            removeDarkMode() {
-                document.documentElement.style.setProperty('--white', '#FFFFFF');
-                document.documentElement.style.setProperty('--light', '#F2F2F7');
-                document.documentElement.style.setProperty('--dark', '#1D1D1F');
-                document.body.style.background = '#F2F2F7';
-                document.body.style.color = '#1D1D1F';
-            }
-            
-            refreshData() {
-                this.showNotification('Actualizando datos...', 'info');
-                
-                // Simular actualización
-                setTimeout(() => {
-                    // Reiniciar contadores
-                    this.initCounters();
-                    this.showNotification('Datos actualizados', 'success');
-                }, 1000);
-            }
-            
-            showNotification(message, type = 'info') {
-                // Remover notificación existente
-                const existing = document.querySelector('.notification');
-                if (existing) {
-                    existing.remove();
-                }
-                
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                
-                const icons = {
-                    success: '✅',
-                    warning: '⚠️',
-                    danger: '❌',
-                    info: 'ℹ️'
-                };
-                
-                notification.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1.2rem;">${icons[type] || icons.info}</span>
-                        <span>${message}</span>
-                        <button onclick="this.parentElement.parentElement.remove()" 
-                                style="margin-left: auto; background: none; border: none; cursor: pointer; font-size: 1.2rem;">
-                            ✕
-                        </button>
-                    </div>
-                `;
-                
-                document.body.appendChild(notification);
-                
-                // Auto-remove después de 3 segundos
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.style.transform = 'translateX(100%)';
-                        notification.style.opacity = '0';
-                        setTimeout(() => notification.remove(), 300);
-                    }
-                }, 3000);
-            }
+    <script src="js/auth.js"></script>
+<script src="js/auth.js"></script>
+<script>
+// ========================================
+// PANEL ADMIN CON AUTENTICACIÓN OBLIGATORIA
+// ========================================
+
+// 🔒 VERIFICAR AUTENTICACIÓN AL CARGAR
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔒 Verificando autenticación de administrador...');
+    
+    // Verificar autenticación obligatoria
+    if (!requireAdmin()) {
+        console.log('❌ Acceso denegado - redirigiendo al login');
+        return; // requireAdmin ya maneja la redirección
+    }
+    
+    console.log('✅ Autenticación de admin verificada');
+    
+    // Mostrar información del usuario
+    displayUserInfo();
+    
+    // Inicializar panel admin
+    initAdminPanel();
+});
+
+// Función para inicializar el panel admin
+function initAdminPanel() {
+    console.log('🚀 Inicializando Panel Admin');
+    
+    // Verificar autenticación cada 30 segundos
+    setInterval(() => {
+        if (!isAuthenticated() || !isAdmin()) {
+            console.log('⚠️ Sesión expirada - redirigiendo al login');
+            logout();
         }
-        
-        // ========================================
-        // FUNCIONES GLOBALES SIMPLIFICADAS
-        // ========================================
-        
-        let adminPanel;
-        
-        // Inicializar cuando el DOM esté listo
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                adminPanel = new AdminPanelLite();
-            });
-        } else {
-            adminPanel = new AdminPanelLite();
-        }
-        
-        // Funciones globales para botones
-        function toggleSidebar() {
-            adminPanel.toggleSidebar();
-        }
-        
-        function toggleTheme() {
-            adminPanel.toggleTheme();
-        }
-        
-        function refreshData() {
-            adminPanel.refreshData();
-        }
-        
-        function showSection(section) {
-            adminPanel.showSection(section);
-            
-            // Actualizar navegación
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-                if (link.dataset.section === section) {
-                    link.classList.add('active');
-                }
-            });
-            
-            // Actualizar título
-            const sectionTitles = {
-                dashboard: 'Dashboard',
-                entregas: 'Entregas',
-                estudiantes: 'Estudiantes',
-                avisos: 'Avisos',
-                materiales: 'Materiales'
-            };
-            
-            document.querySelector('.page-title').textContent = sectionTitles[section] || 'Panel Admin';
-        }
-        
-        function showNotification(message, type) {
-            adminPanel.showNotification(message, type);
-        }
-        
-        // ========================================
-        // RESPONSIVE SIDEBAR PARA MÓVIL
-        // ========================================
-        
-        // Overlay para móvil
-        const overlay = document.createElement('div');
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        `;
-        document.body.appendChild(overlay);
-        
-        // Manejar responsive
-        function handleResize() {
-            const sidebar = document.getElementById('sidebar');
-            
-            if (window.innerWidth <= 768) {
-                // Móvil: sidebar como overlay
-                const originalToggle = toggleSidebar;
-                window.toggleSidebar = function() {
-                    sidebar.classList.toggle('show');
-                    overlay.style.display = sidebar.classList.contains('show') ? 'block' : 'none';
-                };
-            } else {
-                // Desktop: sidebar normal
-                window.toggleSidebar = function() {
-                    adminPanel.toggleSidebar();
-                };
-                sidebar.classList.remove('show');
-                overlay.style.display = 'none';
-            }
-        }
-        
-        // Cerrar sidebar al hacer clic en overlay
-        overlay.addEventListener('click', () => {
-            document.getElementById('sidebar').classList.remove('show');
-            overlay.style.display = 'none';
+    }, 30000);
+    
+    // Inicializar funcionalidades del panel
+    initNavigation();
+    initDateTime();
+    initCounters();
+    loadDashboardData();
+    hideLoading();
+}
+
+// Navegación del panel
+function initNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link[data-section]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.dataset.section;
+            showSection(section);
         });
-        
-        // Inicializar responsive
-        window.addEventListener('resize', handleResize);
-        handleResize();
-        
-        // ========================================
-        // PERFORMANCE MONITORING
-        // ========================================
-        
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const metrics = {
-                    loadTime: performance.now(),
-                    memoryUsage: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 'N/A'
-                };
-                
-                console.log('📊 Performance Metrics:', metrics);
-                
-                // Mostrar métricas si está en desarrollo
-                if (location.hostname === 'localhost') {
-                    console.log(`⚡ Carga completa: ${metrics.loadTime.toFixed(2)}ms`);
-                    console.log(`💾 Memoria usada: ${metrics.memoryUsage}MB`);
-                }
-            }, 100);
-        });
-        
-        // ========================================
-        // ERROR HANDLING GLOBAL
-        // ========================================
-        
-        window.addEventListener('error', (e) => {
-            console.error('Error capturado:', e.error);
-            if (adminPanel) {
-                adminPanel.showNotification('Ha ocurrido un error', 'danger');
-            }
-        });
-        
-        // ========================================
-        // UTILIDADES ADICIONALES
-        // ========================================
-        
-        // Función para copiar al portapapeles
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('Copiado al portapapeles', 'success');
-            }).catch(() => {
-                showNotification('Error al copiar', 'danger');
-            });
+    });
+}
+
+// Mostrar sección específica
+function showSection(sectionName) {
+    // Ocultar todas las secciones
+    const sections = document.querySelectorAll('.admin-section');
+    sections.forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Mostrar sección seleccionada
+    const targetSection = document.getElementById(sectionName);
+    if (targetSection) {
+        targetSection.style.display = 'block';
+    }
+    
+    // Actualizar navegación activa
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => link.classList.remove('active'));
+    
+    const activeLink = document.querySelector(`[data-section="${sectionName}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+    
+    // Cargar datos específicos de la sección
+    loadSectionData(sectionName);
+}
+
+// Cargar datos de sección específica
+async function loadSectionData(section) {
+    try {
+        switch(section) {
+            case 'users':
+                await loadUsers();
+                break;
+            case 'submissions':
+                await loadSubmissions();
+                break;
+            case 'materials':
+                await loadMaterials();
+                break;
+            case 'dashboard':
+                await loadDashboardData();
+                break;
         }
+    } catch (error) {
+        console.error(`❌ Error cargando datos de ${section}:`, error);
+        showAlert(`Error cargando datos de ${section}`, 'danger');
+    }
+}
+
+// Cargar datos del dashboard
+async function loadDashboardData() {
+    try {
+        const response = await authenticatedFetch('/api/admin/stats');
+        if (!response.ok) throw new Error('Error obteniendo estadísticas');
         
-        // Función para formatear fechas
-        function formatDate(date) {
-            return new Intl.DateTimeFormat('es-ES', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            }).format(date);
+        const stats = await response.json();
+        updateDashboardCounters(stats);
+    } catch (error) {
+        console.error('❌ Error cargando dashboard:', error);
+        showAlert('Error cargando estadísticas del dashboard', 'danger');
+    }
+}
+
+// Actualizar contadores del dashboard
+function updateDashboardCounters(stats) {
+    const counters = {
+        'total-users': stats.totalUsers || 0,
+        'total-submissions': stats.totalSubmissions || 0,
+        'total-materials': stats.totalMaterials || 0,
+        'pending-submissions': stats.pendingSubmissions || 0
+    };
+    
+    Object.entries(counters).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
         }
+    });
+}
+
+// Cargar usuarios
+async function loadUsers() {
+    try {
+        const response = await authenticatedFetch('/api/admin/users');
+        if (!response.ok) throw new Error('Error obteniendo usuarios');
         
-        // Función para formatear tamaños de archivo
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        const users = await response.json();
+        displayUsers(users);
+    } catch (error) {
+        console.error('❌ Error cargando usuarios:', error);
+        showAlert('Error cargando lista de usuarios', 'danger');
+    }
+}
+
+// Mostrar usuarios en tabla
+function displayUsers(users) {
+    const tbody = document.querySelector('#users-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.ra || 'N/A'}</td>
+            <td><span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'}">${user.role}</span></td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editUser(${user.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                ${user.role !== 'admin' ? `
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+                ` : ''}
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Cargar entregas
+async function loadSubmissions() {
+    try {
+        const response = await authenticatedFetch('/api/admin/submissions');
+        if (!response.ok) throw new Error('Error obteniendo entregas');
+        
+        const submissions = await response.json();
+        displaySubmissions(submissions);
+    } catch (error) {
+        console.error('❌ Error cargando entregas:', error);
+        showAlert('Error cargando entregas', 'danger');
+    }
+}
+
+// Mostrar entregas
+function displaySubmissions(submissions) {
+    const tbody = document.querySelector('#submissions-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = submissions.map(submission => `
+        <tr>
+            <td>${submission.id}</td>
+            <td>${submission.title}</td>
+            <td>${submission.user_name || 'N/A'}</td>
+            <td>${submission.original_name}</td>
+            <td>${new Date(submission.submitted_at).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="downloadSubmission(${submission.id})">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteSubmission(${submission.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Cargar materiales
+async function loadMaterials() {
+    try {
+        const response = await authenticatedFetch('/api/admin/materials');
+        if (!response.ok) throw new Error('Error obteniendo materiales');
+        
+        const materials = await response.json();
+        displayMaterials(materials);
+    } catch (error) {
+        console.error('❌ Error cargando materiales:', error);
+        showAlert('Error cargando materiales', 'danger');
+    }
+}
+
+// Mostrar materiales
+function displayMaterials(materials) {
+    const tbody = document.querySelector('#materials-table tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = materials.map(material => `
+        <tr>
+            <td>${material.id}</td>
+            <td>${material.title}</td>
+            <td>${material.description || 'Sin descripción'}</td>
+            <td>${material.filename}</td>
+            <td>${new Date(material.uploaded_at).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="downloadMaterial(${material.id})">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteMaterial(${material.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Funciones de utilidad
+function initDateTime() {
+    const updateDateTime = () => {
+        const now = new Date();
+        const dateTimeElement = document.getElementById('current-datetime');
+        if (dateTimeElement) {
+            dateTimeElement.textContent = now.toLocaleString();
         }
-        
-        console.log('🚀 Panel Admin Ultra-Optimizado v1.0');
-        console.log('⚡ Carga rápida • 📱 Responsive • 🎨 Minimalista');
-    </script>
+    };
+    
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+}
+
+function initCounters() {
+    // Los contadores se actualizan con loadDashboardData()
+    console.log('✅ Contadores inicializados');
+}
+
+function hideLoading() {
+    const loadingElement = document.getElementById('loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    
+    const mainContent = document.getElementById('main-content');
+    if (mainContent) {
+        mainContent.style.display = 'block';
+    }
+}
+
+// Funciones de acción
+function editUser(userId) {
+    console.log('Editando usuario:', userId);
+    // Implementar edición de usuario
+}
+
+function deleteUser(userId) {
+    if (confirm('¿Estás seguro de eliminar este usuario?')) {
+        console.log('Eliminando usuario:', userId);
+        // Implementar eliminación de usuario
+    }
+}
+
+function deleteSubmission(submissionId) {
+    if (confirm('¿Estás seguro de eliminar esta entrega?')) {
+        console.log('Eliminando entrega:', submissionId);
+        // Implementar eliminación de entrega
+    }
+}
+
+function deleteMaterial(materialId) {
+    if (confirm('¿Estás seguro de eliminar este material?')) {
+        console.log('Eliminando material:', materialId);
+        // Implementar eliminación de material
+    }
+}
+
+function downloadSubmission(submissionId) {
+    window.open(`/api/admin/submissions/${submissionId}/download`, '_blank');
+}
+
+function downloadMaterial(materialId) {
+    window.open(`/api/materials/${materialId}/download`, '_blank');
+}
+
+console.log('✅ Panel Admin con autenticación cargado');
+</script>
 </body>
 </html>
