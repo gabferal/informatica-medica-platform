@@ -6,208 +6,1087 @@
     <title>Informática Médica - Plataforma de Entregas Académicas</title>
     
     <!-- Meta tags para SEO -->
-    <meta name="description" content="Plataforma digital para entregas académicas de Informática Médica. Sistema seguro y profesional para estudiantes de medicina.">
-    <meta name="keywords" content="informática médica, entregas académicas, medicina, plataforma educativa">
+    <meta name="description" content="Plataforma digital para estudiantes de 4to semestre de Informática Médica. Gestión de entregas, avisos importantes y materiales del curso.">
+    <meta name="keywords" content="informática médica, estudiantes medicina, entregas académicas, plataforma educativa">
     <meta name="author" content="Prof. Gabriel Álvarez">
     
-    <!-- Open Graph para redes sociales -->
+    <!-- Open Graph -->
     <meta property="og:title" content="Informática Médica - Plataforma Académica">
-    <meta property="og:description" content="Sistema profesional de entregas para estudiantes de medicina">
+    <meta property="og:description" content="Plataforma digital para estudiantes de medicina - 4to semestre">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://web-production-0af6.up.railway.app">
     
-    <!-- Bootstrap 5.3 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- AOS Animation Library -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- PWA Meta tags -->
+    <meta name="theme-color" content="#007AFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="InfoMédica">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- CSS INTEGRADO Y CORREGIDO -->
+    <style>
+        /* ========================================
+           VARIABLES CSS Y CONFIGURACIÓN BASE
+        ======================================== */
+        
+        :root {
+            /* Colores médicos principales */
+            --medical-primary: #007AFF;
+            --medical-secondary: #34C759;
+            --medical-accent: #5856D6;
+            --medical-warning: #FF9500;
+            --medical-danger: #FF3B30;
+            --medical-success: #34C759;
+            --medical-info: #5AC8FA;
+            
+            /* Colores de fondo */
+            --light-gray: #F2F2F7;
+            --dark-gray: #8E8E93;
+            --background-white: #FFFFFF;
+            --background-dark: #1D1D1F;
+            
+            /* Gradientes médicos */
+            --medical-gradient-primary: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            --medical-gradient-secondary: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+            --medical-gradient-hero: linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #34C759 100%);
+            --medical-gradient-dark: linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 100%);
+            
+            /* Border radius */
+            --border-radius: 12px;
+            --border-radius-small: 8px;
+            --border-radius-large: 16px;
+            
+            /* Sombras */
+            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
+            --shadow-medical: 0 8px 32px rgba(0, 122, 255, 0.2);
+            
+            /* Transiciones */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Efectos de vidrio */
+            --glass-effect: rgba(255, 255, 255, 0.1);
+            
+            /* Texto */
+            --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            
+            /* Hero */
+            --hero-height: 100vh;
+        }
+        
+        /* ========================================
+           RESET Y CONFIGURACIÓN BASE
+        ======================================== */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            background: var(--light-gray) !important;
+            color: #1D1D1F !important;
+            line-height: 1.6 !important;
+            overflow-x: hidden !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif !important;
+            font-weight: 600 !important;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* ========================================
+           LOADING SCREEN
+        ======================================== */
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--medical-gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+        
+        .loading-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .loading-text h4 {
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        
+        .loading-text p {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+        
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            animation: loadingProgress 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes loadingProgress {
+            0% { width: 0; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* ========================================
+           NAVBAR MODERNO Y MEJORADO
+        ======================================== */
+        
+        .medical-navbar {
+            background: var(--medical-gradient-primary) !important;
+            backdrop-filter: blur(20px) !important;
+            transition: all 0.3s ease !important;
+            padding: 1rem 0 !important;
+            box-shadow: 0 2px 20px rgba(0, 122, 255, 0.15) !important;
+        }
+        
+        .navbar-scrolled {
+            padding: 0.5rem 0 !important;
+            box-shadow: 0 4px 30px rgba(0, 122, 255, 0.25) !important;
+            background: rgba(0, 122, 255, 0.95) !important;
+        }
+        
+        /* Navbar brand mejorado */
+        .medical-brand .brand-container {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+        }
+        
+        .brand-icon {
+            width: 40px !important;
+            height: 40px !important;
+            background: rgba(255, 255, 255, 0.25) !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.2rem !important;
+            color: white !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        }
+        
+        .brand-text {
+            display: flex !important;
+            flex-direction: column !important;
+            line-height: 1 !important;
+        }
+        
+        .brand-title {
+            font-weight: 700 !important;
+            font-size: 1.1rem !important;
+            color: white !important;
+        }
+        
+        .brand-subtitle {
+            font-weight: 400 !important;
+            font-size: 0.8rem !important;
+            opacity: 0.9 !important;
+            color: white !important;
+        }
+        
+        /* Nav links mejorados */
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500 !important;
+            padding: 0.75rem 1rem !important;
+            border-radius: var(--border-radius) !important;
+            transition: var(--transition) !important;
+            margin: 0 0.25rem !important;
+            position: relative !important;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.15) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        .navbar-nav .nav-link.active {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            font-weight: 600 !important;
+        }
+        
+        /* BOTONES DEL NAVBAR - SÚPER VISIBLES */
+        .navbar .btn {
+            font-weight: 600 !important;
+            padding: 0.75rem 1.5rem !important;
+            border-radius: var(--border-radius) !important;
+            transition: var(--transition) !important;
+            border-width: 2px !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            white-space: nowrap !important;
+        }
+        
+        /* Botón "Iniciar Sesión" - SÚPER VISIBLE */
+        .navbar .btn-outline-light {
+            background: rgba(255, 255, 255, 0.25) !important;
+            border: 2px solid rgba(255, 255, 255, 0.9) !important;
+            color: white !important;
+            backdrop-filter: blur(10px) !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .navbar .btn-outline-light:hover {
+            background: white !important;
+            border-color: white !important;
+            color: var(--medical-primary) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3) !important;
+        }
+        
+        /* Botón "Registrarse" - SÚPER DESTACADO */
+        .navbar .btn-medical-primary {
+            background: white !important;
+            border: 2px solid white !important;
+            color: var(--medical-primary) !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        }
+        
+        .navbar .btn-medical-primary:hover {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.95) !important;
+            color: var(--medical-primary) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.4) !important;
+        }
+        
+        /* Espaciado entre botones */
+        .navbar .btn + .btn {
+            margin-left: 0.75rem !important;
+        }
+        
+        /* ========================================
+           BOTONES GENERALES MEJORADOS
+        ======================================== */
+        
+        .btn {
+            border-radius: var(--border-radius) !important;
+            font-weight: 600 !important;
+            padding: 0.75rem 1.5rem !important;
+            transition: var(--transition) !important;
+            border: none !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        /* Botón primario médico */
+        .btn-medical-primary {
+            background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%) !important;
+            border: 2px solid #007AFF !important;
+            color: white !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+        }
+        
+        .btn-medical-primary:hover {
+            background: linear-gradient(135deg, #0056CC 0%, #003D99 100%) !important;
+            border-color: #0056CC !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4) !important;
+            color: white !important;
+        }
+        
+        /* Botón secundario médico */
+        .btn-medical-secondary {
+            background: linear-gradient(135deg, #34C759 0%, #28A745 100%) !important;
+            border: 2px solid #34C759 !important;
+            color: white !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3) !important;
+        }
+        
+        .btn-medical-secondary:hover {
+            background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%) !important;
+            border-color: #28A745 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4) !important;
+            color: white !important;
+        }
+        
+        /* Botón outline mejorado */
+        .btn-outline-medical {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid #007AFF !important;
+            color: #007AFF !important;
+            font-weight: 600 !important;
+            backdrop-filter: blur(10px) !important;
+        }
+        
+        .btn-outline-medical:hover {
+            background: #007AFF !important;
+            color: white !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.3) !important;
+        }
+        
+        /* Tamaños de botones */
+        .btn-lg {
+            padding: 1rem 2rem !important;
+            font-size: 1.1rem !important;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.9rem !important;
+        }
+        
+        /* ========================================
+           HERO SECTION MODERNA
+        ======================================== */
+        
+        .hero-section-modern {
+            position: relative !important;
+            min-height: var(--hero-height) !important;
+            background: var(--medical-gradient-hero) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        .hero-background {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1 !important;
+        }
+        
+        .hero-particles {
+            position: absolute !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+        
+        .particle {
+            position: absolute !important;
+            width: 4px !important;
+            height: 4px !important;
+            background: rgba(255, 255, 255, 0.3) !important;
+            border-radius: 50% !important;
+            animation: float 15s infinite linear !important;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .hero-gradient {
+            position: absolute !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: linear-gradient(45deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%) !important;
+        }
+        
+        .hero-content {
+            position: relative !important;
+            z-index: 2 !important;
+            color: white !important;
+        }
+        
+        .hero-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 50px !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .hero-title {
+            font-size: 3.5rem !important;
+            font-weight: 700 !important;
+            line-height: 1.1 !important;
+            margin-bottom: 1.5rem !important;
+            text-shadow: var(--text-shadow) !important;
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }
+        
+        .hero-subtitle {
+            font-weight: 300 !important;
+            opacity: 0.9 !important;
+        }
+        
+        .hero-description {
+            font-size: 1.2rem !important;
+            line-height: 1.6 !important;
+            margin-bottom: 2rem !important;
+            opacity: 0.9 !important;
+        }
+        
+        .hero-stats {
+            display: flex !important;
+            gap: 2rem !important;
+            margin-bottom: 2rem !important;
+        }
+        
+        .stat-item {
+            text-align: center !important;
+        }
+        
+        .stat-number {
+            font-size: 2rem !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem !important;
+            opacity: 0.8 !important;
+        }
+        
+        .hero-actions {
+            display: flex !important;
+            gap: 1rem !important;
+            flex-wrap: wrap !important;
+            margin-bottom: 2rem !important;
+        }
+        
+        /* Botones del hero - SÚPER VISIBLES */
+        .hero-actions .btn-medical-primary {
+            background: white !important;
+            border: 2px solid white !important;
+            color: var(--medical-primary) !important;
+            font-weight: 700 !important;
+            padding: 1rem 2rem !important;
+            font-size: 1.1rem !important;
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3) !important;
+            animation: pulse-button 2s infinite !important;
+        }
+        
+        .hero-actions .btn-medical-primary:hover {
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: var(--medical-primary) !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 6px 30px rgba(255, 255, 255, 0.4) !important;
+        }
+        
+        .hero-actions .btn-outline-light {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border: 2px solid rgba(255, 255, 255, 0.9) !important;
+            color: white !important;
+            font-weight: 600 !important;
+            padding: 1rem 2rem !important;
+            font-size: 1.1rem !important;
+            backdrop-filter: blur(10px) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .hero-actions .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.3) !important;
+            border-color: white !important;
+            color: white !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 6px 30px rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        @keyframes pulse-button {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            }
+        }
+        
+        .hero-trust {
+            opacity: 0.8 !important;
+        }
+        
+        /* Dashboard Preview */
+        .hero-visual {
+            position: relative !important;
+            z-index: 2 !important;
+        }
+        
+        .medical-dashboard-preview {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(20px) !important;
+            border-radius: var(--border-radius-large) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            overflow: hidden !important;
+            box-shadow: var(--shadow-medical) !important;
+        }
+        
+        .dashboard-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 1rem !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .dashboard-controls {
+            display: flex !important;
+            gap: 0.5rem !important;
+        }
+        
+        .control {
+            width: 12px !important;
+            height: 12px !important;
+            border-radius: 50% !important;
+        }
+        
+        .control.red { background: #ff5f57 !important; }
+        .control.yellow { background: #ffbd2e !important; }
+        .control.green { background: #28ca42 !important; }
+        
+        .dashboard-title {
+            color: white !important;
+            font-weight: 600 !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .dashboard-content {
+            padding: 1.5rem !important;
+        }
+        
+        .dashboard-card {
+            display: flex !important;
+            align-items: center !important;
+            gap: 1rem !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            padding: 1rem !important;
+            border-radius: var(--border-radius) !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        .card-icon {
+            width: 40px !important;
+            height: 40px !important;
+            background: var(--medical-success) !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: white !important;
+        }
+        
+        .card-info h6 {
+            color: white !important;
+            margin: 0 !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .card-info p {
+            color: rgba(255, 255, 255, 0.8) !important;
+            margin: 0 !important;
+            font-size: 0.8rem !important;
+        }
+        
+        .card-status.success {
+            color: var(--medical-success) !important;
+            font-size: 1.2rem !important;
+        }
+        
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute !important;
+            bottom: 2rem !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            text-align: center !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+            z-index: 2 !important;
+        }
+        
+        .scroll-text {
+            font-size: 0.9rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .scroll-arrow {
+            animation: bounce 2s infinite !important;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        /* ========================================
+           SECCIONES GENERALES
+        ======================================== */
+        
+        .section-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            background: rgba(0, 122, 255, 0.1) !important;
+            color: var(--medical-primary) !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 50px !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            border: 1px solid rgba(0, 122, 255, 0.2) !important;
+        }
+        
+        .section-title {
+            font-size: 2.5rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 1rem !important;
+            color: var(--medical-primary) !important;
+        }
+        
+        .section-description {
+            font-size: 1.1rem !important;
+            color: var(--dark-gray) !important;
+            line-height: 1.6 !important;
+        }
+        
+        /* ========================================
+           CARDS Y COMPONENTES
+        ======================================== */
+        
+        .card {
+            border: none !important;
+            border-radius: var(--border-radius-large) !important;
+            box-shadow: var(--shadow-light) !important;
+            transition: var(--transition) !important;
+            background: white !important;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-medium) !important;
+            transform: translateY(-5px) !important;
+        }
+        
+        .card-header {
+            background: var(--light-gray) !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+            border-radius: var(--border-radius-large) var(--border-radius-large) 0 0 !important;
+            padding: 1rem 1.5rem !important;
+        }
+        
+        .card-title {
+            color: var(--medical-primary) !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+        }
+        
+        /* ========================================
+           RESPONSIVE DESIGN
+        ======================================== */
+        
+        @media (max-width: 991px) {
+            .navbar-collapse {
+                background: rgba(0, 122, 255, 0.95) !important;
+                backdrop-filter: blur(20px) !important;
+                border-radius: var(--border-radius) !important;
+                margin-top: 1rem !important;
+                padding: 1rem !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                            }
+            
+            .navbar-nav {
+                margin-bottom: 1rem !important;
+            }
+            
+            .navbar-nav .nav-link {
+                margin: 0.25rem 0 !important;
+                text-align: center !important;
+            }
+            
+            .navbar .btn {
+                width: 100% !important;
+                margin: 0.25rem 0 !important;
+                justify-content: center !important;
+            }
+            
+            .navbar .btn + .btn {
+                margin-left: 0 !important;
+                margin-top: 0.5rem !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem !important;
+            }
+            
+            .hero-stats {
+                gap: 1rem !important;
+            }
+            
+            .hero-actions {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            
+            .hero-actions .btn {
+                width: 100% !important;
+                margin-bottom: 0.5rem !important;
+                justify-content: center !important;
+            }
+            
+            .section-title {
+                font-size: 2rem !important;
+            }
+            
+            .medical-dashboard-preview {
+                margin-top: 2rem !important;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .hero-title {
+                font-size: 2rem !important;
+            }
+            
+            .hero-description {
+                font-size: 1rem !important;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem !important;
+            }
+        }
+        
+        /* ========================================
+           MEJORAS DE ACCESIBILIDAD
+        ======================================== */
+        
+        .btn:focus,
+        .nav-link:focus,
+        a:focus {
+            outline: 2px solid var(--medical-primary) !important;
+            outline-offset: 2px !important;
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            
+            .particle {
+                display: none !important;
+            }
+        }
+        
+        /* ========================================
+           UTILIDADES ADICIONALES
+        ======================================== */
+        
+        .text-medical-primary { color: var(--medical-primary) !important; }
+        .text-medical-success { color: var(--medical-success) !important; }
+        .bg-medical-primary { background: var(--medical-primary) !important; }
+        
+        .medical-gradient-text {
+            background: var(--medical-gradient-primary) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Selección de texto personalizada */
+        ::selection {
+            background: rgba(0, 122, 255, 0.2) !important;
+            color: var(--medical-primary) !important;
+        }
+        
+        ::-moz-selection {
+            background: rgba(0, 122, 255, 0.2) !important;
+            color: var(--medical-primary) !important;
+        }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--light-gray);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--medical-primary);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--medical-accent);
+        }
+    </style>
 </head>
+
 <body>
-    <!-- 🔝 NAVBAR MODERNA -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top medical-navbar" id="mainNavbar">
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="loading-text">
+                <h4>Informática Médica</h4>
+                <p>Cargando plataforma académica...</p>
+            </div>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar Moderno -->
+    <nav class="navbar navbar-expand-lg medical-navbar fixed-top" id="mainNavbar">
         <div class="container">
             <a class="navbar-brand medical-brand" href="index.html">
                 <div class="brand-container">
                     <div class="brand-icon">
-                        <i class="fas fa-stethoscope"></i>
+                        <i class="fas fa-heartbeat"></i>
                     </div>
                     <div class="brand-text">
-                        <span class="brand-title">Informática</span>
-                        <span class="brand-subtitle">Médica</span>
+                        <div class="brand-title">InfoMédica</div>
+                        <div class="brand-subtitle">4to Semestre</div>
                     </div>
                 </div>
             </a>
             
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="#inicio">
                             <i class="fas fa-home me-1"></i>Inicio
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#caracteristicas">
-                            <i class="fas fa-star me-1"></i>Características
+                        <a class="nav-link" href="#avisos">
+                            <i class="fas fa-bullhorn me-1"></i>Avisos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#materiales">
+                            <i class="fas fa-book-medical me-1"></i>Materiales
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#como-funciona">
-                            <i class="fas fa-question-circle me-1"></i>¿Cómo Funciona?
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#estadisticas">
-                            <i class="fas fa-chart-bar me-1"></i>Estadísticas
+                            <i class="fas fa-question-circle me-1"></i>Cómo Funciona
                         </a>
                     </li>
                 </ul>
                 
-                <div class="navbar-nav">
-                    <a href="login.html" class="btn btn-outline-light me-2">
+                <div class="d-flex gap-2">
+                    <a href="#demo" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#demoModal">
+                        <i class="fas fa-play me-1"></i>Ver Demo
+                    </a>
+                    <a href="login.html" class="btn btn-medical-primary">
                         <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
                     </a>
-                    <a href="register.html" class="btn btn-medical-primary">
-                        <i class="fas fa-user-plus me-1"></i>Registrarse
-                    </a>
                 </div>
-                
-                <div id="user-info" class="d-none"></div>
             </div>
         </div>
     </nav>
 
-    <!-- 🏥 HERO SECTION MODERNA -->
+    <!-- Hero Section Moderna -->
     <section id="inicio" class="hero-section-modern">
         <div class="hero-background">
-            <div class="hero-particles"></div>
+            <div class="hero-particles" id="heroParticles"></div>
             <div class="hero-gradient"></div>
         </div>
         
         <div class="container">
-            <div class="row align-items-center min-vh-100 py-5">
-                <div class="col-lg-6" data-aos="fade-right" data-aos-duration="1000">
+            <div class="row align-items-center min-vh-100">
+                <div class="col-lg-6" data-aos="fade-right">
                     <div class="hero-content">
                         <div class="hero-badge mb-4">
-                            <i class="fas fa-award me-2"></i>
-                            Plataforma Académica Oficial
+                            <i class="fas fa-graduation-cap me-2"></i>
+                            Plataforma Académica 2024
                         </div>
                         
                         <h1 class="hero-title">
-                            <span class="text-gradient">Informática Médica</span><br>
-                            <span class="hero-subtitle">Nueva Generación</span>
+                            Informática <span class="text-gradient">Médica</span>
+                            <br>
+                            <span class="hero-subtitle">4to Semestre</span>
                         </h1>
                         
                         <p class="hero-description">
-                            Plataforma digital avanzada para la gestión de entregas académicas. 
-                            Diseñada específicamente para estudiantes de medicina con tecnología 
-                            de vanguardia y seguridad hospitalaria.
+                            Plataforma digital moderna para la gestión de entregas académicas, 
+                            avisos importantes y materiales del curso. Diseñada específicamente 
+                            para estudiantes de medicina.
                         </p>
                         
-                        <div class="hero-stats mb-4">
+                        <div class="hero-stats">
                             <div class="stat-item">
-                                <div class="stat-number" id="heroStudents">150+</div>
+                                <div class="stat-number" data-count="150">0</div>
                                 <div class="stat-label">Estudiantes</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-number" id="heroSubmissions">2,500+</div>
-                                <div class="stat-label">Entregas</div>
+                                <div class="stat-number" data-count="12">0</div>
+                                <div class="stat-label">Módulos</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-number">99.9%</div>
-                                <div class="stat-label">Uptime</div>
+                                <div class="stat-number" data-count="98">0</div>
+                                <div class="stat-label">% Satisfacción</div>
                             </div>
                         </div>
                         
                         <div class="hero-actions">
-                            <a href="register.html" class="btn btn-medical-primary btn-lg me-3">
-                                <i class="fas fa-rocket me-2"></i>
-                                Comenzar Ahora
-                                <i class="fas fa-arrow-right ms-2"></i>
+                            <a href="student-area.html" class="btn btn-medical-primary btn-lg">
+                                <i class="fas fa-rocket me-2"></i>Comenzar Ahora
                             </a>
                             <a href="#demo" class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#demoModal">
-                                <i class="fas fa-play me-2"></i>
-                                Ver Demo
+                                <i class="fas fa-play me-2"></i>Ver Demo
                             </a>
                         </div>
                         
-                        <div class="hero-trust mt-4">
-                            <small class="text-muted">
-                                <i class="fas fa-shield-check me-2"></i>
-                                Certificado por la Universidad • Datos Protegidos • GDPR Compliant
+                        <div class="hero-trust">
+                            <small>
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Plataforma segura y confiable • Prof. Gabriel Álvarez
                             </small>
                         </div>
                     </div>
                 </div>
                 
-                <div class="col-lg-6" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="200">
+                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
                     <div class="hero-visual">
                         <div class="medical-dashboard-preview">
                             <div class="dashboard-header">
                                 <div class="dashboard-controls">
-                                    <span class="control red"></span>
-                                    <span class="control yellow"></span>
-                                    <span class="control green"></span>
+                                    <div class="control red"></div>
+                                    <div class="control yellow"></div>
+                                    <div class="control green"></div>
                                 </div>
                                 <div class="dashboard-title">Panel de Estudiante</div>
                             </div>
-                            
                             <div class="dashboard-content">
                                 <div class="dashboard-card">
                                     <div class="card-icon">
-                                        <i class="fas fa-file-medical"></i>
+                                        <i class="fas fa-file-upload"></i>
                                     </div>
                                     <div class="card-info">
                                         <h6>Última Entrega</h6>
-                                        <p>Trabajo Práctico #3</p>
+                                        <p>TP3 - Sistemas HIS</p>
                                     </div>
                                     <div class="card-status success">
-                                        <i class="fas fa-check"></i>
+                                        <i class="fas fa-check-circle"></i>
                                     </div>
                                 </div>
                                 
-                                <div class="dashboard-chart">
-                                    <div class="chart-header">
-                                        <h6>Progreso del Semestre</h6>
+                                <div class="dashboard-card">
+                                    <div class="card-icon">
+                                        <i class="fas fa-calendar"></i>
                                     </div>
-                                    <div class="chart-bars">
-                                        <div class="bar" style="height: 60%"></div>
-                                        <div class="bar" style="height: 80%"></div>
-                                        <div class="bar" style="height: 45%"></div>
-                                        <div class="bar" style="height: 90%"></div>
-                                        <div class="bar" style="height: 75%"></div>
+                                    <div class="card-info">
+                                        <h6>Próxima Fecha</h6>
+                                        <p>26 de Enero - Examen</p>
+                                    </div>
+                                    <div class="card-status success">
+                                        <i class="fas fa-clock"></i>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Elementos flotantes decorativos -->
-                        <div class="floating-elements">
-                            <div class="floating-icon" style="top: 10%; left: 10%;">
-                                <i class="fas fa-heartbeat"></i>
-                            </div>
-                            <div class="floating-icon" style="top: 20%; right: 15%;">
-                                <i class="fas fa-user-md"></i>
-                            </div>
-                            <div class="floating-icon" style="bottom: 30%; left: 5%;">
-                                <i class="fas fa-laptop-medical"></i>
-                            </div>
-                            <div class="floating-icon" style="bottom: 10%; right: 10%;">
-                                <i class="fas fa-shield-virus"></i>
+                                
+                                <div class="dashboard-card">
+                                    <div class="card-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="card-info">
+                                        <h6>Progreso del Curso</h6>
+                                        <p>75% Completado</p>
+                                    </div>
+                                    <div class="card-status success">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -215,17 +1094,90 @@
             </div>
         </div>
         
-        <!-- Scroll indicator -->
         <div class="scroll-indicator">
-            <div class="scroll-text">Desliza para explorar</div>
+            <div class="scroll-text">Explorar más</div>
             <div class="scroll-arrow">
                 <i class="fas fa-chevron-down"></i>
             </div>
         </div>
     </section>
 
-    <!-- 🌟 CARACTERÍSTICAS AVANZADAS -->
-    <section id="caracteristicas" class="features-section-modern py-5">
+    <!-- Estadísticas en Tiempo Real -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row text-center mb-5" data-aos="fade-up">
+                <div class="col-lg-8 mx-auto">
+                    <div class="section-badge mb-3">
+                        <i class="fas fa-chart-bar me-2"></i>Estadísticas del Curso
+                    </div>
+                    <h2 class="section-title">
+                        Resultados <span class="medical-gradient-text">Académicos</span>
+                    </h2>
+                    <p class="section-description">
+                        Datos actualizados del rendimiento y participación de los estudiantes 
+                        en la asignatura de Informática Médica.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <i class="fas fa-users fa-3x text-medical-primary"></i>
+                            </div>
+                            <h3 class="text-medical-primary mb-2" data-count="152">0</h3>
+                            <h6 class="card-title">Estudiantes Activos</h6>
+                            <p class="text-muted small">4to Semestre 2024</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <i class="fas fa-file-upload fa-3x text-medical-success"></i>
+                            </div>
+                            <h3 class="text-medical-success mb-2" data-count="1247">0</h3>
+                            <h6 class="card-title">Entregas Realizadas</h6>
+                            <p class="text-muted small">Total del semestre</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <i class="fas fa-percentage fa-3x text-medical-warning"></i>
+                            </div>
+                            <h3 class="text-medical-warning mb-2" data-count="94">0</h3>
+                            <h6 class="card-title">Tasa de Aprobación</h6>
+                            <p class="text-muted small">Promedio histórico</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <i class="fas fa-star fa-3x text-medical-info"></i>
+                            </div>
+                            <h3 class="text-medical-info mb-2" data-count="4.8">0</h3>
+                            <h6 class="card-title">Calificación Promedio</h6>
+                            <p class="text-muted small">Evaluación del curso</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Características Principales -->
+    <section id="caracteristicas" class="py-5">
         <div class="container">
             <div class="row text-center mb-5" data-aos="fade-up">
                 <div class="col-lg-8 mx-auto">
@@ -233,210 +1185,132 @@
                         <i class="fas fa-star me-2"></i>Características
                     </div>
                     <h2 class="section-title">
-                        Tecnología <span class="text-gradient">Médica Avanzada</span>
+                        ¿Por qué elegir nuestra <span class="medical-gradient-text">plataforma</span>?
                     </h2>
                     <p class="section-description">
-                        Herramientas diseñadas específicamente para el entorno académico médico, 
-                        con la seguridad y confiabilidad que tu educación merece.
+                        Diseñada específicamente para las necesidades de estudiantes de medicina, 
+                        con herramientas modernas y una interfaz intuitiva.
                     </p>
                 </div>
             </div>
             
             <div class="row g-4">
-                <!-- Feature 1 -->
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-                    <div class="feature-card-modern">
-                        <div class="feature-icon-container">
-                            <div class="feature-icon">
-                                <i class="fas fa-cloud-upload-alt"></i>
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-medical-primary"></i>
                             </div>
-                            <div class="feature-glow"></div>
-                        </div>
-                        
-                        <h5 class="feature-title">Subida Inteligente</h5>
-                        <p class="feature-description">
-                            Sistema de drag & drop con validación automática, compresión inteligente 
-                            y detección de duplicados para una experiencia sin fricciones.
-                        </p>
-                        
-                        <div class="feature-specs">
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Hasta 50MB por archivo
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                15+ formatos soportados
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Validación automática
-                            </div>
+                            <h5 class="card-title">Entregas Digitales</h5>
+                            <p class="card-text">
+                                Sube tus trabajos prácticos de forma segura y recibe 
+                                confirmación inmediata de entrega.
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Múltiples formatos</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Hasta 30MB por archivo</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Historial completo</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Feature 2 -->
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="feature-card-modern">
-                        <div class="feature-icon-container">
-                            <div class="feature-icon">
-                                <i class="fas fa-chart-line"></i>
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <i class="fas fa-bullhorn fa-3x text-medical-info"></i>
                             </div>
-                            <div class="feature-glow"></div>
-                        </div>
-                        
-                        <h5 class="feature-title">Analytics en Tiempo Real</h5>
-                        <p class="feature-description">
-                            Dashboard interactivo con métricas de progreso, estadísticas de entregas 
-                            y análisis de rendimiento académico personalizado.
-                        </p>
-                        
-                        <div class="feature-specs">
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Métricas en tiempo real
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Reportes automáticos
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Gráficos interactivos
-                            </div>
+                            <h5 class="card-title">Avisos en Tiempo Real</h5>
+                            <p class="card-text">
+                                Mantente informado con notificaciones instantáneas 
+                                sobre fechas importantes y cambios.
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Notificaciones push</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Categorías por urgencia</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Historial de avisos</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Feature 3 -->
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                    <div class="feature-card-modern">
-                        <div class="feature-icon-container">
-                            <div class="feature-icon">
-                                <i class="fas fa-shield-alt"></i>
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <i class="fas fa-book-medical fa-3x text-medical-warning"></i>
                             </div>
-                            <div class="feature-glow"></div>
-                        </div>
-                        
-                        <h5 class="feature-title">Seguridad Hospitalaria</h5>
-                        <p class="feature-description">
-                            Encriptación de grado médico, autenticación multi-factor y cumplimiento 
-                            HIPAA para proteger tu información académica.
-                        </p>
-                        
-                        <div class="feature-specs">
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Encriptación AES-256
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Backup automático
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Cumplimiento GDPR
-                            </div>
+                            <h5 class="card-title">Materiales Organizados</h5>
+                            <p class="card-text">
+                                Accede a todos los recursos del curso organizados 
+                                por módulos y temas específicos.
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-check text-medical-success me-2"></i>4 módulos temáticos</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Videos y documentos</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Software especializado</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Feature 4 -->
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
-                    <div class="feature-card-modern">
-                        <div class="feature-icon-container">
-                            <div class="feature-icon">
-                                <i class="fas fa-mobile-alt"></i>
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <i class="fas fa-mobile-alt fa-3x text-medical-secondary"></i>
                             </div>
-                            <div class="feature-glow"></div>
-                        </div>
-                        
-                        <h5 class="feature-title">Acceso Móvil</h5>
-                        <p class="feature-description">
-                            PWA optimizada para dispositivos móviles con funcionalidad offline 
-                            y sincronización automática cuando recuperes conexión.
-                        </p>
-                        
-                        <div class="feature-specs">
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Funciona offline
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Instalable como app
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Notificaciones push
-                            </div>
+                            <h5 class="card-title">Acceso Móvil</h5>
+                            <p class="card-text">
+                                Plataforma responsive que funciona perfectamente 
+                                en cualquier dispositivo.
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-check text-medical-success me-2"></i>PWA instalable</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Funciona offline</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Sincronización automática</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Feature 5 -->
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
-                    <div class="feature-card-modern">
-                        <div class="feature-icon-container">
-                            <div class="feature-icon">
-                                <i class="fas fa-robot"></i>
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <i class="fas fa-shield-alt fa-3x text-medical-success"></i>
                             </div>
-                            <div class="feature-glow"></div>
-                        </div>
-                        
-                        <h5 class="feature-title">IA Integrada</h5>
-                        <p class="feature-description">
-                            Asistente inteligente que sugiere mejoras, detecta errores comunes 
-                            y proporciona feedback automático sobre tus entregas.
-                        </p>
-                        
-                        <div class="feature-specs">
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Detección de plagio
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Sugerencias automáticas
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Análisis de contenido
-                            </div>
+                            <h5 class="card-title">Seguridad Garantizada</h5>
+                            <p class="card-text">
+                                Tus datos y trabajos están protegidos con los 
+                                más altos estándares de seguridad.
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Encriptación SSL</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Backups automáticos</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Acceso autenticado</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Feature 6 -->
                 <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
-                    <div class="feature-card-modern">
-                        <div class="feature-icon-container">
-                            <div class="feature-icon">
-                                <i class="fas fa-users-cog"></i>
+                    <div class="card h-100 text-center">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <i class="fas fa-headset fa-3x text-medical-accent"></i>
                             </div>
-                            <div class="feature-glow"></div>
-                        </div>
-                        
-                        <h5 class="feature-title">Colaboración Avanzada</h5>
-                        <p class="feature-description">
-                            Herramientas de trabajo en equipo, comentarios en tiempo real 
-                            y sistema de revisión por pares para proyectos grupales.
-                        </p>
-                        
-                        <div class="feature-specs">
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Trabajo en equipo
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Comentarios en vivo
-                            </div>
-                            <div class="spec-item">
-                                <i class="fas fa-check text-success me-2"></i>
-                                Control de versiones
-                            </div>
+                            <h5 class="card-title">Soporte Académico</h5>
+                            <p class="card-text">
+                                Asistencia directa del profesor y recursos de 
+                                ayuda disponibles 24/7.
+                            </p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Horarios de consulta</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>FAQ completo</li>
+                                <li><i class="fas fa-check text-medical-success me-2"></i>Contacto directo</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -444,739 +1318,180 @@
         </div>
     </section>
 
-    <!-- 📊 ESTADÍSTICAS EN TIEMPO REAL -->
-    <section id="estadisticas" class="stats-section-modern py-5">
-        <div class="container">
-            <div class="row text-center mb-5" data-aos="fade-up">
-                <div class="col">
-                    <div class="section-badge mb-3">
-                        <i class="fas fa-chart-bar me-2"></i>Estadísticas
+    <!-- CTA Section -->
+    <section class="py-5 bg-medical-primary text-white">
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-lg-8 mx-auto" data-aos="fade-up">
+                    <div class="mb-4">
+                        <i class="fas fa-graduation-cap fa-4x mb-3"></i>
                     </div>
-                    <h2 class="section-title text-white">
-                        Números que <span class="text-gradient">Hablan por Sí Solos</span>
+                    <h2 class="display-5 fw-bold mb-4">
+                        ¿Listo para comenzar?
                     </h2>
-                </div>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
-                    <div class="stat-card-modern">
-                        <div class="stat-icon">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <div class="stat-number" data-target="247">0</div>
-                        <div class="stat-label">Estudiantes Activos</div>
-                        <div class="stat-growth">
-                            <i class="fas fa-arrow-up"></i> +15% este mes
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                    <div class="stat-card-modern">
-                        <div class="stat-icon">
-                            <i class="fas fa-file-medical"></i>
-                        </div>
-                        <div class="stat-number" data-target="3542">0</div>
-                        <div class="stat-label">Entregas Completadas</div>
-                        <div class="stat-growth">
-                            <i class="fas fa-arrow-up"></i> +28% este mes
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
-                    <div class="stat-card-modern">
-                        <div class="stat-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-number" data-target="99.8">0</div>
-                        <div class="stat-label">% Tiempo Activo</div>
-                        <div class="stat-growth">
-                            <i class="fas fa-check"></i> Excelente
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
-                    <div class="stat-card-modern">
-                        <div class="stat-icon">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-number" data-target="4.9">0</div>
-                        <div class="stat-label">Calificación Promedio</div>
-                        <div class="stat-growth">
-                            <i class="fas fa-heart"></i> Excelente
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-<!-- 📢 AVISOS IMPORTANTES PARA ESTUDIANTES -->
-<section id="avisos" class="avisos-section py-5">
-    <div class="container">
-        <div class="row text-center mb-5" data-aos="fade-up">
-            <div class="col-lg-8 mx-auto">
-                <div class="section-badge mb-3">
-                    <i class="fas fa-bullhorn me-2"></i>Avisos Importantes
-                </div>
-                <h2 class="section-title">
-                    Comunicados <span class="text-gradient">4to Semestre</span>
-                </h2>
-                <p class="section-description">
-                    Mantente al día con las últimas noticias, fechas importantes y comunicados 
-                    específicos para Informática Médica 2024.
-                </p>
-            </div>
-        </div>
-        
-        <div class="row g-4">
-            <!-- Aviso Urgente -->
-            <div class="col-lg-12" data-aos="fade-up" data-aos-delay="100">
-                <div class="aviso-card urgent">
-                    <div class="aviso-header">
-                        <div class="aviso-icon urgent">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="aviso-meta">
-                            <span class="aviso-type urgent">URGENTE</span>
-                            <span class="aviso-date">15 de Enero, 2024</span>
-                        </div>
-                    </div>
-                    <div class="aviso-content">
-                        <h5>Cambio de Fecha - Examen Parcial</h5>
-                        <p>
-                            <strong>Atención estudiantes:</strong> El examen parcial de Informática Médica 
-                            ha sido reprogramado para el <strong>viernes 26 de enero a las 14:00 hrs</strong>. 
-                            El examen cubrirá los temas de bases de datos médicas y sistemas de información hospitalaria.
-                        </p>
-                        <div class="aviso-actions">
-                            <a href="#" class="btn btn-info-medical btn-sm">
-                                <i class="fas fa-calendar me-1"></i>Ver Calendario
-                            </a>
-                            <a href="#" class="btn btn-outline-medical btn-sm">
-                                <i class="fas fa-download me-1"></i>Descargar Temario
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Avisos Regulares -->
-            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
-                <div class="aviso-card info">
-                    <div class="aviso-header">
-                        <div class="aviso-icon info">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <div class="aviso-meta">
-                            <span class="aviso-type info">INFORMACIÓN</span>
-                            <span class="aviso-date">12 de Enero, 2024</span>
-                        </div>
-                    </div>
-                    <div class="aviso-content">
-                        <h6>Nuevos Recursos Disponibles</h6>
-                        <p>
-                            Se han agregado nuevos videos tutoriales sobre el uso de sistemas 
-                            PACS y manejo de imágenes médicas DICOM en la sección de materiales.
-                        </p>
-                        <div class="aviso-actions">
-                            <a href="#materiales" class="btn btn-material-medical btn-sm">
-                                <i class="fas fa-play me-1"></i>Ver Videos
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
-                <div class="aviso-card success">
-                    <div class="aviso-header">
-                        <div class="aviso-icon success">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="aviso-meta">
-                            <span class="aviso-type success">RECORDATORIO</span>
-                            <span class="aviso-date">10 de Enero, 2024</span>
-                        </div>
-                    </div>
-                    <div class="aviso-content">
-                        <h6>Entrega TP3 - Sistemas HIS</h6>
-                        <p>
-                            Recuerden que la fecha límite para la entrega del Trabajo Práctico #3 
-                            sobre Sistemas de Información Hospitalaria es el <strong>20 de enero</strong>.
-                        </p>
-                        <div class="aviso-actions">
-                            <a href="student-area.html" class="btn btn-medical-primary btn-sm">
-                                <i class="fas fa-upload me-1"></i>Subir Trabajo
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="400">
-                <div class="aviso-card warning">
-                    <div class="aviso-header">
-                        <div class="aviso-icon warning">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="aviso-meta">
-                            <span class="aviso-type warning">PRÓXIMO</span>
-                            <span class="aviso-date">8 de Enero, 2024</span>
-                        </div>
-                    </div>
-                    <div class="aviso-content">
-                        <h6>Clase Práctica - Laboratorio</h6>
-                        <p>
-                            La próxima clase práctica será en el laboratorio de informática. 
-                            Traer pendrive y tener instalado el software requerido.
-                        </p>
-                        <div class="aviso-actions">
-                            <a href="#" class="btn btn-info-medical btn-sm">
-                                <i class="fas fa-list me-1"></i>Ver Requisitos
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="500">
-                <div class="aviso-card general">
-                    <div class="aviso-header">
-                        <div class="aviso-icon general">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                        <div class="aviso-meta">
-                            <span class="aviso-type general">ACADÉMICO</span>
-                            <span class="aviso-date">5 de Enero, 2024</span>
-                        </div>
-                    </div>
-                    <div class="aviso-content">
-                        <h6>Horarios de Consulta</h6>
-                        <p>
-                            Horarios de consulta del Prof. Gabriel Álvarez: 
-                            Martes y Jueves de 16:00 a 18:00 hrs. Oficina 205, Edificio de Medicina.
-                        </p>
-                        <div class="aviso-actions">
-                            <a href="mailto:ec.gabrielalvarez@gmail.com" class="btn btn-outline-medical btn-sm">
-                                <i class="fas fa-envelope me-1"></i>Contactar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Ver todos los avisos -->
-        <div class="text-center mt-4" data-aos="fade-up" data-aos-delay="600">
-            <a href="#" class="btn btn-outline-medical">
-                <i class="fas fa-list me-2"></i>Ver Todos los Avisos
-                <i class="fas fa-arrow-right ms-2"></i>
-            </a>
-        </div>
-    </div>
-</section>
-<!-- 📚 MATERIALES DEL CURSO -->
-<section id="materiales" class="materiales-section py-5">
-    <div class="container">
-        <div class="row text-center mb-5" data-aos="fade-up">
-            <div class="col-lg-8 mx-auto">
-                <div class="section-badge mb-3">
-                    <i class="fas fa-book-medical me-2"></i>Materiales del Curso
-                </div>
-                <h2 class="section-title">
-                    Recursos <span class="text-gradient">Académicos</span>
-                </h2>
-                <p class="section-description">
-                    Todo el material necesario para Informática Médica 4to Semestre. 
-                    Documentos, videos, software y recursos adicionales organizados por módulos.
-                </p>
-            </div>
-        </div>
-        
-        <!-- Navegación por módulos -->
-        <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
-            <div class="col-12">
-                <div class="modulos-nav">
-                    <button class="modulo-btn active" data-modulo="todos">
-                        <i class="fas fa-th-large me-2"></i>Todos
-                    </button>
-                    <button class="modulo-btn" data-modulo="modulo1">
-                        <i class="fas fa-database me-2"></i>Módulo 1: BD Médicas
-                    </button>
-                    <button class="modulo-btn" data-modulo="modulo2">
-                        <i class="fas fa-hospital me-2"></i>Módulo 2: Sistemas HIS
-                    </button>
-                    <button class="modulo-btn" data-modulo="modulo3">
-                        <i class="fas fa-x-ray me-2"></i>Módulo 3: PACS y DICOM
-                    </button>
-                    <button class="modulo-btn" data-modulo="modulo4">
-                        <i class="fas fa-chart-line me-2"></i>Módulo 4: Analytics
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row g-4">
-            <!-- Módulo 1: Bases de Datos Médicas -->
-            <div class="col-lg-6 material-item" data-modulo="modulo1" data-aos="fade-up" data-aos-delay="200">
-                <div class="material-card">
-                    <div class="material-header">
-                        <div class="material-icon modulo1">
-                            <i class="fas fa-database"></i>
-                        </div>
-                        <div class="material-info">
-                            <h6>Bases de Datos Médicas</h6>
-                            <span class="material-type">Módulo 1 • 8 recursos</span>
-                        </div>
-                        <div class="material-status">
-                            <span class="status-badge updated">Actualizado</span>
-                        </div>
-                    </div>
-                    <div class="material-content">
-                        <p>Fundamentos de bases de datos en el ámbito médico, modelado de datos clínicos y estándares internacionales.</p>
-                        <div class="material-resources">
-                            <div class="resource-item">
-                                <i class="fas fa-file-pdf text-danger"></i>
-                                <span>Apuntes_BD_Medicas.pdf</span>
-                                <small>2.3 MB</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-play-circle text-primary"></i>
-                                <span>Video: Introducción a HL7</span>
-                                <small>45 min</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-code text-success"></i>
-                                <span>Ejercicios_SQL_Clinico.sql</span>
-                                <small>156 KB</small>
-                            </div>
-                        </div>
-                        <div class="material-actions">
-                            <a href="#" class="btn btn-material-medical btn-sm">
-                                <i class="fas fa-download me-1"></i>Descargar Todo
-                            </a>
-                            <a href="#" class="btn btn-outline-medical btn-sm">
-                                <i class="fas fa-eye me-1"></i>Ver Detalles
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Módulo 2: Sistemas HIS -->
-            <div class="col-lg-6 material-item" data-modulo="modulo2" data-aos="fade-up" data-aos-delay="300">
-                <div class="material-card">
-                    <div class="material-header">
-                        <div class="material-icon modulo2">
-                            <i class="fas fa-hospital"></i>
-                        </div>
-                        <div class="material-info">
-                            <h6>Sistemas de Información Hospitalaria</h6>
-                            <span class="material-type">Módulo 2 • 12 recursos</span>
-                        </div>
-                        <div class="material-status">
-                            <span class="status-badge new">Nuevo</span>
-                        </div>
-                    </div>
-                    <div class="material-content">
-                        <p>Arquitectura y funcionamiento de sistemas HIS, integración de servicios y gestión de información clínica.</p>
-                        <div class="material-resources">
-                            <div class="resource-item">
-                                <i class="fas fa-file-powerpoint text-warning"></i>
-                                <span>Presentacion_HIS_2024.pptx</span>
-                                <small>15.7 MB</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-play-circle text-primary"></i>
-                                <span>Demo: Sistema HIS Real</span>
-                                <small>1h 20min</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-file-alt text-info"></i>
-                                <span>Casos_Estudio_HIS.docx</span>
-                                <small>890 KB</small>
-                            </div>
-                        </div>
-                        <div class="material-actions">
-                            <a href="#" class="btn btn-material-medical btn-sm">
-                                <i class="fas fa-download me-1"></i>Descargar Todo
-                            </a>
-                            <a href="#" class="btn btn-outline-medical btn-sm">
-                                <i class="fas fa-eye me-1"></i>Ver Detalles
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Módulo 3: PACS y DICOM -->
-            <div class="col-lg-6 material-item" data-modulo="modulo3" data-aos="fade-up" data-aos-delay="400">
-                <div class="material-card">
-                    <div class="material-header">
-                        <div class="material-icon modulo3">
-                            <i class="fas fa-x-ray"></i>
-                        </div>
-                        <div class="material-info">
-                            <h6>PACS y Estándar DICOM</h6>
-                            <span class="material-type">Módulo 3 • 10 recursos</span>
-                        </div>
-                        <div class="material-status">
-                            <span class="status-badge updated">Actualizado</span>
-                        </div>
-                    </div>
-                    <div class="material-content">
-                        <p>Sistemas de archivo y comunicación de imágenes médicas, protocolo DICOM y herramientas de visualización.</p>
-                        <div class="material-resources">
-                            <div class="resource-item">
-                                <i class="fas fa-file-pdf text-danger"></i>
-                                <span>Manual_DICOM_Completo.pdf</span>
-                                <small>8.9 MB</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-download text-success"></i>
-                                <span>Software: DICOM Viewer</span>
-                                <small>125 MB</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-images text-info"></i>
-                                <span>Imagenes_Ejemplo_DICOM.zip</span>
-                                <small>45.2 MB</small>
-                            </div>
-                        </div>
-                        <div class="material-actions">
-                            <a href="#" class="btn btn-material-medical btn-sm">
-                                <i class="fas fa-download me-1"></i>Descargar Todo
-                            </a>
-                            <a href="#" class="btn btn-outline-medical btn-sm">
-                                <i class="fas fa-eye me-1"></i>Ver Detalles
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Módulo 4: Analytics y Big Data -->
-            <div class="col-lg-6 material-item" data-modulo="modulo4" data-aos="fade-up" data-aos-delay="500">
-                <div class="material-card">
-                    <div class="material-header">
-                        <div class="material-icon modulo4">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="material-info">
-                            <h6>Analytics y Big Data Médico</h6>
-                            <span class="material-type">Módulo 4 • 6 recursos</span>
-                        </div>
-                        <div class="material-status">
-                            <span class="status-badge coming">Próximamente</span>
-                        </div>
-                    </div>
-                    <div class="material-content">
-                        <p>Análisis de datos médicos, machine learning en salud y herramientas de business intelligence hospitalaria.</p>
-                        <div class="material-resources">
-                            <div class="resource-item">
-                                <i class="fas fa-file-code text-primary"></i>
-                                <span>Notebooks_Python_Medico.zip</span>
-                                <small>3.4 MB</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-database text-success"></i>
-                                <span>Dataset_Clinico_Anonimo.csv</span>
-                                <small>12.1 MB</small>
-                            </div>
-                            <div class="resource-item">
-                                <i class="fas fa-play-circle text-primary"></i>
-                                <span>Tutorial: Power BI Médico</span>
-                                <small>55 min</small>
-                            </div>
-                        </div>
-                        <div class="material-actions">
-                            <a href="#" class="btn btn-material-medical btn-sm disabled">
-                                <i class="fas fa-clock me-1"></i>Disponible Pronto
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Software y Herramientas -->
-            <div class="col-lg-12 material-item" data-modulo="todos" data-aos="fade-up" data-aos-delay="600">
-                <div class="material-card software-card">
-                    <div class="material-header">
-                        <div class="material-icon software">
-                            <i class="fas fa-tools"></i>
-                        </div>
-                        <div class="material-info">
-                            <h6>Software y Herramientas Requeridas</h6>
-                            <span class="material-type">Herramientas • Instalación obligatoria</span>
-                        </div>
-                        <div class="material-status">
-                            <span class="status-badge required">Obligatorio</span>
-                        </div>
-                    </div>
-                    <div class="material-content">
-                        <p>Software necesario para las clases prácticas y trabajos del curso. Descargar e instalar antes de las clases de laboratorio.</p>
-                        <div class="software-grid">
-                            <div class="software-item">
-                                <div class="software-icon">
-                                    <i class="fas fa-database"></i>
-                                </div>
-                                <div class="software-info">
-                                    <h6>MySQL Workbench</h6>
-                                    <p>Para gestión de bases de datos médicas</p>
-                                    <span class="version">v8.0.35</span>
-                                </div>
-                                <a href="#" class="btn btn-medical-primary btn-sm">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                            </div>
-                            
-                            <div class="software-item">
-                                <div class="software-icon">
-                                    <i class="fas fa-eye"></i>
-                                </div>
-                                <div class="software-info">
-                                    <h6>DICOM Viewer</h6>
-                                    <p>Visualizador de imágenes médicas</p>
-                                    <span class="version">v3.2.1</span>
-                                </div>
-                                <a href="#" class="btn btn-medical-primary btn-sm">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                            </div>
-                            
-                            <div class="software-item">
-                                <div class="software-icon">
-                                    <i class="fab fa-python"></i>
-                                </div>
-                                <div class="software-info">
-                                    <h6>Python + Anaconda</h6>
-                                    <p>Para análisis de datos médicos</p>
-                                    <span class="version">v3.11</span>
-                                </div>
-                                <a href="#" class="btn btn-medical-primary btn-sm">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                            </div>
-                            
-                            <div class="software-item">
-                                <div class="software-icon">
-                                    <i class="fas fa-chart-bar"></i>
-                                </div>
-                                <div class="software-info">
-                                    <h6>Power BI Desktop</h6>
-                                    <p>Business Intelligence médico</p>
-                                    <span class="version">Gratuito</span>
-                                </div>
-                                <a href="#" class="btn btn-medical-primary btn-sm">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Acceso completo -->
-        <div class="text-center mt-5" data-aos="fade-up" data-aos-delay="700">
-            <div class="access-info">
-                <h5>¿Necesitas acceso completo a todos los materiales?</h5>
-                <p class="text-muted mb-4">
-                    Inicia sesión con tu cuenta de estudiante para acceder a todos los recursos, 
-                    descargas ilimitadas y contenido exclusivo del curso.
-                </p>
-                <a href="login.html" class="btn btn-medical-primary btn-lg me-3">
-                    <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
-                </a>
-                <a href="register.html" class="btn btn-outline-medical btn-lg">
-                    <i class="fas fa-user-plus me-2"></i>Registrarse
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
-    <!-- 🎯 CÓMO FUNCIONA -->
-    <section id="como-funciona" class="how-it-works-section py-5">
-        <div class="container">
-            <div class="row text-center mb-5" data-aos="fade-up">
-                <div class="col-lg-8 mx-auto">
-                    <div class="section-badge mb-3">
-                        <i class="fas fa-question-circle me-2"></i>Proceso
-                    </div>
-                    <h2 class="section-title">
-                        ¿Cómo <span class="text-gradient">Funciona</span>?
-                    </h2>
-                    <p class="section-description">
-                        Proceso simplificado en 4 pasos para que puedas concentrarte en lo importante: tu aprendizaje.
+                    <p class="lead mb-5">
+                        Únete a más de 150 estudiantes que ya están utilizando nuestra plataforma 
+                        para gestionar sus entregas académicas de forma eficiente.
                     </p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="student-area.html" class="btn btn-light btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Acceder Ahora
+                        </a>
+                        <a href="register.html" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Registrarse
+                        </a>
+                    </div>
+                    
+                    <div class="row mt-5">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span>100% Gratuito</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                <span>Datos Seguros</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-clock me-2"></i>
+                                <span>Disponible 24/7</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="brand-icon me-3">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">InfoMédica</h5>
+                            <small class="text-muted">Plataforma Académica</small>
+                        </div>
+                    </div>
+                    <p class="text-muted">
+                        Plataforma digital diseñada específicamente para estudiantes 
+                        de 4to semestre de Informática Médica.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-light btn-sm">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-light btn-sm">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="mailto:ec.gabrielalvarez@gmail.com" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Navegación</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#inicio" class="text-muted text-decoration-none">Inicio</a></li>
+                        <li><a href="#avisos" class="text-muted text-decoration-none">Avisos</a></li>
+                        <li><a href="#materiales" class="text-muted text-decoration-none">Materiales</a></li>
+                        <li><a href="#como-funciona" class="text-muted text-decoration-none">Cómo Funciona</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Recursos</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="student-area.html" class="text-muted text-decoration-none">Área de Estudiante</a></li>
+                        <li><a href="login.html" class="text-muted text-decoration-none">Iniciar Sesión</a></li>
+                        <li><a href="register.html" class="text-muted text-decoration-none">Registrarse</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">Ayuda</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-4 mb-4">
+                    <h6>Contacto</h6>
+                    <div class="d-flex align-items-start mb-2">
+                        <i class="fas fa-user me-2 mt-1"></i>
+                        <div>
+                            <strong>Prof. Gabriel Álvarez</strong><br>
+                            <small class="text-muted">Engenheiro de Computação</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-2">
+                        <i class="fas fa-envelope me-2 mt-1"></i>
+                        <div>
+                            <a href="mailto:ec.gabrielalvarez@gmail.com" class="text-muted text-decoration-none">
+                                ec.gabrielalvarez@gmail.com
+                            </a>
+                                                    </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-2">
+                        <i class="fas fa-clock me-2 mt-1"></i>
+                        <div>
+                            <small class="text-muted">
+                                Horarios de consulta:<br>
+                                Martes y Jueves 16:00-18:00
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="row g-4">
-                <div class="col-lg-6" data-aos="fade-right" data-aos-delay="100">
-                    <div class="step-card">
-                        <div class="step-number">01</div>
-                        <div class="step-content">
-                            <div class="step-icon">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <h5>Registro Rápido</h5>
-                            <p>Crea tu cuenta en menos de 2 minutos con tu email institucional. Verificación automática y acceso inmediato.</p>
-                            <div class="step-features">
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>Email institucional
-                                </span>
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>Verificación automática
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            <hr class="my-4">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        © 2024 InfoMédica - Plataforma Académica. Todos los derechos reservados.
+                    </small>
                 </div>
-                
-                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
-                    <div class="step-card">
-                        <div class="step-number">02</div>
-                        <div class="step-content">
-                            <div class="step-icon">
-                                <i class="fas fa-sign-in-alt"></i>
-                            </div>
-                            <h5>Acceso Seguro</h5>
-                            <p>Inicia sesión con autenticación de dos factores opcional. Tu seguridad es nuestra prioridad número uno.</p>
-                            <div class="step-features">
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>2FA opcional
-                                </span>
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>Sesión persistente
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-lg-6" data-aos="fade-right" data-aos-delay="300">
-                    <div class="step-card">
-                        <div class="step-number">03</div>
-                        <div class="step-content">
-                            <div class="step-icon">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
-                            <h5>Subida Inteligente</h5>
-                            <p>Arrastra y suelta tus archivos. El sistema valida automáticamente formato, tamaño y detecta duplicados.</p>
-                            <div class="step-features">
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>Drag & Drop
-                                </span>
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>Validación automática
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="400">
-                    <div class="step-card">
-                        <div class="step-number">04</div>
-                        <div class="step-content">
-                            <div class="step-icon">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <h5>Confirmación Instantánea</h5>
-                            <p>Recibe confirmación inmediata con número de seguimiento. Accede a tu historial completo cuando quieras.</p>
-                            <div class="step-features">
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>Confirmación inmediata
-                                </span>
-                                <span class="feature-tag">
-                                    <i class="fas fa-check me-1"></i>Historial completo
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">
+                        <a href="#" class="text-muted text-decoration-none me-3">Privacidad</a>
+                        <a href="#" class="text-muted text-decoration-none me-3">Términos</a>
+                        <a href="#" class="text-muted text-decoration-none">Soporte</a>
+                    </small>
                 </div>
             </div>
         </div>
-    </section>
+    </footer>
 
-    <!-- 🎉 CALL TO ACTION FINAL -->
-    <section class="cta-section-modern py-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-8 text-center" data-aos="zoom-in">
-                    <div class="cta-content">
-                        <div class="cta-icon mb-4">
-                            <i class="fas fa-rocket"></i>
-                        </div>
-                        
-                        <h2 class="cta-title mb-4">
-                            ¿Listo para <span class="text-gradient">Revolucionar</span> tus Entregas?
-                        </h2>
-                        
-                        <p class="cta-description mb-4">
-                            Únete a cientos de estudiantes que ya están usando la plataforma más avanzada 
-                            para entregas académicas en medicina. Tu futuro profesional comienza aquí.
-                        </p>
-                        
-                        <div class="cta-actions mb-4">
-                            <a href="register.html" class="btn btn-medical-primary btn-lg me-3">
-                                <i class="fas fa-user-plus me-2"></i>
-                                Crear Cuenta Gratis
-                                <i class="fas fa-arrow-right ms-2"></i>
-                            </a>
-                            <a href="login.html" class="btn btn-outline-light btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>
-                                Ya Tengo Cuenta
-                            </a>
-                        </div>
-                                                
-                        <div class="cta-trust">
-                            <div class="trust-badges">
-                                <div class="trust-badge">
-                                    <i class="fas fa-shield-check"></i>
-                                    <span>100% Seguro</span>
-                                </div>
-                                <div class="trust-badge">
-                                    <i class="fas fa-graduation-cap"></i>
-                                    <span>Académicamente Aprobado</span>
-                                </div>
-                                <div class="trust-badge">
-                                    <i class="fas fa-clock"></i>
-                                    <span>Disponible 24/7</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 📱 MODAL DEMO -->
+    <!-- Modal Demo -->
     <div class="modal fade" id="demoModal" tabindex="-1" aria-labelledby="demoModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header border-0">
+                <div class="modal-header">
                     <h5 class="modal-title" id="demoModalLabel">
                         <i class="fas fa-play-circle me-2"></i>Demo de la Plataforma
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="demo-container">
-                        <div class="demo-placeholder">
-                            <i class="fas fa-video fa-3x text-muted mb-3"></i>
-                            <h6>Video Demo Interactivo</h6>
-                            <p class="text-muted">
-                                Descubre cómo funciona la plataforma en menos de 3 minutos.
-                                Ve el proceso completo desde el registro hasta la entrega.
-                            </p>
-                            <button class="btn btn-medical-primary">
-                                <i class="fas fa-play me-2"></i>Reproducir Demo
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-video fa-4x text-medical-primary"></i>
+                        </div>
+                        <h4>Demo Interactivo</h4>
+                        <p class="text-muted mb-4">
+                            Explora las funcionalidades principales de la plataforma 
+                            en este recorrido guiado de 3 minutos.
+                        </p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="student-area.html" class="btn btn-medical-primary">
+                                <i class="fas fa-external-link-alt me-2"></i>Ir al Demo en Vivo
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                Cerrar
                             </button>
                         </div>
                     </div>
@@ -1185,563 +1500,429 @@
         </div>
     </div>
 
-    <!-- 🏥 FOOTER MODERNO -->
-    <footer class="footer-modern">
-        <div class="footer-main">
-            <div class="container">
-                <div class="row g-4">
-                    <!-- Información Principal -->
-                    <div class="col-lg-4 col-md-6">
-                        <div class="footer-brand">
-                            <div class="brand-container mb-3">
-                                <div class="brand-icon">
-                                    <i class="fas fa-stethoscope"></i>
-                                </div>
-                                <div class="brand-text">
-                                    <span class="brand-title">Informática</span>
-                                    <span class="brand-subtitle">Médica</span>
-                                </div>
-                            </div>
-                            <p class="footer-description">
-                                Plataforma digital líder en gestión de entregas académicas para estudiantes de medicina. 
-                                Tecnología avanzada al servicio de la educación médica.
-                            </p>
-                            <div class="footer-social">
-                                <a href="#" class="social-link">
-                                    <i class="fab fa-linkedin"></i>
-                                </a>
-                                <a href="#" class="social-link">
-                                    <i class="fab fa-twitter"></i>
-                                </a>
-                                <a href="#" class="social-link">
-                                    <i class="fab fa-github"></i>
-                                </a>
-                                <a href="mailto:ec.gabrielalvarez@gmail.com" class="social-link">
-                                    <i class="fas fa-envelope"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Enlaces Rápidos -->
-                    <div class="col-lg-2 col-md-6">
-                        <div class="footer-section">
-                            <h6 class="footer-title">Plataforma</h6>
-                            <ul class="footer-links">
-                                <li><a href="#caracteristicas">Características</a></li>
-                                <li><a href="#como-funciona">Cómo Funciona</a></li>
-                                <li><a href="#estadisticas">Estadísticas</a></li>
-                                <li><a href="login.html">Iniciar Sesión</a></li>
-                                <li><a href="register.html">Registrarse</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <!-- Soporte -->
-                    <div class="col-lg-2 col-md-6">
-                        <div class="footer-section">
-                            <h6 class="footer-title">Soporte</h6>
-                            <ul class="footer-links">
-                                <li><a href="#faq">Preguntas Frecuentes</a></li>
-                                <li><a href="#documentacion">Documentación</a></li>
-                                <li><a href="#tutoriales">Tutoriales</a></li>
-                                <li><a href="#contacto">Contacto</a></li>
-                                <li><a href="#estado">Estado del Sistema</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <!-- Contacto -->
-                    <div class="col-lg-4 col-md-6">
-                        <div class="footer-section">
-                            <h6 class="footer-title">Contacto</h6>
-                            <div class="contact-info">
-                                <div class="contact-item">
-                                    <i class="fas fa-envelope"></i>
-                                    <div>
-                                        <strong>Email de Soporte</strong>
-                                        <a href="mailto:ec.gabrielalvarez@gmail.com">ec.gabrielalvarez@gmail.com</a>
-                                    </div>
-                                </div>
-                                <div class="contact-item">
-                                    <i class="fas fa-clock"></i>
-                                    <div>
-                                        <strong>Horario de Atención</strong>
-                                        <span>Lunes a Viernes: 8:00 - 18:00</span>
-                                    </div>
-                                </div>
-                                <div class="contact-item">
-                                    <i class="fas fa-shield-check"></i>
-                                    <div>
-                                        <strong>Tiempo de Respuesta</strong>
-                                        <span>Menos de 24 horas</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    <!-- Cookie Consent -->
+    <div class="cookie-consent" id="cookieConsent">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-cookie-bite fa-2x text-warning me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Uso de Cookies</h6>
+                        <p class="mb-0 small">
+                            Utilizamos cookies para mejorar tu experiencia. 
+                            <a href="#" class="text-primary">Más información</a>
+                        </p>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Footer Bottom -->
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="footer-copyright">
-                            <small>
-                                © 2024 <strong>Informática Médica</strong>. Todos los derechos reservados.
-                                Desarrollado con <i class="fas fa-heart text-danger"></i> por 
-                                <strong>Prof. Gabriel Álvarez</strong>
-                            </small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="footer-legal">
-                            <a href="#privacidad">Política de Privacidad</a>
-                            <a href="#terminos">Términos de Uso</a>
-                            <a href="#cookies">Cookies</a>
-                        </div>
-                    </div>
+                <div class="d-flex gap-2 mt-2 mt-md-0">
+                    <button class="btn btn-outline-light btn-sm" onclick="acceptCookies()">
+                        Aceptar
+                    </button>
+                    <button class="btn btn-light btn-sm" onclick="declineCookies()">
+                        Rechazar
+                    </button>
                 </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- 🔄 LOADING SCREEN -->
-    <div id="loadingScreen" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <i class="fas fa-stethoscope"></i>
-            </div>
-            <div class="loading-text">
-                <h4>Informática Médica</h4>
-                <p>Cargando plataforma...</p>
-            </div>
-            <div class="loading-progress">
-                <div class="progress-bar"></div>
             </div>
         </div>
     </div>
 
-    <!-- 🍪 COOKIE CONSENT -->
-    <div id="cookieConsent" class="cookie-consent">
-        <div class="cookie-content">
-            <div class="cookie-icon">
-                <i class="fas fa-cookie-bite"></i>
-            </div>
-            <div class="cookie-text">
-                <h6>Usamos cookies para mejorar tu experiencia</h6>
-                <p>Utilizamos cookies esenciales y de análisis para optimizar nuestros servicios. 
-                   <a href="#privacidad">Más información</a></p>
-            </div>
-            <div class="cookie-actions">
-                <button class="btn btn-outline-light btn-sm me-2" onclick="acceptCookies()">
-                    <i class="fas fa-check me-1"></i>Aceptar
-                </button>
-                <button class="btn btn-link btn-sm text-light" onclick="declineCookies()">
-                    Rechazar
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- PWA Install Button -->
+    <button class="btn btn-medical-primary install-btn d-none" id="installBtn">
+        <i class="fas fa-download me-2"></i>Instalar App
+    </button>
 
-    <!-- 📚 SCRIPTS -->
-    <!-- Bootstrap 5.3 -->
+    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- AOS Animation Library -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     
-    <!-- Typed.js para efectos de escritura -->
-    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
-    
-    <!-- CountUp.js para animación de números -->
-    <script src="https://cdn.jsdelivr.net/npm/countup.js@2.0.7/dist/countUp.umd.js"></script>
-    
-    <!-- Custom JavaScript -->
-    <script src="js/auth.js"></script>
+    <!-- JavaScript Personalizado -->
     <script>
-        // 🎨 INICIALIZACIÓN DE ANIMACIONES
+        // ========================================
+        // INICIALIZACIÓN Y CONFIGURACIÓN
+        // ========================================
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar AOS
+            // Inicializar AOS (Animate On Scroll)
             AOS.init({
                 duration: 800,
-                easing: 'ease-out-cubic',
+                easing: 'ease-in-out',
                 once: true,
                 offset: 100
             });
             
-            // Loading Screen
+            // Ocultar loading screen
             setTimeout(() => {
-                document.getElementById('loadingScreen').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                }, 500);
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
+                }
             }, 1500);
             
-            // Navbar scroll effect
+            // Inicializar funcionalidades
+            initNavbarScroll();
+            initCounters();
+            initParticles();
+            initCookieConsent();
+            initPWA();
+            
+            console.log('🏥 InfoMédica Platform initialized successfully!');
+        });
+        
+        // ========================================
+        // NAVBAR SCROLL EFFECT
+        // ========================================
+        
+        function initNavbarScroll() {
+            const navbar = document.getElementById('mainNavbar');
+            
             window.addEventListener('scroll', function() {
-                const navbar = document.getElementById('mainNavbar');
                 if (window.scrollY > 50) {
                     navbar.classList.add('navbar-scrolled');
                 } else {
                     navbar.classList.remove('navbar-scrolled');
                 }
             });
-            
-            // Smooth scrolling para enlaces internos
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-            
-            // Animación de números en estadísticas
-            const observerOptions = {
-                threshold: 0.5,
-                rootMargin: '0px 0px -100px 0px'
-            };
+        }
+        
+        // ========================================
+        // CONTADORES ANIMADOS
+        // ========================================
+        
+        function initCounters() {
+            const counters = document.querySelectorAll('[data-count]');
             
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        const target = entry.target;
-                        const finalNumber = parseInt(target.getAttribute('data-target'));
-                        
-                        if (typeof CountUp !== 'undefined') {
-                            const countUp = new CountUp(target, finalNumber, {
-                                duration: 2,
-                                useEasing: true,
-                                useGrouping: true,
-                                separator: ',',
-                                decimal: finalNumber > 10 ? '.' : '',
-                                decimalPlaces: finalNumber > 10 ? 1 : 0
-                            });
-                            
-                            if (!countUp.error) {
-                                countUp.start();
-                            }
-                        }
-                        
-                        observer.unobserve(target);
+                        animateCounter(entry.target);
+                        observer.unobserve(entry.target);
                     }
                 });
-            }, observerOptions);
-            
-            // Observar elementos con data-target
-            document.querySelectorAll('[data-target]').forEach(el => {
-                observer.observe(el);
             });
             
-            // Efecto de partículas en el hero
-            createParticles();
-            
-            // Cookie consent
-            setTimeout(() => {
-                if (!localStorage.getItem('cookiesAccepted')) {
-                    document.getElementById('cookieConsent').classList.add('show');
-                }
-            }, 2000);
-        });
+            counters.forEach(counter => {
+                observer.observe(counter);
+            });
+        }
         
-        // 🌟 EFECTO DE PARTÍCULAS
-        function createParticles() {
-            const particlesContainer = document.querySelector('.hero-particles');
+        function animateCounter(element) {
+            const target = parseInt(element.getAttribute('data-count'));
+            const duration = 2000;
+            const step = target / (duration / 16);
+            let current = 0;
+            
+            const timer = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+        
+        // ========================================
+        // SISTEMA DE PARTÍCULAS
+        // ========================================
+        
+        function initParticles() {
+            const particlesContainer = document.getElementById('heroParticles');
             if (!particlesContainer) return;
             
-            for (let i = 0; i < 50; i++) {
+            function createParticle() {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 20 + 's';
                 particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                
                 particlesContainer.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 20000);
+            }
+            
+            // Crear partículas cada 2 segundos
+            setInterval(createParticle, 2000);
+            
+            // Crear algunas partículas iniciales
+            for (let i = 0; i < 5; i++) {
+                setTimeout(createParticle, i * 400);
             }
         }
         
-        // 🍪 GESTIÓN DE COOKIES
+        // ========================================
+        // COOKIE CONSENT
+        // ========================================
+        
+        function initCookieConsent() {
+            const cookieConsent = document.getElementById('cookieConsent');
+            
+            // Mostrar banner si no se ha decidido sobre cookies
+            if (!localStorage.getItem('cookieConsent')) {
+                setTimeout(() => {
+                    cookieConsent.classList.add('show');
+                }, 2000);
+            }
+        }
+        
         function acceptCookies() {
-            localStorage.setItem('cookiesAccepted', 'true');
+            localStorage.setItem('cookieConsent', 'accepted');
             document.getElementById('cookieConsent').classList.remove('show');
+            
+            // Aquí puedes inicializar Google Analytics u otros servicios
+            console.log('Cookies aceptadas');
         }
         
         function declineCookies() {
+            localStorage.setItem('cookieConsent', 'declined');
             document.getElementById('cookieConsent').classList.remove('show');
+            console.log('Cookies rechazadas');
         }
         
-        // 📱 PWA INSTALLATION
-        let deferredPrompt;
+        // ========================================
+        // PWA (PROGRESSIVE WEB APP)
+        // ========================================
         
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
+        function initPWA() {
+            let deferredPrompt;
+            const installBtn = document.getElementById('installBtn');
             
-            // Mostrar botón de instalación
-            const installButton = document.createElement('button');
-            installButton.className = 'btn btn-outline-light btn-sm install-btn';
-            installButton.innerHTML = '<i class="fas fa-download me-1"></i>Instalar App';
-            installButton.onclick = installApp;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installBtn.classList.remove('d-none');
+            });
             
-            const navbar = document.querySelector('.navbar-nav');
-            if (navbar) {
-                navbar.appendChild(installButton);
-            }
-        });
-        
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    
+                    if (outcome === 'accepted') {
                         console.log('PWA instalada');
                     }
+                    
                     deferredPrompt = null;
-                });
-            }
-        }
-        
-        // 🔄 SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('SW registrado: ', registration);
-                    })
-                    .catch((registrationError) => {
-                        console.log('SW falló: ', registrationError);
-                    });
+                    installBtn.classList.add('d-none');
+                }
+            });
+            
+            window.addEventListener('appinstalled', () => {
+                console.log('PWA instalada exitosamente');
+                installBtn.classList.add('d-none');
             });
         }
         
-        // 📊 ANALYTICS BÁSICO
-        function trackEvent(eventName, eventData = {}) {
-            console.log('Event tracked:', eventName, eventData);
-            // Aquí integrarías Google Analytics o similar
+        // ========================================
+        // SMOOTH SCROLLING PARA ENLACES INTERNOS
+        // ========================================
+        
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 80; // Ajustar por navbar fijo
+                    
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // ========================================
+        // ANALYTICS Y TRACKING
+        // ========================================
+        
+        function trackEvent(eventName, properties = {}) {
+            // Aquí puedes integrar con Google Analytics, Mixpanel, etc.
+            console.log('Event tracked:', eventName, properties);
+            
+            // Ejemplo para Google Analytics 4
+            if (typeof gtag !== 'undefined') {
+                gtag('event', eventName, properties);
+            }
         }
         
-        // Track clicks en CTAs
+        // Track clicks en botones importantes
         document.querySelectorAll('.btn-medical-primary').forEach(btn => {
-            btn.addEventListener('click', () => {
-                trackEvent('cta_click', {
-                    button_text: btn.textContent.trim(),
+            btn.addEventListener('click', function() {
+                trackEvent('button_click', {
+                    button_text: this.textContent.trim(),
                     page: 'index'
                 });
             });
         });
+        
+        // ========================================
+        // NOTIFICACIONES TOAST
+        // ========================================
+        
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            // Crear container si no existe
+            let toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(toastContainer);
+            }
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            // Remover del DOM después de que se oculte
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+        
+        // ========================================
+        // MANEJO DE ERRORES GLOBALES
+        // ========================================
+        
+        window.addEventListener('error', function(e) {
+            console.error('Error global capturado:', e.error);
+            
+            // En producción, enviar error a servicio de logging
+            // trackEvent('javascript_error', {
+            //     message: e.message,
+            //     filename: e.filename,
+            //     lineno: e.lineno
+            // });
+        });
+        
+        // ========================================
+        // UTILIDADES ADICIONALES
+        // ========================================
+        
+        // Detectar si es dispositivo móvil
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Formatear fechas
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }).format(date);
+        }
+        
+        // Validar email
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        // Copiar al portapapeles
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Copiado al portapapeles', 'success');
+            } catch (err) {
+                console.error('Error al copiar:', err);
+                showToast('Error al copiar', 'danger');
+            }
+        }
+        
+        // ========================================
+        // SERVICE WORKER REGISTRATION
+        // ========================================
+        
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registrado exitosamente:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Error al registrar ServiceWorker:', error);
+                    });
+            });
+        }
+        
+        // ========================================
+        // MODO OSCURO (OPCIONAL)
+        // ========================================
+        
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            
+            trackEvent('dark_mode_toggle', { enabled: isDark });
+        }
+        
+        // Aplicar modo oscuro guardado
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+        
+        // ========================================
+        // PERFORMANCE MONITORING
+        // ========================================
+        
+        window.addEventListener('load', function() {
+            // Medir tiempo de carga
+            const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+            console.log('Tiempo de carga de la página:', loadTime + 'ms');
+            
+            // Track performance
+            trackEvent('page_load_time', {
+                load_time: loadTime,
+                page: 'index'
+            });
+        });
+        
+        // ========================================
+        // EASTER EGG (OPCIONAL)
+        // ========================================
+        
+        let konamiCode = [];
+        const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65]; // ↑↑↓↓←→←→BA
+        
+        document.addEventListener('keydown', function(e) {
+            konamiCode.push(e.keyCode);
+            
+            if (konamiCode.length > konamiSequence.length) {
+                konamiCode.shift();
+            }
+            
+            if (konamiCode.join(',') === konamiSequence.join(',')) {
+                showToast('🎉 ¡Código Konami activado! ¡Eres un verdadero geek médico!', 'success');
+                trackEvent('konami_code_activated');
+                konamiCode = [];
+            }
+        });
+        
+        console.log('🚀 InfoMédica Platform v2.0 - Desarrollado por Prof. Gabriel Álvarez');
+        console.log('💡 ¿Sabías que puedes instalar esta página como una app? Busca el botón de instalación.');
     </script>
-    <script>
-// 🎯 FUNCIONALIDAD DE FILTROS DE MATERIALES
-document.addEventListener('DOMContentLoaded', function() {
-    // Filtros de módulos
-    const moduloBtns = document.querySelectorAll('.modulo-btn');
-    const materialItems = document.querySelectorAll('.material-item');
-    
-    moduloBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const targetModulo = this.getAttribute('data-modulo');
-            
-            // Actualizar botones activos
-            moduloBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Filtrar materiales
-            materialItems.forEach(item => {
-                const itemModulo = item.getAttribute('data-modulo');
-                
-                if (targetModulo === 'todos' || itemModulo === targetModulo) {
-                    item.style.display = 'block';
-                    item.classList.add('show');
-                } else {
-                    item.style.display = 'none';
-                    item.classList.remove('show');
-                }
-            });
-            
-            // Track evento
-            trackEvent('material_filter', {
-                modulo: targetModulo,
-                page: 'index'
-            });
-        });
-    });
-    
-    // Animación de números en tiempo real para avisos
-    function updateAvisoStats() {
-        // Simular actualización de estadísticas de avisos
-        const urgentCount = document.querySelector('.urgent-count');
-        if (urgentCount) {
-            urgentCount.textContent = Math.floor(Math.random() * 3) + 1;
-        }
-    }
-    
-    // Actualizar cada 30 segundos
-    setInterval(updateAvisoStats, 30000);
-    
-    // Marcar avisos como leídos
-    const avisoCards = document.querySelectorAll('.aviso-card');
-    avisoCards.forEach(card => {
-        card.addEventListener('click', function() {
-            this.classList.add('read');
-            
-            // Track evento
-            trackEvent('aviso_read', {
-                aviso_type: this.classList.contains('urgent') ? 'urgent' : 'normal',
-                page: 'index'
-            });
-        });
-    });
-    
-    // Lazy loading para recursos pesados
-    const resourceItems = document.querySelectorAll('.resource-item');
-    const resourceObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('loaded');
-                resourceObserver.unobserve(entry.target);
-            }
-        });
-    });
-    
-    resourceItems.forEach(item => {
-        resourceObserver.observe(item);
-    });
-});
-
-// 📊 ANALYTICS PARA MATERIALES
-function trackMaterialDownload(materialName, moduleType) {
-    trackEvent('material_download', {
-        material: materialName,
-        module: moduleType,
-        page: 'index'
-    });
-    
-    // Mostrar notificación de descarga
-    showNotification('Descarga iniciada', `${materialName} se está descargando...`, 'info');
-}
-
-// 🔔 SISTEMA DE NOTIFICACIONES SIMPLE
-function showNotification(title, message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <div class="notification-icon">
-                <i class="fas fa-${type === 'info' ? 'info-circle' : type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
-            </div>
-            <div class="notification-text">
-                <h6>${title}</h6>
-                <p>${message}</p>
-            </div>
-            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    
-    // Agregar estilos si no existen
-    if (!document.querySelector('#notification-styles')) {
-        const styles = document.createElement('style');
-        styles.id = 'notification-styles';
-        styles.textContent = `
-            .notification {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-                z-index: 1000;
-                max-width: 400px;
-                animation: slideInRight 0.3s ease-out;
-                border-left: 4px solid #007AFF;
-            }
-            
-            .notification-info { border-left-color: #5AC8FA; }
-            .notification-success { border-left-color: #34C759; }
-            .notification-warning { border-left-color: #FF9500; }
-            
-            .notification-content {
-                display: flex;
-                align-items: flex-start;
-                gap: 1rem;
-                padding: 1rem;
-            }
-            
-            .notification-icon {
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                background: rgba(0, 122, 255, 0.1);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #007AFF;
-            }
-            
-            .notification-text {
-                flex: 1;
-            }
-            
-            .notification-text h6 {
-                margin: 0 0 0.25rem 0;
-                font-weight: 600;
-                color: #1D1D1F;
-            }
-            
-            .notification-text p {
-                margin: 0;
-                font-size: 0.9rem;
-                color: #8E8E93;
-            }
-            
-            .notification-close {
-                background: none;
-                border: none;
-                color: #8E8E93;
-                cursor: pointer;
-                padding: 0.25rem;
-                border-radius: 4px;
-                transition: all 0.2s ease;
-            }
-            
-            .notification-close:hover {
-                background: rgba(0, 0, 0, 0.05);
-                color: #1D1D1F;
-            }
-            
-            @keyframes slideInRight {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-        `;
-        document.head.appendChild(styles);
-    }
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remover después de 5 segundos
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.style.animation = 'slideInRight 0.3s ease-out reverse';
-            setTimeout(() => notification.remove(), 300);
-        }
-    }, 5000);
-}
-</script>
 </body>
 </html>
