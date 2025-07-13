@@ -29,10 +29,10 @@
     "sqlite3": "^5.1.6"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "webpack-bundle-analyzer": "^4.10.2"
   },
   "engines": {
     "node": ">=18.0.0"
   }
-  
 }
