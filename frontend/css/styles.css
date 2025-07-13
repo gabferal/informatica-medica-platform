@@ -1,829 +1,86 @@
-/* 🏥 TEMA MÉDICO PROFESIONAL - Inspirado en iOS/macOS */
+/* 🏥 SISTEMA DE INFORMÁTICA MÉDICA - CSS COMPLETO v2.0 */
+
+/* ========================================
+   VARIABLES CSS Y CONFIGURACIÓN BASE
+======================================== */
+
 :root {
-    /* 🎨 Colores Médicos Principales */
-    --medical-primary: #007AFF;        /* Azul médico iOS */
-    --medical-secondary: #34C759;      /* Verde salud iOS */
-    --medical-accent: #5856D6;         /* Púrpura tecnológico */
-    --medical-success: #34C759;        /* Verde éxito */
-    --medical-warning: #FF9500;        /* Naranja advertencia */
-    --medical-danger: #FF3B30;         /* Rojo peligro */
-    --medical-info: #5AC8FA;           /* Azul información */
+    /* Colores médicos principales */
+    --medical-primary: #007AFF;
+    --medical-secondary: #34C759;
+    --medical-accent: #5856D6;
+    --medical-warning: #FF9500;
+    --medical-danger: #FF3B30;
+    --medical-success: #34C759;
+    --medical-info: #5AC8FA;
     
-    /* 🎨 Grises Médicos iOS */
+    /* Colores de fondo */
     --light-gray: #F2F2F7;
-    --medium-gray: #C7C7CC;
     --dark-gray: #8E8E93;
-    --text-primary: #000000;
-    --text-secondary: #3C3C43;
-    --background-primary: #FFFFFF;
-    --background-secondary: #F2F2F7;
-    --border-color: #C6C6C8;
+    --background-white: #FFFFFF;
+    --background-dark: #1D1D1F;
     
-    /* 🎨 Gradientes Médicos */
-    --medical-gradient-primary: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-accent) 100%);
-    --medical-gradient-success: linear-gradient(135deg, var(--medical-success) 0%, #28A745 100%);
-    --medical-gradient-header: linear-gradient(135deg, #007AFF 0%, #34C759 100%);
-    --medical-gradient-card: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    /* Gradientes médicos */
+    --medical-gradient-primary: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+    --medical-gradient-secondary: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+    --medical-gradient-hero: linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #34C759 100%);
+    --medical-gradient-dark: linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 100%);
     
-    /* 📏 Espaciado y Sombras */
-    --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-heavy: 0 10px 25px rgba(0, 0, 0, 0.15);
-    --shadow-medical: 0 8px 32px rgba(0, 122, 255, 0.12);
+    /* Border radius */
     --border-radius: 12px;
     --border-radius-small: 8px;
     --border-radius-large: 16px;
+    
+    /* Sombras */
+    --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-medical: 0 8px 32px rgba(0, 122, 255, 0.2);
+    
+    /* Transiciones */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 🎨 Tipografía Médica */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    color: var(--text-primary);
-    background: linear-gradient(135deg, var(--background-primary) 0%, var(--light-gray) 100%);
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* 🏥 NAVEGACIÓN MÉDICA */
-.navbar {
-    backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-bottom: 1px solid var(--border-color);
-    transition: var(--transition);
-    box-shadow: var(--shadow-light);
-}
-
-.navbar-brand {
-    font-weight: 700;
-    font-size: 1.5rem;
-    background: var(--medical-gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.navbar-brand::before {
-    content: '🏥';
-    font-size: 1.75rem;
-    -webkit-text-fill-color: initial;
-}
-
-.nav-link {
-    font-weight: 500;
-    color: var(--text-secondary) !important;
-    transition: var(--transition);
-    border-radius: var(--border-radius-small);
-    margin: 0 4px;
-    padding: 10px 16px !important;
-    position: relative;
-}
-
-.nav-link:hover {
-    color: var(--medical-primary) !important;
-    background: rgba(0, 122, 255, 0.1);
-    transform: translateY(-1px);
-}
-
-.nav-link.active {
-    background: var(--medical-gradient-primary);
-    color: white !important;
-    box-shadow: var(--shadow-medium);
-}
-
-/* 🎯 BOTONES MÉDICOS MEJORADOS */
-.btn {
-    font-weight: 600;
-    border-radius: var(--border-radius);
-    padding: 12px 24px;
-    transition: var(--transition);
-    border: none;
-    position: relative;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-}
-
-.btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.btn:hover::before {
-    left: 100%;
-}
-
-.btn-lg {
-    padding: 16px 32px;
-    font-size: 1.1rem;
-    border-radius: var(--border-radius-large);
-}
-
-.btn-primary {
-    background: var(--medical-gradient-primary);
-    box-shadow: var(--shadow-medium);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-medical);
-    filter: brightness(1.05);
-    color: white;
-}
-
-.btn-success {
-    background: var(--medical-gradient-success);
-    color: white;
-}
-
-.btn-success:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-medium);
-    filter: brightness(1.05);
-    color: white;
-}
-
-.btn-outline-primary {
-    border: 2px solid var(--medical-primary);
-    color: var(--medical-primary);
-    background: transparent;
-    font-weight: 600;
-}
-
-.btn-outline-primary:hover {
-    background: var(--medical-primary);
-    border-color: var(--medical-primary);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-medium);
-}
-
-.btn-outline-secondary {
-    border: 2px solid var(--medium-gray);
-    color: var(--text-secondary);
-    background: transparent;
-}
-
-.btn-outline-secondary:hover {
-    background: var(--text-secondary);
-    border-color: var(--text-secondary);
-    color: white;
-    transform: translateY(-1px);
-}
-
-/* 🏥 SECCIÓN HERO MÉDICA */
-.hero-section {
-    background: var(--medical-gradient-header);
-    position: relative;
-    overflow: hidden;
-    color: white;
-    padding: 4rem 0;
-}
-
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="medical-grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23medical-grid)"/></svg>');
-    opacity: 0.3;
-    z-index: 0;
-}
-
-.hero-section .container {
-    position: relative;
-    z-index: 1;
-}
-
-.hero-section .display-4 {
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.hero-section .lead {
-    font-size: 1.25rem;
-    font-weight: 400;
-    opacity: 0.95;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* 📱 CARDS MÉDICOS MEJORADOS */
-.card {
-    border-radius: var(--border-radius-large);
-    border: 1px solid var(--border-color);
-    transition: var(--transition);
-    overflow: hidden;
-    background: var(--medical-gradient-card);
-    position: relative;
-}
-
-.card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--medical-gradient-primary);
-}
-
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-medical);
-    border-color: var(--medical-primary);
-}
-
-.card-header {
-    border-bottom: 1px solid var(--border-color);
-    background: rgba(0, 122, 255, 0.05);
-    font-weight: 600;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.card-header::before {
-    content: '📋';
-    font-size: 1.5rem;
-}
-
-.card-body {
-    padding: 2rem;
-}
-
-.card-title {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 1rem;
-    font-size: 1.25rem;
-}
-
-.card-text {
-    color: var(--text-secondary);
-    line-height: 1.6;
-    font-size: 1rem;
-}
-
-/* �� ESTADÍSTICAS MÉDICAS */
-.medical-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.medical-stat-card {
-    background: white;
-    border-radius: var(--border-radius-large);
-    padding: 2rem;
-    box-shadow: var(--shadow-medium);
-    border-left: 4px solid var(--medical-primary);
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-
-.medical-stat-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(0, 122, 255, 0.05) 0%, transparent 70%);
-    z-index: 0;
-}
-
-.medical-stat-card > * {
-    position: relative;
-    z-index: 1;
-}
-
-.medical-stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-medical);
-    border-left-color: var(--medical-success);
-}
-
-.medical-stat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.medical-stat-icon {
-    width: 48px;
-    height: 48px;
-    background: var(--medical-gradient-primary);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 20px;
-    box-shadow: var(--shadow-medium);
-}
-
-.medical-stat-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--medical-primary);
-    margin: 0;
-    line-height: 1;
-}
-
-.medical-stat-label {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    margin: 0.5rem 0 0 0;
-}
-
-/* �� FORMULARIOS MÉDICOS */
-.form-control {
-    border-radius: var(--border-radius);
-    border: 2px solid var(--border-color);
-    padding: 14px 16px;
-    font-size: 16px;
-    transition: var(--transition);
-    background-color: var(--background-primary);
-    font-weight: 500;
-}
-
-.form-control:focus {
-    border-color: var(--medical-primary);
-    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
-    outline: none;
-    transform: translateY(-1px);
-}
-
-.form-label {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.form-label::before {
-    content: '📝';
-    font-size: 1rem;
-}
-
-.form-text {
-    color: var(--dark-gray);
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-/* 🎯 DRAG & DROP MÉDICO */
-.medical-dropzone {
-    border: 3px dashed var(--medium-gray);
-    border-radius: var(--border-radius-large);
-    padding: 3rem 2rem;
-    text-align: center;
-    background: var(--light-gray);
-    transition: var(--transition);
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-
-.medical-dropzone::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle, rgba(0, 122, 255, 0.05) 0%, transparent 70%);
-    opacity: 0;
-    transition: var(--transition);
-}
-
-.medical-dropzone:hover {
-    border-color: var(--medical-primary);
-    background: rgba(0, 122, 255, 0.05);
-    transform: scale(1.02);
-}
-
-.medical-dropzone:hover::before {
-    opacity: 1;
-}
-
-.medical-dropzone.dragover {
-    border-color: var(--medical-success);
-    background: rgba(52, 199, 89, 0.1);
-    transform: scale(1.05);
-}
-
-.medical-dropzone-icon {
-    font-size: 3rem;
-    color: var(--medical-primary);
-    margin-bottom: 1rem;
-}
-
-.medical-dropzone-text {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-/* 🔔 ALERTAS MÉDICAS */
-.alert {
-    border-radius: var(--border-radius);
-    border: none;
-    padding: 1rem 1.5rem;
-    font-weight: 500;
-    border-left: 4px solid;
-    position: relative;
-    overflow: hidden;
-}
-
-.alert::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 4px;
-    background: currentColor;
-    opacity: 0.3;
-}
-
-.alert-success {
-    background: rgba(52, 199, 89, 0.1);
-    color: var(--medical-success);
-    border-left-color: var(--medical-success);
-}
-
-.alert-danger {
-    background: rgba(255, 59, 48, 0.1);
-    color: var(--medical-danger);
-    border-left-color: var(--medical-danger);
-}
-
-.alert-warning {
-    background: rgba(255, 149, 0, 0.1);
-    color: var(--medical-warning);
-    border-left-color: var(--medical-warning);
-}
-
-.alert-info {
-    background: rgba(90, 200, 250, 0.1);
-    color: var(--medical-info);
-    border-left-color: var(--medical-info);
-}
-
-/* 📋 LISTA DE ENTREGAS */
-.submission-item {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    background: var(--medical-gradient-card);
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-
-.submission-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--medical-gradient-primary);
-}
-
-.submission-item:hover {
-    box-shadow: var(--shadow-medical);
-    transform: translateY(-2px);
-    border-color: var(--medical-primary);
-}
-
-.submission-meta {
-    font-size: 0.875rem;
-    color: var(--dark-gray);
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.submission-meta span {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-/* 📱 MODAL MÉDICO */
-.modal-content {
-    border-radius: var(--border-radius-large);
-    border: none;
-    box-shadow: var(--shadow-heavy);
-    overflow: hidden;
-}
-
-.modal-header {
-    padding: 2rem;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--medical-gradient-primary);
-    color: white;
-}
-
-.modal-body {
-    padding: 2rem;
-}
-
-.modal-title {
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-/* �� BADGES MÉDICOS */
-.badge {
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.badge-success {
-    background: var(--medical-gradient-success);
-    color: white;
-}
-
-.badge-primary {
-    background: var(--medical-gradient-primary);
-    color: white;
-}
-
-/* 📊 TABLAS MÉDICAS */
-.table {
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    box-shadow: var(--shadow-light);
-}
-
-.table th {
-    background: var(--medical-gradient-primary);
-    color: white;
-    font-weight: 600;
-    border: none;
-    padding: 1rem;
-}
-
-.table td {
-    padding: 1rem;
-    border-color: var(--border-color);
-    vertical-align: middle;
-}
-
-.table tbody tr:hover {
-    background: rgba(0, 122, 255, 0.05);
-}
-
-/* 🎯 ANIMACIONES MÉDICAS */
-@keyframes medical-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.05); }
-}
-
-@keyframes medical-bounce {
-    0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
-    40%, 43% { transform: translate3d(0,-8px,0); }
-    70% { transform: translate3d(0,-4px,0); }
-    90% { transform: translate3d(0,-2px,0); }
-}
-
-.medical-loading {
-    animation: medical-pulse 2s infinite;
-}
-
-.medical-bounce {
-    animation: medical-bounce 1s;
-}
-
-/* 📱 RESPONSIVE MÉDICO */
-@media (max-width: 768px) {
-    .display-4 {
-        font-size: 2.5rem;
-    }
     
-    .btn-lg {
-        padding: 14px 28px;
-        font-size: 1rem;
-    }
-    
-    .hero-section {
-        padding: 3rem 0;
-        text-align: center;
-    }
-    
-    .card-body {
-        padding: 1.5rem;
-    }
-    
-    .medical-stats {
-        grid-template-columns: 1fr;
-    }
-    
-    .medical-stat-card {
-        padding: 1.5rem;
-    }
-    
-    .navbar-brand {
-        font-size: 1.25rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-    
-    .display-4 {
-        font-size: 2rem;
-    }
-    
-    .lead {
-        font-size: 1rem;
-    }
-    
-    .card-header {
-        padding: 1rem;
-    }
-    
-    .card-body {
-        padding: 1rem;
-    }
-    
-    .medical-dropzone {
-        padding: 2rem 1rem;
-    }
-}
-
-/* 🌙 MODO OSCURO MÉDICO */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text-primary: #FFFFFF;
-        --text-secondary: #EBEBF5;
-        --background-primary: #000000;
-        --background-secondary: #1C1C1E;
-        --border-color: #38383A;
-        --light-gray: #1C1C1E;
-        --medium-gray: #48484A;
-    }
-    
-    .navbar {
-        background: rgba(28, 28, 30, 0.95) !important;
-    }
-    
-    .card {
-        background: var(--background-secondary);
-        border-color: var(--border-color);
-    }
-    
-    .form-control {
-        background: var(--background-secondary);
-        border-color: var(--border-color);
-        color: var(--text-primary);
-    }
-    
-    .modal-content {
-        background: var(--background-secondary);
-        color: var(--text-primary);
-    }
-    
-    .medical-stat-card {
-        background: var(--background-secondary);
-        border-color: var(--border-color);
-    }
-}
-
-/* ✨ EFECTOS ESPECIALES */
-.glass-effect {
-    backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.medical-glow {
-    box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
-}
-
-.medical-gradient-text {
-    background: var(--medical-gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 700;
-}
-
-/* 🎯 ESTADOS DE CARGA */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
-    position: relative;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 24px;
-    height: 24px;
-    margin: -12px 0 0 -12px;
-    border: 3px solid var(--medical-primary);
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 1s linear infinite;
-    z-index: 1000;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* 🎨 UTILIDADES */
-.text-medical-primary { color: var(--medical-primary) !important; }
-.text-medical-success { color: var(--medical-success) !important; }
-.bg-medical-light { background: var(--light-gray) !important; }
-.border-medical { border-color: var(--medical-primary) !important; }
-
-/* 🔧 SMOOTH SCROLLING */
-html {
-    scroll-behavior: smooth;
-}
-
-/* ♿ ACCESIBILIDAD */
-.btn:focus,
-.form-control:focus,
-.nav-link:focus {
-    outline: 3px solid var(--medical-primary);
-    outline-offset: 2px;
-}
-
-/* 🎯 TRANSICIONES SUAVES */
-* {
-    transition: var(--transition);
-}
-
-*:focus {
-    outline-color: var(--medical-primary);
-}
-/* 🏥 ESTILOS ADICIONALES PARA INDEX MODERNO */
-
-/* Variables adicionales */
-:root {
-    --medical-gradient-hero: linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #34C759 100%);
-    --medical-gradient-dark: linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 100%);
+    /* Efectos de vidrio */
     --glass-effect: rgba(255, 255, 255, 0.1);
+    
+    /* Texto */
     --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    /* Hero */
     --hero-height: 100vh;
 }
 
-/* Fuentes */
+/* ========================================
+   RESET Y CONFIGURACIÓN BASE
+======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--light-gray);
+    color: #1D1D1F;
+    line-height: 1.6;
+    overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
+    font-weight: 600;
 }
 
-/* Loading Screen */
+/* Scroll suave */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ========================================
+   LOADING SCREEN
+======================================== */
+
 .loading-screen {
     position: fixed;
     top: 0;
@@ -849,13 +106,23 @@ h1, h2, h3, h4, h5, h6 {
     animation: pulse 2s infinite;
 }
 
+.loading-text h4 {
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.loading-text p {
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
 .loading-progress {
     width: 200px;
     height: 4px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 2px;
     overflow: hidden;
-    margin-top: 1rem;
+    margin: 0 auto;
 }
 
 .progress-bar {
@@ -872,19 +139,30 @@ h1, h2, h3, h4, h5, h6 {
     100% { width: 100%; }
 }
 
-/* Navbar Moderna */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ========================================
+   NAVBAR MODERNO Y MEJORADO
+======================================== */
+
 .medical-navbar {
     background: var(--medical-gradient-primary) !important;
     backdrop-filter: blur(20px);
     transition: all 0.3s ease;
     padding: 1rem 0;
+    box-shadow: 0 2px 20px rgba(0, 122, 255, 0.15);
 }
 
 .navbar-scrolled {
     padding: 0.5rem 0;
-    box-shadow: var(--shadow-medical);
+    box-shadow: 0 4px 30px rgba(0, 122, 255, 0.25);
+    background: rgba(0, 122, 255, 0.95) !important;
 }
 
+/* Navbar brand mejorado */
 .medical-brand .brand-container {
     display: flex;
     align-items: center;
@@ -894,12 +172,14 @@ h1, h2, h3, h4, h5, h6 {
 .brand-icon {
     width: 40px;
     height: 40px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .brand-text {
@@ -911,31 +191,269 @@ h1, h2, h3, h4, h5, h6 {
 .brand-title {
     font-weight: 700;
     font-size: 1.1rem;
+    color: white;
 }
 
 .brand-subtitle {
     font-weight: 400;
     font-size: 0.8rem;
     opacity: 0.9;
+    color: white;
 }
 
-.btn-medical-primary {
-    background: var(--medical-gradient-secondary);
+/* Nav links mejorados */
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    padding: 0.75rem 1rem !important;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    margin: 0 0.25rem;
+    position: relative;
+}
+
+.navbar-nav .nav-link:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+}
+
+/* Botones del navbar - MÁS VISIBLES */
+.navbar .btn {
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    border-width: 2px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* Botón "Iniciar Sesión" - Outline sólido y visible */
+.navbar .btn-outline-light {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    color: white !important;
+    backdrop-filter: blur(10px);
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .btn-outline-light:hover {
+    background: white;
+    border-color: white;
+    color: var(--medical-primary) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+.navbar .btn-outline-light:focus {
+    background: white;
+    border-color: white;
+    color: var(--medical-primary) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Botón "Registrarse" - Sólido y destacado */
+.navbar .btn-medical-primary {
+    background: white;
+    border: 2px solid white;
+    color: var(--medical-primary) !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.navbar .btn-medical-primary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.95);
+    color: var(--medical-primary) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.4);
+}
+
+.navbar .btn-medical-primary:focus {
+    background: white;
+    border-color: white;
+    color: var(--medical-primary) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Espaciado entre botones */
+.navbar .btn + .btn {
+    margin-left: 0.75rem;
+}
+
+/* ========================================
+   BOTONES GENERALES MEJORADOS
+======================================== */
+
+.btn {
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition);
     border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Botón primario médico - más sólido */
+.btn-medical-primary {
+    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+    border: 2px solid #007AFF;
     color: white;
     font-weight: 600;
     padding: 0.75rem 1.5rem;
     border-radius: var(--border-radius);
     transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-medical-primary:hover {
+    background: linear-gradient(135deg, #0056CC 0%, #003D99 100%);
+    border-color: #0056CC;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-medical);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
     color: white;
 }
 
-/* Hero Section Moderna */
+.btn-medical-primary:focus {
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+    color: white;
+}
+
+/* Botón secundario médico - más visible */
+.btn-medical-secondary {
+    background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
+    border: 2px solid #34C759;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-medical-secondary:hover {
+    background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
+    border-color: #28A745;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
+    color: white;
+}
+
+/* Botón outline mejorado - más visible */
+.btn-outline-medical {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #007AFF;
+    color: #007AFF;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    backdrop-filter: blur(10px);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-medical:hover {
+    background: #007AFF;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.3);
+}
+
+/* Botón de información - para avisos */
+.btn-info-medical {
+    background: linear-gradient(135deg, #5AC8FA 0%, #007AFF 100%);
+    border: 2px solid #5AC8FA;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(90, 200, 250, 0.3);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-info-medical:hover {
+    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(90, 200, 250, 0.4);
+    color: white;
+}
+
+/* Botón de material - para recursos */
+.btn-material-medical {
+    background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
+    border: 2px solid #FF9500;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-material-medical:hover {
+    background: linear-gradient(135deg, #FF6B00 0%, #E55A00 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
+    color: white;
+}
+
+/* Tamaños de botones */
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Botón deshabilitado */
+.btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ========================================
+   HERO SECTION MODERNA
+======================================== */
+
 .hero-section-modern {
     position: relative;
     min-height: var(--hero-height);
@@ -1065,6 +583,48 @@ h1, h2, h3, h4, h5, h6 {
     gap: 1rem;
     flex-wrap: wrap;
     margin-bottom: 2rem;
+}
+
+/* Botón principal del hero - "Comenzar Ahora" */
+.hero-actions .btn-medical-primary {
+    background: white;
+    border: 2px solid white;
+    color: var(--medical-primary) !important;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-actions .btn-medical-primary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--medical-primary) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 30px rgba(255, 255, 255, 0.4);
+}
+
+/* Botón secundario del hero - "Ver Demo" */
+.hero-actions .btn-outline-light {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    color: white !important;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+.hero-actions .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
+    color: white !important;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 30px rgba(255, 255, 255, 0.2);
 }
 
 .hero-trust {
@@ -1243,7 +803,10 @@ h1, h2, h3, h4, h5, h6 {
     60% { transform: translateY(-5px); }
 }
 
-/* Secciones */
+/* ========================================
+   SECCIONES GENERALES
+======================================== */
+
 .section-badge {
     display: inline-flex;
     align-items: center;
@@ -1268,7 +831,10 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.6;
 }
 
-/* Feature Cards Modernas */
+/* ========================================
+   CARACTERÍSTICAS AVANZADAS
+======================================== */
+
 .features-section-modern {
     background: var(--light-gray);
 }
@@ -1297,7 +863,7 @@ h1, h2, h3, h4, h5, h6 {
     width: 80px;
     height: 80px;
     background: var(--medical-gradient-primary);
-        border-radius: 50%;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1347,7 +913,10 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
 }
 
-/* Estadísticas Modernas */
+/* ========================================
+   ESTADÍSTICAS EN TIEMPO REAL
+======================================== */
+
 .stats-section-modern {
     background: var(--medical-gradient-dark);
     color: white;
@@ -1416,697 +985,10 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 500;
 }
 
-/* Cómo Funciona */
-.how-it-works-section {
-    background: white;
-}
+/* ========================================
+   SECCIÓN DE AVISOS
+======================================== */
 
-.step-card {
-    background: white;
-    border-radius: var(--border-radius-large);
-    padding: 2rem;
-    box-shadow: var(--shadow-light);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-
-.step-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-medium);
-}
-
-.step-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--medical-gradient-primary);
-}
-
-.step-number {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 60px;
-    height: 60px;
-    background: var(--medical-gradient-primary);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    font-weight: 700;
-    box-shadow: var(--shadow-medium);
-}
-
-.step-content {
-    padding-left: 1rem;
-}
-
-.step-icon {
-    width: 50px;
-    height: 50px;
-    background: rgba(0, 122, 255, 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--medical-primary);
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-}
-
-.step-content h5 {
-    color: var(--medical-primary);
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-.step-content p {
-    color: var(--dark-gray);
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
-
-.step-features {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.feature-tag {
-    background: rgba(52, 199, 89, 0.1);
-    color: var(--medical-success);
-    padding: 0.25rem 0.75rem;
-    border-radius: 50px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border: 1px solid rgba(52, 199, 89, 0.2);
-}
-
-/* CTA Section */
-.cta-section-modern {
-    background: var(--medical-gradient-primary);
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.cta-section-modern::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-}
-
-.cta-content {
-    position: relative;
-    z-index: 2;
-}
-
-.cta-icon {
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    font-size: 2rem;
-    backdrop-filter: blur(10px);
-}
-
-.cta-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-}
-
-.cta-description {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    line-height: 1.6;
-}
-
-.cta-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.trust-badges {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    flex-wrap: wrap;
-}
-
-.trust-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 0.75rem 1rem;
-    border-radius: var(--border-radius);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.trust-badge i {
-    font-size: 1.2rem;
-}
-
-.trust-badge span {
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-/* Footer Moderno */
-.footer-modern {
-    background: var(--medical-gradient-dark);
-    color: white;
-}
-
-.footer-main {
-    padding: 4rem 0 2rem;
-}
-
-.footer-brand .brand-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.footer-description {
-    color: rgba(255, 255, 255, 0.8);
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-}
-
-.footer-social {
-    display: flex;
-    gap: 1rem;
-}
-
-.social-link {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    text-decoration: none;
-    transition: var(--transition);
-}
-
-.social-link:hover {
-    background: var(--medical-primary);
-    color: white;
-    transform: translateY(-2px);
-}
-
-.footer-title {
-    color: white;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-.footer-links {
-    list-style: none;
-    padding: 0;
-}
-
-.footer-links li {
-    margin-bottom: 0.5rem;
-}
-
-.footer-links a {
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-    transition: var(--transition);
-}
-
-.footer-links a:hover {
-    color: white;
-    padding-left: 0.5rem;
-}
-
-.contact-info {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.contact-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-}
-
-.contact-item i {
-    width: 20px;
-    color: var(--medical-primary);
-    margin-top: 0.25rem;
-}
-
-.contact-item div {
-    flex: 1;
-}
-
-.contact-item strong {
-    display: block;
-    color: white;
-    margin-bottom: 0.25rem;
-}
-
-.contact-item span,
-.contact-item a {
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-}
-
-.contact-item a:hover {
-    color: white;
-}
-
-.footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1.5rem 0;
-}
-
-.footer-copyright {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.footer-legal {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: flex-end;
-}
-
-.footer-legal a {
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: var(--transition);
-}
-
-.footer-legal a:hover {
-    color: white;
-}
-
-/* Cookie Consent */
-.cookie-consent {
-    position: fixed;
-    bottom: -100px;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(20px);
-    color: white;
-    padding: 1rem 0;
-    z-index: 1000;
-    transition: bottom 0.3s ease;
-}
-
-.cookie-consent.show {
-    bottom: 0;
-}
-
-.cookie-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
-}
-
-.cookie-icon {
-    font-size: 2rem;
-    color: var(--medical-warning);
-}
-
-.cookie-text {
-    flex: 1;
-}
-
-.cookie-text h6 {
-    margin: 0 0 0.5rem 0;
-    font-weight: 600;
-}
-
-.cookie-text p {
-    margin: 0;
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-.cookie-text a {
-    color: var(--medical-primary);
-    text-decoration: none;
-}
-
-.cookie-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 2.5rem;
-    }
-    
-    .hero-stats {
-        gap: 1rem;
-    }
-    
-    .hero-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .section-title {
-        font-size: 2rem;
-    }
-    
-    .cta-title {
-        font-size: 2rem;
-    }
-    
-    .trust-badges {
-        gap: 1rem;
-    }
-    
-    .trust-badge {
-        flex: 1;
-        justify-content: center;
-        min-width: 150px;
-    }
-    
-    .cookie-content {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-    
-    .cookie-actions {
-        justify-content: center;
-    }
-    
-    .footer-legal {
-        justify-content: center;
-        margin-top: 1rem;
-    }
-    
-    .floating-icon {
-        display: none;
-    }
-    
-    .medical-dashboard-preview {
-        margin-top: 2rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .hero-title {
-        font-size: 2rem;
-    }
-    
-    .hero-description {
-        font-size: 1rem;
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-    }
-    
-    .feature-card-modern {
-        padding: 1.5rem;
-    }
-    
-    .step-card {
-        padding: 1.5rem;
-    }
-    
-    .step-number {
-        width: 50px;
-        height: 50px;
-        font-size: 1.2rem;
-    }
-}
-
-/* Animaciones adicionales */
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in-up {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-/* Utilidades adicionales */
-.text-shadow {
-    text-shadow: var(--text-shadow);
-}
-
-.glass-effect {
-    background: var(--glass-effect);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.medical-gradient-bg {
-    background: var(--medical-gradient-primary);
-}
-
-.medical-gradient-text {
-    background: var(--medical-gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* PWA Install Button */
-.install-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    border-radius: 50px;
-    box-shadow: var(--shadow-medical);
-}
-
-/* Demo Modal */
-.demo-container {
-    text-align: center;
-    padding: 2rem;
-}
-
-.demo-placeholder {
-    background: var(--light-gray);
-    border-radius: var(--border-radius-large);
-    padding: 3rem 2rem;
-}
-
-/* Scroll suave */
-html {
-    scroll-behavior: smooth;
-}
-
-/* Mejoras de accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-    
-    .particle {
-        display: none;
-    }
-}
-
-/* Focus states mejorados */
-.btn:focus,
-.nav-link:focus,
-a:focus {
-    outline: 2px solid var(--medical-primary);
-    outline-offset: 2px;
-}
-
-/* Print styles */
-@media print {
-    .navbar,
-    .cookie-consent,
-    .install-btn {
-        display: none !important;
-    }
-    
-    .hero-section-modern {
-        background: white !important;
-        color: black !important;
-    }
-}
-/* 🔘 BOTONES MEJORADOS - MÁS VISIBLES Y PROFESIONALES */
-
-/* Botón primario médico - más sólido */
-.btn-medical-primary {
-    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
-    border: 2px solid #007AFF;
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-medical-primary:hover {
-    background: linear-gradient(135deg, #0056CC 0%, #003D99 100%);
-    border-color: #0056CC;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-    color: white;
-}
-
-.btn-medical-primary:focus {
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
-    color: white;
-}
-
-/* Botón secundario médico - más visible */
-.btn-medical-secondary {
-    background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
-    border: 2px solid #34C759;
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-medical-secondary:hover {
-    background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
-    border-color: #28A745;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
-    color: white;
-}
-
-/* Botón outline mejorado - más visible */
-.btn-outline-medical {
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px solid #007AFF;
-    color: #007AFF;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    backdrop-filter: blur(10px);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-outline-medical:hover {
-    background: #007AFF;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.3);
-}
-
-/* Botón de información - para avisos */
-.btn-info-medical {
-    background: linear-gradient(135deg, #5AC8FA 0%, #007AFF 100%);
-    border: 2px solid #5AC8FA;
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(90, 200, 250, 0.3);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-info-medical:hover {
-    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(90, 200, 250, 0.4);
-    color: white;
-}
-
-/* Botón de material - para recursos */
-.btn-material-medical {
-    background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
-    border: 2px solid #FF9500;
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--border-radius);
-    transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-material-medical:hover {
-    background: linear-gradient(135deg, #FF6B00 0%, #E55A00 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
-    color: white;
-}
-
-/* Tamaños de botones */
-.btn-lg {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-}
-
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-}
-/* 📢 SECCIÓN DE AVISOS */
 .avisos-section {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
@@ -2268,7 +1150,10 @@ a:focus {
     flex-wrap: wrap;
 }
 
-/* 📚 SECCIÓN DE MATERIALES */
+/* ========================================
+   SECCIÓN DE MATERIALES
+======================================== */
+
 .materiales-section {
     background: white;
 }
@@ -2556,14 +1441,475 @@ a:focus {
     margin-bottom: 1rem;
 }
 
-/* Botón deshabilitado */
-.btn.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
+/* ========================================
+   CÓMO FUNCIONA
+======================================== */
+
+.how-it-works-section {
+    background: white;
 }
 
-/* Filtrado de materiales */
+.step-card {
+    background: white;
+    border-radius: var(--border-radius-large);
+    padding: 2rem;
+    box-shadow: var(--shadow-light);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+}
+
+.step-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--medical-gradient-primary);
+}
+
+.step-number {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 60px;
+    height: 60px;
+    background: var(--medical-gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-medium);
+}
+
+.step-content {
+    padding-left: 1rem;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 122, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--medical-primary);
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.step-content h5 {
+    color: var(--medical-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.step-content p {
+    color: var(--dark-gray);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.step-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.feature-tag {
+    background: rgba(52, 199, 89, 0.1);
+    color: var(--medical-success);
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+/* ========================================
+   CTA SECTION
+======================================== */
+
+.cta-section-modern {
+    background: var(--medical-gradient-primary);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+}
+
+.cta-content {
+    position: relative;
+    z-index: 2;
+}
+
+.cta-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.cta-description {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+.cta-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-actions .btn-medical-primary {
+    background: white;
+    border: 2px solid white;
+    color: var(--medical-primary) !important;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+}
+
+.cta-actions .btn-medical-primary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--medical-primary) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 30px rgba(255, 255, 255, 0.4);
+}
+
+.cta-actions .btn-outline-light {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    color: white !important;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+.cta-actions .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
+    color: white !important;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 30px rgba(255, 255, 255, 0.2);
+}
+
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trust-badge i {
+    font-size: 1.2rem;
+}
+
+.trust-badge span {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   FOOTER MODERNO
+======================================== */
+
+.footer-modern {
+    background: var(--medical-gradient-dark);
+    color: white;
+}
+
+.footer-main {
+    padding: 4rem 0 2rem;
+}
+
+.footer-brand .brand-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.footer-description {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.footer-social {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-link {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.social-link:hover {
+    background: var(--medical-primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.footer-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer-links a:hover {
+    color: white;
+    padding-left: 0.5rem;
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.contact-item i {
+    width: 20px;
+    color: var(--medical-primary);
+    margin-top: 0.25rem;
+}
+
+.contact-item div {
+    flex: 1;
+}
+
+.contact-item strong {
+    display: block;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.contact-item span,
+.contact-item a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+}
+
+.contact-item a:hover {
+    color: white;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1.5rem 0;
+}
+
+.footer-copyright {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-legal {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: flex-end;
+}
+
+.footer-legal a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.footer-legal a:hover {
+    color: white;
+}
+
+/* ========================================
+   COOKIE CONSENT
+======================================== */
+
+.cookie-consent {
+    position: fixed;
+    bottom: -100px;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    color: white;
+    padding: 1rem 0;
+    z-index: 1000;
+    transition: bottom 0.3s ease;
+}
+
+.cookie-consent.show {
+    bottom: 0;
+}
+
+.cookie-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.cookie-icon {
+    font-size: 2rem;
+    color: var(--medical-warning);
+}
+
+.cookie-text {
+    flex: 1;
+}
+
+.cookie-text h6 {
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.cookie-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.cookie-text a {
+    color: var(--medical-primary);
+    text-decoration: none;
+}
+
+.cookie-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ========================================
+   EFECTOS ADICIONALES PARA BOTONES
+======================================== */
+
+/* Efecto de brillo en botones importantes */
+.btn-medical-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+    z-index: 1;
+}
+
+.btn-medical-primary:hover::before {
+    left: 100%;
+}
+
+/* Efecto de pulso para botones de acción */
+@keyframes pulse-button {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+.hero-actions .btn-medical-primary {
+    animation: pulse-button 2s infinite;
+}
+
+/* Estados de focus mejorados para accesibilidad */
+.btn:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+.navbar .btn:focus-visible {
+    outline-color: rgba(255, 255, 255, 0.8);
+}
+
+/* ========================================
+   FILTRADO DE MATERIALES
+======================================== */
+
 .material-item {
     transition: all 0.3s ease;
 }
@@ -2572,7 +1918,340 @@ a:focus {
     display: none;
 }
 
-/* Responsive para materiales */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.material-item.show {
+    animation: fadeInScale 0.3s ease-out;
+}
+
+/* ========================================
+   CARDS Y TABLAS
+======================================== */
+
+.card {
+    border: none;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-light);
+    transition: var(--transition);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-medium);
+}
+
+.card-header {
+    background: var(--light-gray);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius-large) var(--border-radius-large) 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.card-title {
+    color: var(--medical-primary);
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Tablas */
+.medical-table {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-light);
+}
+
+.medical-table thead {
+    background: var(--medical-gradient-primary);
+    color: white;
+}
+
+.medical-table tbody tr {
+    transition: var(--transition);
+}
+
+.medical-table tbody tr:hover {
+    background: rgba(0, 122, 255, 0.05);
+    transform: scale(1.01);
+}
+
+/* Formularios */
+.form-control {
+    border-radius: var(--border-radius);
+    border: 2px solid #E5E5EA;
+    padding: 0.75rem 1rem;
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    border-color: var(--medical-primary);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Badges */
+.badge {
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+.badge-primary {
+    background: var(--medical-primary);
+    color: white;
+}
+
+.badge-success {
+    background: var(--medical-success);
+    color: white;
+}
+
+.badge-custom {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Modales */
+.modal-content {
+    border-radius: var(--border-radius-large);
+    border: none;
+    box-shadow: var(--shadow-medical);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius-large) var(--border-radius-large) 0 0;
+}
+
+/* Loading */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: var(--border-radius);
+}
+
+/* ========================================
+   PWA INSTALL BUTTON
+======================================== */
+
+.install-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    border-radius: 50px;
+    box-shadow: var(--shadow-medical);
+}
+
+/* ========================================
+   DEMO MODAL
+======================================== */
+
+.demo-container {
+    text-align: center;
+    padding: 2rem;
+}
+
+.demo-placeholder {
+    background: var(--light-gray);
+    border-radius: var(--border-radius-large);
+    padding: 3rem 2rem;
+}
+
+/* ========================================
+   UTILIDADES
+======================================== */
+
+.text-medical-primary { color: var(--medical-primary) !important; }
+.text-medical-success { color: var(--medical-success) !important; }
+.text-medical-warning { color: var(--medical-warning) !important; }
+.text-medical-danger { color: var(--medical-danger) !important; }
+
+.bg-medical-primary { background: var(--medical-primary) !important; }
+.bg-medical-gradient { background: var(--medical-gradient-primary) !important; }
+
+.medical-gradient-text {
+    background: var(--medical-gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.text-shadow {
+    text-shadow: var(--text-shadow);
+}
+
+.glass-effect {
+    background: var(--glass-effect);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.medical-gradient-bg {
+    background: var(--medical-gradient-primary);
+}
+
+/* ========================================
+   ANIMACIONES
+======================================== */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+======================================== */
+
+/* Navbar responsive */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        background: rgba(0, 122, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius);
+        margin-top: 1rem;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .navbar-nav {
+        margin-bottom: 1rem;
+    }
+    
+    .navbar-nav .nav-link {
+        margin: 0.25rem 0;
+        text-align: center;
+    }
+    
+    .navbar .btn {
+        width: 100%;
+        margin: 0.25rem 0;
+        justify-content: center;
+    }
+    
+    .navbar .btn + .btn {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+}
+
+/* Hero responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-stats {
+        gap: 1rem;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .hero-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        justify-content: center;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .cta-title {
+        font-size: 2rem;
+    }
+    
+    .trust-badges {
+        gap: 1rem;
+    }
+    
+    .trust-badge {
+        flex: 1;
+        justify-content: center;
+        min-width: 150px;
+    }
+    
+    .floating-icon {
+        display: none;
+    }
+    
+    .medical-dashboard-preview {
+        margin-top: 2rem;
+    }
+    
+    .medical-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .medical-stat-value {
+        font-size: 2rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* CTA responsive */
+@media (max-width: 768px) {
+    .cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .cta-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        justify-content: center;
+    }
+}
+
+/* Materiales responsive */
 @media (max-width: 768px) {
     .modulos-nav {
         flex-direction: column;
@@ -2615,6 +2294,32 @@ a:focus {
 }
 
 @media (max-width: 576px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-description {
+        font-size: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .feature-card-modern {
+        padding: 1.5rem;
+    }
+    
+    .step-card {
+        padding: 1.5rem;
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
     .material-actions,
     .aviso-actions {
         flex-direction: column;
@@ -2629,20 +2334,352 @@ a:focus {
         width: 100%;
         margin-bottom: 0.5rem;
     }
+    
+    .cookie-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .cookie-actions {
+        justify-content: center;
+    }
+    
+    .footer-legal {
+        justify-content: center;
+        margin-top: 1rem;
+    }
 }
 
-/* Animaciones para filtros */
-@keyframes fadeInScale {
+/* ========================================
+   MEJORAS DE ACCESIBILIDAD
+======================================== */
+
+/* Focus states mejorados */
+.btn:focus,
+.nav-link:focus,
+a:focus {
+    outline: 2px solid var(--medical-primary);
+    outline-offset: 2px;
+}
+
+/* Mejora para usuarios con motion reducido */
+@media (prefers-reduced-motion: reduce) {
+    .btn-medical-primary::before,
+    .hero-actions .btn-medical-primary {
+        animation: none;
+    }
+    
+    .btn {
+        transition: none;
+    }
+    
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .particle {
+        display: none;
+    }
+}
+
+/* ========================================
+   PRINT STYLES
+======================================== */
+
+@media print {
+    .navbar,
+    .cookie-consent,
+    .install-btn {
+        display: none !important;
+    }
+    
+    .hero-section-modern {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .btn {
+        border: 1px solid #000 !important;
+        background: white !important;
+        color: black !important;
+    }
+}
+
+/* ========================================
+   NOTIFICACIONES
+======================================== */
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease-out;
+    border-left: 4px solid #007AFF;
+}
+
+.notification-info { border-left-color: #5AC8FA; }
+.notification-success { border-left-color: #34C759; }
+.notification-warning { border-left-color: #FF9500; }
+
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 122, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #007AFF;
+}
+
+.notification-text {
+    flex: 1;
+}
+
+.notification-text h6 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+    color: #1D1D1F;
+}
+
+.notification-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #8E8E93;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #8E8E93;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.notification-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1D1D1F;
+}
+
+@keyframes slideInRight {
     from {
+        transform: translateX(100%);
         opacity: 0;
-        transform: scale(0.9);
     }
     to {
+        transform: translateX(0);
         opacity: 1;
-        transform: scale(1);
     }
 }
 
-.material-item.show {
-    animation: fadeInScale 0.3s ease-out;
+/* ========================================
+   HERO SECTION - LEGACY SUPPORT
+======================================== */
+
+.hero-section {
+    background: var(--medical-gradient-primary);
+    color: white;
+    margin: 1rem 0;
+    box-shadow: var(--shadow-medical);
+}
+
+/* ========================================
+   MEDICAL STATS - LEGACY SUPPORT
+======================================== */
+
+.medical-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.medical-stat-card {
+    background: white;
+    border-radius: var(--border-radius-large);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-medium);
+    border-left: 4px solid var(--medical-primary);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.medical-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medical);
+}
+
+.medical-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--medical-gradient-primary);
+}
+
+.medical-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.medical-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--medical-gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.medical-stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--medical-primary);
+    margin: 0.5rem 0;
+}
+
+.medical-stat-label {
+    color: var(--dark-gray);
+    font-weight: 500;
+    margin: 0;
+}
+
+/* ========================================
+   TABLAS ESPECIALIZADAS
+======================================== */
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-light);
+    background: white;
+}
+
+.data-table thead {
+    background: var(--medical-gradient-primary);
+}
+
+.data-table th {
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    border: none;
+}
+
+.data-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+    background: rgba(0, 122, 255, 0.05);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ========================================
+   FINAL DEL ARCHIVO CSS
+======================================== */
+
+/* Asegurar que todos los elementos tengan box-sizing correcto */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Mejorar la legibilidad del texto */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Asegurar que las imágenes sean responsivas por defecto */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Mejorar el comportamiento de los enlaces */
+a {
+    color: var(--medical-primary);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--medical-accent);
+}
+
+/* Asegurar que los botones tengan cursor pointer */
+button, .btn {
+    cursor: pointer;
+}
+
+/* Mejorar la apariencia de los inputs en iOS */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+    -webkit-appearance: none;
+    border-radius: var(--border-radius);
+}
+
+/* Ocultar scrollbars en webkit cuando no son necesarias */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-gray);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--medical-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--medical-accent);
+}
+
+/* Selección de texto personalizada */
+::selection {
+    background: rgba(0, 122, 255, 0.2);
+    color: var(--medical-primary);
+}
+
+::-moz-selection {
+    background: rgba(0, 122, 255, 0.2);
+    color: var(--medical-primary);
 }
