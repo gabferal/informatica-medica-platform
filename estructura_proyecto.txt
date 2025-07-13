@@ -1,0 +1,52 @@
+.
+├── backend
+│   ├── create-test-data.js
+│   ├── database
+│   │   ├── database.db
+│   │   ├── init.js
+│   │   └── migrate.js
+│   ├── database.db
+│   ├── fix-database.js
+│   ├── init.js
+│   ├── middleware
+│   │   └── auth.js
+│   ├── recreate-database.js
+│   ├── routes
+│   │   ├── admin.js
+│   │   ├── auth.js
+│   │   ├── materials.js
+│   │   └── submissions.js
+│   ├── services
+│   │   └── emailService.js
+│   └── uploads
+│       ├── materials
+│       └── submissions
+├── database.db
+├── estructura_proyecto.txt
+├── frontend
+│   ├── admin-panel.html
+│   ├── admin.html
+│   ├── css
+│   │   └── styles.css
+│   ├── index.html
+│   ├── js
+│   │   ├── admin.js
+│   │   ├── auth.js
+│   │   ├── main.js
+│   │   └── student-area.js
+│   ├── login.html
+│   ├── register.html
+│   └── student-area.html
+├── package-lock.json
+├── package.json
+├── Procfile
+├── server.js
+├── setup-email.js
+└── uploads
+    └── submissions
+        ├── 1752264860076_1_DOC. LYANDRO FERREIRA SILVA CORRECCION.pdf
+        ├── 1752266428792_1_OrcÌ§amento Arnaldo Otazu.pdf
+        ├── 1752266576168_2_DOC._LYANDRO_FERREIRA_SILVA_CORRECCION_assinado.pdf
+        └── 1752267827426_2_OrcÌ§amento Arnaldo Otazu.pdf
+
+14 directories, 36 files
