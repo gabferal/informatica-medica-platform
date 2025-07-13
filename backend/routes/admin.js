@@ -646,184 +646,269 @@ router.get('/export/submissions', authenticateAdmin, async (req, res) => {
     }
 });
 
-// ✅ NUEVA RUTA: Estadísticas avanzadas - AGREGADA
-router.get('/advanced-stats', authenticateAdmin, async (req, res) => {
+// ✅ ENDPOINT MEJORADO: Migración completa usando script
+router.post('/migrate-database', authenticateAdmin, async (req, res) => {
     try {
-        logSecurityEvent('ADMIN_ADVANCED_STATS_REQUEST', { 
-            adminId: req.user.userId 
-        }, req);
-
-        console.log('📈 Solicitando estadísticas avanzadas');
-
-        const [
-            submissionsByDay,
-            submissionsByType,
-            topStudents,
-            averageFileSize
-        ] = await Promise.all([
-            // Entregas por día (últimos 30 días)
-            dbOperation(`
-                SELECT DATE(submitted_at) as date, COUNT(*) as count 
-                FROM submissions 
-                WHERE submitted_at >= date('now', '-30 days')
-                GROUP BY DATE(submitted_at) 
-                ORDER BY date DESC
-            `),
-            // Entregas por tipo de archivo
-            dbOperation(`
-                SELECT mime_type, COUNT(*) as count 
-                FROM submissions 
-                GROUP BY mime_type 
-                ORDER BY count DESC
-            `),
-            // Estudiantes más activos
-            dbOperation(`
-                SELECT u.name, u.email, COUNT(s.id) as submission_count 
-                FROM users u 
-                LEFT JOIN submissions s ON u.id = s.user_id 
-                WHERE u.role = 'student' 
-                GROUP BY u.id, u.name, u.email 
-                ORDER BY submission_count DESC 
-                LIMIT 10
-            `),
-            // Tamaño promedio de archivo
-            dbGet(`
-                SELECT 
-                    AVG(file_size) as avg_size,
-                    MIN(file_size) as min_size,
-                    MAX(file_size) as max_size,
-                    SUM(file_size) as total_size
-                FROM submissions
-            `)
-        ]);
-
-        const advancedStats = {
-            submissionsByDay,
-            submissionsByType,
-            topStudents,
-            fileSizeStats: averageFileSize || {
-                avg_size: 0,
-                min_size: 0,
-                max_size: 0,
-                total_size: 0
-            }
-        };
-
-        logSecurityEvent('ADMIN_ADVANCED_STATS_SUCCESS', { 
-            adminId: req.user.userId 
-        }, req);
-
-        console.log('�� Estadísticas avanzadas enviadas');
-        res.json(advancedStats);
-
-    } catch (error) {
-        console.error('❌ Error obteniendo estadísticas avanzadas:', error);
-        logSecurityEvent('ADMIN_ADVANCED_STATS_ERROR', { 
-            adminId: req.user.userId,
-            error: error.message 
-        }, req);
-
-        res.status(500).json({ 
-            error: 'Error al obtener estadísticas avanzadas',
-            code: 'DATABASE_ERROR'
-        });
-    }
-});
-// ✅ ENDPOINT TEMPORAL: Agregar columna mime_type específicamente
-router.post('/fix-mime-type-column', authenticateAdmin, async (req, res) => {
-    try {
-        logSecurityEvent('ADMIN_FIX_MIME_TYPE_ATTEMPT', { 
+        logSecurityEvent('ADMIN_MIGRATE_DATABASE_ATTEMPT', { 
             adminId: req.user.userId,
             adminEmail: req.user.email 
         }, req);
 
-        console.log('🔧 Agregando columna mime_type específicamente...');
+        console.log('🔧 Ejecutando migración completa desde admin...');
         
-        const db = new sqlite3.Database(dbPath);
+        // Importar y ejecutar el script de migración
+        const { runMigration } = require('../scripts/migrate-database');
+        const result = await runMigration();
         
-        // Verificar si mime_type ya existe
-        const columns = await new Promise((resolve, reject) => {
-            db.all("PRAGMA table_info(submissions)", (err, columns) => {
-                if (err) reject(err);
-                else resolve(columns);
-            });
-        });
-        
-        const columnNames = columns.map(col => col.name);
-        console.log('📋 Columnas actuales:', columnNames);
-        
-        if (columnNames.includes('mime_type')) {
-            db.close();
-            return res.json({ 
-                success: true,
-                message: 'Columna mime_type ya existe',
-                currentColumns: columnNames
-            });
-        }
-        
-        // Agregar columna mime_type
-        await new Promise((resolve, reject) => {
-            console.log('➕ Agregando columna mime_type...');
-            db.run(`ALTER TABLE submissions ADD COLUMN mime_type TEXT`, (err) => {
-                if (err) {
-                    console.error('❌ Error agregando mime_type:', err.message);
-                    reject(err);
-                } else {
-                    console.log('✅ Columna mime_type agregada');
-                    resolve();
-                }
-            });
-        });
-        
-        // Actualizar registros existentes con mime_type por defecto
-        const updateResult = await new Promise((resolve, reject) => {
-            db.run(`
-                UPDATE submissions 
-                SET mime_type = CASE 
-                    WHEN filename LIKE '%.pdf' THEN 'application/pdf'
-                    WHEN filename LIKE '%.doc' THEN 'application/msword'
-                    WHEN filename LIKE '%.docx' THEN 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                    WHEN filename LIKE '%.txt' THEN 'text/plain'
-                    WHEN filename LIKE '%.zip' THEN 'application/zip'
-                    WHEN filename LIKE '%.png' THEN 'image/png'
-                    WHEN filename LIKE '%.jpg' OR filename LIKE '%.jpeg' THEN 'image/jpeg'
-                    ELSE 'application/octet-stream'
-                END
-                WHERE mime_type IS NULL OR mime_type = ''
-            `, function(err) {
-                if (err) reject(err);
-                else resolve({ changes: this.changes });
-            });
-        });
-        
-        db.close();
-        
-        logSecurityEvent('ADMIN_FIX_MIME_TYPE_SUCCESS', { 
+        logSecurityEvent('ADMIN_MIGRATE_DATABASE_SUCCESS', { 
             adminId: req.user.userId,
-            updateResult 
+            result 
         }, req);
-        
-        console.log('🎉 Columna mime_type agregada y actualizada exitosamente!');
         
         res.json({ 
             success: true,
-            message: 'Columna mime_type agregada exitosamente',
-            updatedRecords: updateResult.changes
+            message: 'Migración completada exitosamente',
+            ...result
         });
         
     } catch (error) {
-        console.error('❌ Error agregando mime_type:', error);
-        logSecurityEvent('ADMIN_FIX_MIME_TYPE_ERROR', { 
+        console.error('❌ Error en migración desde admin:', error);
+        logSecurityEvent('ADMIN_MIGRATE_DATABASE_ERROR', { 
             adminId: req.user.userId,
             error: error.message 
         }, req);
 
         res.status(500).json({ 
             success: false,
-            error: 'Error agregando columna mime_type',
+            error: 'Error ejecutando migración',
             details: error.message
         });
     }
 });
+// ✅ ENDPOINTS ESPECÍFICOS para columnas faltantes
+router.post('/add-file-path-column', authenticateAdmin, async (req, res) => {
+    try {
+        logSecurityEvent('ADMIN_ADD_FILE_PATH_ATTEMPT', { 
+            adminId: req.user.userId,
+            adminEmail: req.user.email 
+        }, req);
 
+        console.log('🔧 Agregando columna file_path...');
+        const db = new sqlite3.Database(dbPath);
+        
+        // Verificar si ya existe
+        const columns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns.map(col => col.name));
+            });
+        });
+        
+        console.log('📋 Columnas actuales:', columns);
+        
+        if (columns.includes('file_path')) {
+            db.close();
+            return res.json({ success: true, message: 'Columna file_path ya existe', currentColumns: columns });
+        }
+        
+        // Agregar columna
+        await new Promise((resolve, reject) => {
+            console.log('➕ Ejecutando: ALTER TABLE submissions ADD COLUMN file_path TEXT');
+            db.run("ALTER TABLE submissions ADD COLUMN file_path TEXT", (err) => {
+                if (err) {
+                    console.error('❌ Error agregando file_path:', err.message);
+                    reject(err);
+                } else {
+                    console.log('✅ Columna file_path agregada');
+                    resolve();
+                }
+            });
+        });
+        
+        // Actualizar registros existentes
+        const updateResult = await new Promise((resolve, reject) => {
+            console.log('🔄 Actualizando registros existentes...');
+            db.run("UPDATE submissions SET file_path = 'uploads/' || filename WHERE file_path IS NULL OR file_path = ''", function(err) {
+                if (err) {
+                    console.error('❌ Error actualizando registros:', err.message);
+                    reject(err);
+                } else {
+                    console.log(`✅ ${this.changes} registros actualizados`);
+                    resolve({ changes: this.changes });
+                }
+            });
+        });
+        
+        db.close();
+        
+        logSecurityEvent('ADMIN_ADD_FILE_PATH_SUCCESS', { 
+            adminId: req.user.userId,
+            updateResult 
+        }, req);
+        
+        res.json({ 
+            success: true, 
+            message: 'Columna file_path agregada exitosamente', 
+            updatedRecords: updateResult.changes 
+        });
+        
+    } catch (error) {
+        console.error('❌ Error agregando file_path:', error);
+        logSecurityEvent('ADMIN_ADD_FILE_PATH_ERROR', { 
+            adminId: req.user.userId,
+            error: error.message 
+        }, req);
+        
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/add-original-filename-column', authenticateAdmin, async (req, res) => {
+    try {
+        logSecurityEvent('ADMIN_ADD_ORIGINAL_FILENAME_ATTEMPT', { 
+            adminId: req.user.userId,
+            adminEmail: req.user.email 
+        }, req);
+
+        console.log('🔧 Agregando columna original_filename...');
+        const db = new sqlite3.Database(dbPath);
+        
+        const columns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns.map(col => col.name));
+            });
+        });
+        
+        console.log('📋 Columnas actuales:', columns);
+        
+        if (columns.includes('original_filename')) {
+            db.close();
+            return res.json({ success: true, message: 'Columna original_filename ya existe', currentColumns: columns });
+        }
+        
+        await new Promise((resolve, reject) => {
+            console.log('➕ Ejecutando: ALTER TABLE submissions ADD COLUMN original_filename TEXT');
+            db.run("ALTER TABLE submissions ADD COLUMN original_filename TEXT", (err) => {
+                if (err) {
+                    console.error('❌ Error agregando original_filename:', err.message);
+                    reject(err);
+                } else {
+                    console.log('✅ Columna original_filename agregada');
+                    resolve();
+                }
+            });
+        });
+        
+        const updateResult = await new Promise((resolve, reject) => {
+            console.log('�� Actualizando registros existentes...');
+            db.run("UPDATE submissions SET original_filename = filename WHERE original_filename IS NULL OR original_filename = ''", function(err) {
+                if (err) {
+                    console.error('❌ Error actualizando registros:', err.message);
+                    reject(err);
+                } else {
+                    console.log(`✅ ${this.changes} registros actualizados`);
+                    resolve({ changes: this.changes });
+                }
+            });
+        });
+        
+        db.close();
+        
+        logSecurityEvent('ADMIN_ADD_ORIGINAL_FILENAME_SUCCESS', { 
+            adminId: req.user.userId,
+            updateResult 
+        }, req);
+        
+        res.json({ 
+            success: true, 
+            message: 'Columna original_filename agregada exitosamente', 
+            updatedRecords: updateResult.changes 
+        });
+        
+    } catch (error) {
+        console.error('❌ Error agregando original_filename:', error);
+        logSecurityEvent('ADMIN_ADD_ORIGINAL_FILENAME_ERROR', { 
+            adminId: req.user.userId,
+            error: error.message 
+        }, req);
+        
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/add-file-size-column', authenticateAdmin, async (req, res) => {
+    try {
+        logSecurityEvent('ADMIN_ADD_FILE_SIZE_ATTEMPT', { 
+            adminId: req.user.userId,
+            adminEmail: req.user.email 
+        }, req);
+
+        console.log('🔧 Verificando/agregando columna file_size...');
+        const db = new sqlite3.Database(dbPath);
+        
+        const columns = await new Promise((resolve, reject) => {
+            db.all("PRAGMA table_info(submissions)", (err, columns) => {
+                if (err) reject(err);
+                else resolve(columns.map(col => col.name));
+            });
+        });
+        
+        console.log('📋 Columnas actuales:', columns);
+        
+        if (columns.includes('file_size')) {
+            db.close();
+            return res.json({ success: true, message: 'Columna file_size ya existe', currentColumns: columns });
+        }
+        
+        await new Promise((resolve, reject) => {
+            console.log('➕ Ejecutando: ALTER TABLE submissions ADD COLUMN file_size INTEGER DEFAULT 0');
+            db.run("ALTER TABLE submissions ADD COLUMN file_size INTEGER DEFAULT 0", (err) => {
+                if (err) {
+                    console.error('❌ Error agregando file_size:', err.message);
+                    reject(err);
+                } else {
+                    console.log('✅ Columna file_size agregada');
+                    resolve();
+                }
+            });
+        });
+        
+        // Para file_size, establecer un valor por defecto
+        const updateResult = await new Promise((resolve, reject) => {
+            console.log('🔄 Estableciendo file_size por defecto...');
+            db.run("UPDATE submissions SET file_size = 0 WHERE file_size IS NULL", function(err) {
+                if (err) {
+                    console.error('❌ Error actualizando file_size:', err.message);
+                    reject(err);
+                } else {
+                    console.log(`✅ ${this.changes} registros actualizados con file_size = 0`);
+                    resolve({ changes: this.changes });
+                }
+            });
+        });
+        
+        db.close();
+        
+        logSecurityEvent('ADMIN_ADD_FILE_SIZE_SUCCESS', { 
+            adminId: req.user.userId,
+            updateResult 
+        }, req);
+        
+        res.json({ 
+            success: true, 
+            message: 'Columna file_size agregada exitosamente', 
+            updatedRecords: updateResult.changes 
+        });
+        
+    } catch (error) {
+        console.error('❌ Error agregando file_size:', error);
+        logSecurityEvent('ADMIN_ADD_FILE_SIZE_ERROR', { 
+            adminId: req.user.userId,
+            error: error.message 
+        }, req);
+        
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 module.exports = router;

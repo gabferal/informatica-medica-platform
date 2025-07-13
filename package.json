@@ -4,6 +4,7 @@
   "description": "Plataforma educativa para el curso de Informática Médica",
   "main": "server.js",
   "scripts": {
+    "migrate": "node backend/scripts/migrate-database.js",
     "start": "node server.js",
     "dev": "nodemon server.js",
     "init": "node -e \"require('./backend/database/init.js')()\""
@@ -33,4 +34,5 @@
   "engines": {
     "node": ">=18.0.0"
   }
+  
 }
