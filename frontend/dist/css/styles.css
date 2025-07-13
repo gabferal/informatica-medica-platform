@@ -1,0 +1,559 @@
+/* SISTEMA DE INFORMATICA MEDICA - CSS COMPLETO v2.0 OPTIMIZADO */
+
+/* ========================================
+   VARIABLES CSS Y CONFIGURACION BASE
+======================================== */
+
+:root {
+    /* Colores médicos principales */
+    --medical-primary: #007AFF;
+    --medical-secondary: #34C759;
+    --medical-accent: #5856D6;
+    --medical-warning: #FF9500;
+    --medical-danger: #FF3B30;
+    --medical-success: #30D158;  /* Corregido: diferente del secondary */
+    --medical-info: #5AC8FA;
+    
+    /* Colores de fondo */
+    --light-gray: #F2F2F7;
+    --dark-gray: #8E8E93;
+    --background-white: #FFFFFF;
+    --background-dark: #1D1D1F;
+    
+    /* Gradientes médicos optimizados */
+    --medical-gradient-primary: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+    --medical-gradient-secondary: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+    
+    /* Espaciado y bordes */
+    --border-radius: 12px;
+    --border-radius-small: 8px;
+    --border-radius-large: 16px;
+    
+    /* Sombras optimizadas */
+    --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-medical: 0 8px 32px rgba(0, 122, 255, 0.2);
+    
+    /* Transiciones optimizadas */
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   RESET Y CONFIGURACION BASE OPTIMIZADA
+======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--light-gray);
+    color: #1D1D1F;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* ========================================
+   NAVBAR OPTIMIZADO
+======================================== */
+
+.medical-navbar {
+    background: var(--medical-gradient-primary) !important;
+    backdrop-filter: blur(20px);
+    transition: var(--transition);
+    padding: 1rem 0;
+    box-shadow: var(--shadow-light);
+}
+
+.navbar-scrolled {
+    padding: 0.5rem 0;
+    box-shadow: var(--shadow-medium);
+}
+
+/* Brand optimizado */
+.medical-brand .brand-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.brand-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.brand-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: white;
+}
+
+.brand-subtitle {
+    font-weight: 400;
+    font-size: 0.8rem;
+    opacity: 0.9;
+    color: white;
+}
+
+/* Nav links optimizados */
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    padding: 0.75rem 1rem !important;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    margin: 0 0.25rem;
+}
+
+.navbar-nav .nav-link:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.navbar-nav .nav-link.active {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+}
+
+/* ========================================
+   BOTONES OPTIMIZADOS Y CORREGIDOS
+======================================== */
+
+.btn {
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition);
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Botón primario médico corregido */
+.btn-medical-primary {
+    background: var(--medical-gradient-primary);
+    color: white;
+    box-shadow: var(--shadow-light);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-medical-primary:hover {
+    background: linear-gradient(135deg, #0056CC 0%, #4A4A8A 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    color: white;
+}
+
+/* Botón outline corregido */
+.btn-outline-medical {
+    background: transparent;
+    border: 2px solid var(--medical-primary);
+    color: var(--medical-primary);
+}
+
+.btn-outline-medical:hover {
+    background: var(--medical-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Botones del navbar corregidos */
+.navbar .btn-outline-light {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    color: white !important;
+    backdrop-filter: blur(10px);
+}
+
+.navbar .btn-outline-light:hover {
+    background: white;
+    color: var(--medical-primary) !important;
+    transform: translateY(-2px);
+}
+
+.navbar .btn-medical-primary {
+    background: white;
+    color: var(--medical-primary) !important;
+}
+
+.navbar .btn-medical-primary:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--medical-primary) !important;
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   HERO SECTION OPTIMIZADA
+======================================== */
+
+.hero-section-modern {
+    position: relative;
+    min-height: 100vh;
+    background: var(--medical-gradient-primary);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    color: white;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+}
+
+.hero-description {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+/* ========================================
+   CARDS Y COMPONENTES OPTIMIZADOS
+======================================== */
+
+.card {
+    border: none;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-light);
+    transition: var(--transition);
+    background: white;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+}
+
+/* Stats cards optimizadas */
+.stat-card-modern {
+    background: white;
+    border-radius: var(--border-radius-large);
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--shadow-light);
+    transition: var(--transition);
+}
+
+.stat-card-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--medical-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.stat-label {
+    color: var(--dark-gray);
+    font-weight: 500;
+}
+
+/* ========================================
+   SECCIONES ESPECIALIZADAS
+======================================== */
+
+/* Avisos optimizados */
+.aviso-card {
+    background: white;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-light);
+    overflow: hidden;
+    transition: var(--transition);
+    border-left: 4px solid var(--medical-primary);
+}
+
+.aviso-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.aviso-card.urgent {
+    border-left-color: var(--medical-danger);
+}
+
+.aviso-card.success {
+    border-left-color: var(--medical-success);
+}
+
+.aviso-card.warning {
+    border-left-color: var(--medical-warning);
+}
+
+/* Materiales optimizados */
+.material-card {
+    background: white;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-light);
+    overflow: hidden;
+    transition: var(--transition);
+    height: 100%;
+}
+
+.material-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* ========================================
+   TABLAS OPTIMIZADAS
+======================================== */
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-light);
+    background: white;
+}
+
+.data-table thead {
+    background: var(--medical-gradient-primary);
+}
+
+.data-table th {
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    border: none;
+}
+
+.data-table td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+}
+
+.data-table tbody tr:hover {
+    background: rgba(0, 122, 255, 0.05);
+}
+
+/* ========================================
+   UTILIDADES
+======================================== */
+
+.text-medical-primary { color: var(--medical-primary) !important; }
+.text-medical-success { color: var(--medical-success) !important; }
+.text-medical-warning { color: var(--medical-warning) !important; }
+.text-medical-danger { color: var(--medical-danger) !important; }
+
+.bg-medical-primary { background: var(--medical-primary) !important; }
+.bg-medical-gradient { background: var(--medical-gradient-primary) !important; }
+
+.medical-gradient-text {
+    background: var(--medical-gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN OPTIMIZADO
+======================================== */
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-actions {
+        flex-direction: column;
+    }
+    
+    .hero-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ========================================
+   ACCESIBILIDAD Y PERFORMANCE
+======================================== */
+
+/* Focus states mejorados */
+.btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+}
+
+/* Reducir motion para usuarios sensibles */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-gray);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--medical-primary);
+    border-radius: 4px;
+}
+
+/* Selección de texto */
+::selection {
+    background: rgba(0, 122, 255, 0.2);
+    color: var(--medical-primary);
+}
+
+/* ========================================
+   LOADING Y NOTIFICACIONES
+======================================== */
+
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--medical-gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-medium);
+    z-index: 1000;
+    max-width: 400px;
+    border-left: 4px solid var(--medical-primary);
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   FOOTER OPTIMIZADO
+======================================== */
+
+.footer-modern {
+    background: var(--background-dark);
+    color: white;
+    padding: 3rem 0 1rem;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer-links a:hover {
+    color: white;
+}
+
+/* ========================================
+   FINAL - OPTIMIZACIONES GLOBALES
+======================================== */
+
+/* Mejorar rendimiento de imágenes */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Optimizar inputs para móviles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+    -webkit-appearance: none;
+    border-radius: var(--border-radius);
+}
+
+/* Asegurar cursor pointer en elementos interactivos */
+button, .btn, [role="button"] {
+    cursor: pointer;
+}

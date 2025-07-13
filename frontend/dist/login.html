@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Informática Médica</title>
+    
+    <!-- Preload crítico -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style">
+    
+    <!-- CSS Ultra-Optimizado Inline -->
+    <style>
+        /* ========================================
+           CSS ULTRA-OPTIMIZADO - LOGIN
+        ======================================== */
+        
+        :root {
+            --primary: #007AFF;
+            --success: #34C759;
+            --warning: #FF9500;
+            --danger: #FF3B30;
+            --gray: #8E8E93;
+            --light: #F2F2F7;
+            --dark: #1D1D1F;
+            --white: #FFFFFF;
+            --radius: 12px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-medium: 0 4px 16px rgba(0,0,0,0.15);
+            --shadow-medical: 0 8px 32px rgba(0,122,255,0.2);
+            --transition: all 0.2s ease;
+            --gradient: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gradient);
+            color: var(--dark);
+            line-height: 1.5;
+            font-size: 14px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        /* Container Principal */
+        .login-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: var(--shadow-medical);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 500px;
+        }
+        
+        /* Panel Izquierdo - Información */
+        .login-info {
+            background: var(--gradient);
+            color: var(--white);
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .info-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .brand-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .brand-text h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .brand-text p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .info-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        
+        .info-description {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .info-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius);
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        /* Panel Derecho - Formulario */
+        .login-form {
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .form-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-header p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        /* Formulario */
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+        
+        .form-input {
+            padding: 0.875rem 1rem;
+            border: 2px solid #E5E5EA;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            background: var(--white);
+            color: var(--dark);
+            position: relative;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+        }
+        
+        .form-input.error {
+            border-color: var(--danger);
+            background: rgba(255,59,48,0.05);
+        }
+        
+        .form-input.success {
+            border-color: var(--success);
+            background: rgba(52,199,89,0.05);
+        }
+        
+        /* Input con icono */
+        .input-group {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        
+        .input-group .form-input {
+            padding-left: 2.5rem;
+        }
+        
+        /* Toggle de contraseña */
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+        
+        .password-toggle:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--primary);
+        }
+        
+        /* Checkbox personalizado */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .checkbox-input {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #E5E5EA;
+            border-radius: 4px;
+            background: var(--white);
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .checkbox-input:checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .checkbox-input:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .checkbox-label {
+            font-size: 0.85rem;
+            color: var(--gray);
+            cursor: pointer;
+        }
+        
+        /* Botones */
+        .btn {
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: var(--gradient);
+            color: var(--white);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0056CC 0%, #4A4A8A 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+        
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem;
+        }
+        
+        .btn-link:hover {
+            text-decoration: underline;
+            color: var(--primary);
+        }
+        
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E5E5EA;
+        }
+        
+        .divider span {
+            color: var(--gray);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        /* Links adicionales */
+        .additional-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #E5E5EA;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #E5E5EA;
+        }
+        
+        .register-link p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .register-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Loading State */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: var(--shadow-medical);
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #E5E5EA;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Notificaciones */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-medium);
+            padding: 1rem;
+            max-width: 350px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .notification.success { border-left-color: var(--success); }
+        .notification.warning { border-left-color: var(--warning); }
+        .notification.error { border-left-color: var(--danger); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Error messages */
+        .error-message {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        /* Demo credentials */
+        .demo-credentials {
+            background: rgba(0,122,255,0.05);
+            border: 1px solid rgba(0,122,255,0.2);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-credentials h6 {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .demo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+        }
+        
+        .demo-item span:first-child {
+            color: var(--gray);
+        }
+        
+        .demo-item span:last-child {
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+                max-width: 450px;
+                margin: 1rem;
+            }
+            
+            .login-info {
+                padding: 2rem 1.5rem;
+                order: 2;
+            }
+            
+            .login-form {
+                padding: 2rem 1.5rem;
+                order: 1;
+            }
+            
+            .info-title {
+                font-size: 1.5rem;
+            }
+            
+            .form-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .info-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .additional-links {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            .login-container {
+                margin: 0.5rem;
+            }
+            
+            .login-info,
+            .login-form {
+                padding: 1.5rem 1rem;
+            }
+        }
+        
+        /* Animaciones */
+        .login-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Floating elements */
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .floating-icon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 1.5rem;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-icon:nth-child(1) {
+            top: 20%;
+            right: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-icon:nth-child(2) {
+            bottom: 30%;
+            right: 20%;
+            animation-delay: 3s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+    
+    <!-- Font cargada de forma asíncrona -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"></noscript>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h4>Iniciando sesión...</h4>
+            <p>Por favor espera un momento</p>
+        </div>
+    </div>
+
+    <!-- Container Principal -->
+    <div class="login-container">
+        <!-- Panel Izquierdo - Información -->
+        <div class="login-info">
+            <div class="floating-elements">
+                <div class="floating-icon">🏥</div>
+                <div class="floating-icon">👨‍⚕️</div>
+            </div>
+            
+            <div class="info-content">
+                <div class="brand">
+                    <div class="brand-icon">🏥</div>
+                    <div class="brand-text">
+                        <h2>InfoMédica</h2>
+                        <p>Plataforma Educativa</p>
+                    </div>
+                </div>
+
+                <h1 class="info-title">Bienvenido de Vuelta</h1>
+                <p class="info-description">
+                    Accede a tu cuenta para continuar con tu formación en informática médica. 
+                    Mantente al día con los últimos avances y materiales del curso.
+                </p>
+
+                <div class="info-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">45</div>
+                        <div class="stat-label">Estudiantes Activos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">127</div>
+                        <div class="stat-label">Materiales Disponibles</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">98%</div>
+                        <div class="stat-label">Satisfacción</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Acceso Disponible</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho - Formulario -->
+        <div class="login-form">
+            <div class="form-header">
+                <h1>Iniciar Sesión</h1>
+                <p>Ingresa tus credenciales para acceder</p>
+            </div>
+
+            <!-- Credenciales de Demo -->
+            <div class="demo-credentials">
+                <h6>🚀 Credenciales de Prueba:</h6>
+                <div class="demo-item">
+                    <span>Estudiante:</span>
+                    <span>estudiante@demo.com / demo123</span>
+                </div>
+                <div class="demo-item">
+                    <span>Profesor:</span>
+                    <span>profesor@demo.com / admin123</span>
+                </div>
+            </div>
+
+            <form class="form" id="loginForm">
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label" for="email">Email *</label>
+                    <div class="input-group">
+                        <span class="input-icon">📧</span>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-input" 
+                            required 
+                            placeholder="tu.email@universidad.edu"
+                            autocomplete="email"
+                        >
+                    </div>
+                    <div class="error-message" id="emailError">Ingresa un email válido</div>
+                </div>
+
+                <!-- Contraseña -->
+                <div class="form-group">
+                    <label class="form-label" for="password">Contraseña *</label>
+                    <div class="input-group">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            required 
+                            placeholder="Tu contraseña"
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="password-toggle" id="passwordToggle">
+                            👁️
+                        </button>
+                    </div>
+                    <div class="error-message" id="passwordError">La contraseña es requerida</div>
+                </div>
+
+                <!-- Recordar sesión -->
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember" name="remember" class="checkbox-input">
+                    <label for="remember" class="checkbox-label">
+                        Recordar mi sesión
+                    </label>
+                </div>
+
+                <!-- Botón de Login -->
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span>🚀</span>
+                    Iniciar Sesión
+                </button>
+
+                <!-- Links adicionales -->
+                <div class="additional-links">
+                    <button type="button" class="btn-link" onclick="showForgotPassword()">
+                        ¿Olvidaste tu contraseña?
+                    </button>
+                    <button type="button" class="btn-link" onclick="fillDemoCredentials('student')">
+                        Probar como Estudiante
+                    </button>
+                </div>
+
+                <!-- Divider -->
+                <div class="divider">
+                    <span>o</span>
+                </div>
+
+                <!-- Botón Alternativo -->
+                <a href="register.html" class="btn btn-outline">
+                    <span>👤</span>
+                    Crear Nueva Cuenta
+                </a>
+            </form>
+
+            <!-- Link de Registro -->
+            <div class="register-link">
+                <p>¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Ultra-Optimizado -->
+    <script>
+        // ========================================
+        // LOGIN ULTRA-OPTIMIZADO
+        // ========================================
+        
+        class LoginForm {
+            constructor() {
+                this.form = document.getElementById('loginForm');
+                this.submitBtn = document.getElementById('submitBtn');
+                this.loading = document.getElementById('loading');
+                this.passwordToggle = document.getElementById('passwordToggle');
+                this.passwordInput = document.getElementById('password');
+                this.init();
+            }
+            
+            init() {
+                console.log('🚀 Formulario de login iniciado');
+                
+                // Event listeners
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.setupValidation();
+                this.setupPasswordToggle();
+                this.checkExistingSession();
+                
+                // Auto-hide loading
+                setTimeout(() => {
+                    if (this.loading) {
+                        this.loading.style.display = 'none';
+                    }
+                }, 300);
+                
+                console.log('✅ Login listo');
+            }
+            
+            setupValidation() {
+                const inputs = this.form.querySelectorAll('.form-input');
+                
+                inputs.forEach(input => {
+                    input.addEventListener('blur', () => this.validateField(input));
+                    input.addEventListener('input', () => this.clearError(input));
+                });
+            }
+            
+            setupPasswordToggle() {
+                if (this.passwordToggle && this.passwordInput) {
+                    this.passwordToggle.addEventListener('click', () => {
+                        const type = this.passwordInput.type === 'password' ? 'text' : 'password';
+                        this.passwordInput.type = type;
+                        this.passwordToggle.textContent = type === 'password' ? '👁️' : '🙈';
+                    });
+                }
+            }
+            
+            validateField(field) {
+                const value = field.value.trim();
+                const fieldName = field.name;
+                let isValid = true;
+                let errorMessage = '';
+                
+                switch (fieldName) {
+                    case 'email':
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!value) {
+                            isValid = false;
+                            errorMessage = 'El email es requerido';
+                        } else if (!emailRegex.test(value)) {
+                            isValid = false;
+                            errorMessage = 'Ingresa un email válido';
+                        }
+                        break;
+                        
+                    case 'password':
+                        if (!value) {
+                            isValid = false;
+                            errorMessage = 'La contraseña es requerida';
+                        } else if (value.length < 3) {
+                            isValid = false;
+                            errorMessage = 'La contraseña es muy corta';
+                        }
+                        break;
+                }
+                
+                this.showFieldValidation(field, isValid, errorMessage);
+                return isValid;
+            }
+            
+            showFieldValidation(field, isValid, errorMessage) {
+                const errorElement = document.getElementById(`${field.name}Error`);
+                
+                if (isValid) {
+                    field.classList.remove('error');
+                    field.classList.add('success');
+                    if (errorElement) {
+                        errorElement.classList.remove('show');
+                    }
+                } else {
+                    field.classList.remove('success');
+                    field.classList.add('error');
+                    if (errorElement) {
+                        errorElement.textContent = errorMessage;
+                        errorElement.classList.add('show');
+                    }
+                }
+            }
+            
+            clearError(field) {
+                field.classList.remove('error');
+                const errorElement = document.getElementById(`${field.name}Error`);
+                if (errorElement) {
+                    errorElement.classList.remove('show');
+                }
+            }
+            
+            checkExistingSession() {
+                const token = localStorage.getItem('token');
+                const user = localStorage.getItem('user');
+                
+                if (token && user) {
+                    try {
+                        const userData = JSON.parse(user);
+                        this.showNotification('Ya tienes una sesión activa. Redirigiendo...', 'info');
+                        
+                        setTimeout(() => {
+                            this.redirectUser(userData);
+                        }, 1500);
+                    } catch (error) {
+                        // Token inválido, limpiar storage
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                    }
+                }
+            }
+            
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                // Validar campos
+                const emailField = document.getElementById('email');
+                const passwordField = document.getElementById('password');
+                
+                const isEmailValid = this.validateField(emailField);
+                const isPasswordValid = this.validateField(passwordField);
+                
+                if (!isEmailValid || !isPasswordValid) {
+                    this.showNotification('Por favor corrige los errores en el formulario', 'error');
+                    return;
+                }
+                
+                // Procesar login
+                await this.processLogin();
+            }
+            
+            async processLogin() {
+                                // Mostrar loading
+                this.showLoading(true);
+                this.submitBtn.disabled = true;
+                this.submitBtn.innerHTML = '<span>⏳</span> Iniciando sesión...';
+                
+                try {
+                    const email = document.getElementById('email').value.trim();
+                    const password = document.getElementById('password').value;
+                    const remember = document.getElementById('remember').checked;
+                    
+                    // Simular llamada a API
+                    const result = await this.simulateLogin(email, password);
+                    
+                    if (result.success) {
+                        // Guardar datos de sesión
+                        localStorage.setItem('token', result.token);
+                        localStorage.setItem('user', JSON.stringify(result.user));
+                        
+                        if (remember) {
+                            localStorage.setItem('rememberSession', 'true');
+                        }
+                        
+                        this.showNotification('¡Login exitoso! Redirigiendo...', 'success');
+                        
+                        // Redirigir según el rol
+                        setTimeout(() => {
+                            this.redirectUser(result.user);
+                        }, 1500);
+                        
+                    } else {
+                        throw new Error(result.message || 'Credenciales incorrectas');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error en login:', error);
+                    this.showNotification(error.message || 'Error al iniciar sesión', 'error');
+                    
+                    // Restaurar botón
+                    this.submitBtn.disabled = false;
+                    this.submitBtn.innerHTML = '<span>🚀</span> Iniciar Sesión';
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+            async simulateLogin(email, password) {
+                // Simular tiempo de respuesta de API
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        // Credenciales de demo
+                        const demoUsers = {
+                            'estudiante@demo.com': {
+                                password: 'demo123',
+                                user: {
+                                    id: 1,
+                                    name: 'Juan Estudiante',
+                                    email: 'estudiante@demo.com',
+                                    role: 'student',
+                                    avatar: '👨‍🎓'
+                                }
+                            },
+                            'profesor@demo.com': {
+                                password: 'admin123',
+                                user: {
+                                    id: 2,
+                                    name: 'Prof. Gabriel',
+                                    email: 'profesor@demo.com',
+                                    role: 'admin',
+                                    avatar: '👨‍🏫'
+                                }
+                            }
+                        };
+                        
+                        const demoUser = demoUsers[email.toLowerCase()];
+                        
+                        if (demoUser && demoUser.password === password) {
+                            resolve({
+                                success: true,
+                                token: 'demo_token_' + Date.now(),
+                                user: demoUser.user,
+                                message: 'Login exitoso'
+                            });
+                        } else {
+                            resolve({
+                                success: false,
+                                message: 'Email o contraseña incorrectos'
+                            });
+                        }
+                    }, 1500);
+                });
+            }
+            
+            redirectUser(user) {
+                if (user.role === 'admin') {
+                    window.location.href = 'admin-panel.html';
+                } else {
+                    window.location.href = 'index.html'; // o student-area.html
+                }
+            }
+            
+            showLoading(show) {
+                if (this.loading) {
+                    this.loading.style.display = show ? 'flex' : 'none';
+                }
+            }
+            
+            showNotification(message, type = 'info') {
+                // Remover notificación existente
+                const existing = document.querySelector('.notification');
+                if (existing) {
+                    existing.remove();
+                }
+                
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                
+                const icons = {
+                    success: '✅',
+                    error: '❌',
+                    warning: '⚠️',
+                    info: 'ℹ️'
+                };
+                
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.2rem;">${icons[type] || icons.info}</span>
+                        <span style="flex: 1;">${message}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                style="background: none; border: none; cursor: pointer; font-size: 1.2rem; opacity: 0.6;">
+                            ✕
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Auto-remove después de 5 segundos
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.transform = 'translateX(100%)';
+                        notification.style.opacity = '0';
+                        setTimeout(() => notification.remove(), 300);
+                    }
+                }, 5000);
+            }
+        }
+        
+        // ========================================
+        // FUNCIONES GLOBALES
+        // ========================================
+        
+        function fillDemoCredentials(type) {
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            
+            if (type === 'student') {
+                emailInput.value = 'estudiante@demo.com';
+                passwordInput.value = 'demo123';
+                loginForm.showNotification('Credenciales de estudiante cargadas', 'info');
+            } else if (type === 'admin') {
+                emailInput.value = 'profesor@demo.com';
+                passwordInput.value = 'admin123';
+                loginForm.showNotification('Credenciales de profesor cargadas', 'info');
+            }
+            
+            // Trigger validation
+            loginForm.validateField(emailInput);
+            loginForm.validateField(passwordInput);
+        }
+        
+        function showForgotPassword() {
+            const forgotContent = `
+                <div style="text-align: center;">
+                    <h3 style="color: #007AFF; margin-bottom: 1rem;">🔐 Recuperar Contraseña</h3>
+                    <p style="margin-bottom: 1.5rem; color: #666;">
+                        Para recuperar tu contraseña, contacta al administrador del curso:
+                    </p>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <strong>📧 Email:</strong> profesor@informaticamedica.edu<br>
+                        <strong>📱 WhatsApp:</strong> +54 11 1234-5678
+                    </div>
+                    <p style="font-size: 0.9rem; color: #888;">
+                        Incluye tu nombre completo y legajo estudiantil en el mensaje.
+                    </p>
+                </div>
+            `;
+            
+            showModal('Recuperar Contraseña', forgotContent);
+        }
+        
+        function showModal(title, content) {
+            // Crear modal dinámico
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 1rem;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 2rem;
+                    max-width: 500px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    animation: modalSlideIn 0.3s ease-out;
+                ">
+                    <button onclick="this.closest('div').parentElement.remove()" style="
+                        position: absolute;
+                        top: 1rem;
+                        right: 1rem;
+                        background: none;
+                        border: none;
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        opacity: 0.6;
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">✕</button>
+                    <div style="line-height: 1.6; color: #333;">${content}</div>
+                    <div style="margin-top: 2rem; text-align: center;">
+                        <button onclick="this.closest('div').parentElement.remove()" style="
+                            background: #007AFF;
+                            color: white;
+                            border: none;
+                            padding: 0.75rem 1.5rem;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">Entendido</button>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar animación CSS
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes modalSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9) translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(modal);
+            
+            // Cerrar al hacer clic fuera
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+        
+        // ========================================
+        // INICIALIZACIÓN
+        // ========================================
+        
+        let loginForm;
+        
+        // Inicializar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                loginForm = new LoginForm();
+            });
+        } else {
+            loginForm = new LoginForm();
+        }
+        
+        // ========================================
+        // UTILIDADES ADICIONALES
+        // ========================================
+        
+        // Atajos de teclado
+        document.addEventListener('keydown', (e) => {
+            // Enter para enviar formulario
+            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                e.preventDefault();
+                document.getElementById('submitBtn').click();
+            }
+            
+            // Escape para cerrar modales
+            if (e.key === 'Escape') {
+                const modal = document.querySelector('[style*="position: fixed"]');
+                if (modal) {
+                    modal.remove();
+                }
+            }
+        });
+        
+        // Auto-focus en el primer campo
+        document.addEventListener('DOMContentLoaded', () => {
+            const emailInput = document.getElementById('email');
+            if (emailInput) {
+                setTimeout(() => emailInput.focus(), 500);
+            }
+        });
+        
+        // Detectar caps lock
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordInput = document.getElementById('password');
+            if (passwordInput) {
+                passwordInput.addEventListener('keydown', (e) => {
+                    if (e.getModifierState && e.getModifierState('CapsLock')) {
+                        loginForm.showNotification('⚠️ Caps Lock está activado', 'warning');
+                    }
+                });
+            }
+        });
+        
+        // Analytics simplificado
+        function trackEvent(action, category = 'Login') {
+            console.log(`📊 Event: ${category} - ${action}`);
+            // Aquí se integraría con Google Analytics o similar
+        }
+        
+        // Tracking de eventos importantes
+        document.addEventListener('DOMContentLoaded', () => {
+            trackEvent('Page Loaded');
+            
+            // Track cuando el usuario comienza a llenar el formulario
+            const inputs = document.querySelectorAll('.form-input');
+            let hasStarted = false;
+            
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    if (!hasStarted) {
+                        trackEvent('Form Started');
+                        hasStarted = true;
+                    }
+                });
+            });
+            
+            // Track clicks en credenciales demo
+            document.addEventListener('click', (e) => {
+                if (e.target.textContent.includes('Probar como')) {
+                    trackEvent('Demo Credentials Used');
+                }
+            });
+        });
+        
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const metrics = {
+                    loadTime: performance.now(),
+                    memoryUsage: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 'N/A'
+                };
+                
+                console.log('📊 Performance Metrics:', metrics);
+                
+                if (location.hostname === 'localhost') {
+                    console.log(`⚡ Carga completa: ${metrics.loadTime.toFixed(2)}ms`);
+                    console.log(`💾 Memoria usada: ${metrics.memoryUsage}MB`);
+                }
+            }, 100);
+        });
+        
+        // Prevenir ataques de fuerza bruta (básico)
+        let loginAttempts = 0;
+        const maxAttempts = 5;
+        
+        function checkLoginAttempts() {
+            loginAttempts++;
+            if (loginAttempts >= maxAttempts) {
+                loginForm.showNotification('Demasiados intentos fallidos. Espera 5 minutos.', 'error');
+                document.getElementById('submitBtn').disabled = true;
+                
+                setTimeout(() => {
+                    loginAttempts = 0;
+                    document.getElementById('submitBtn').disabled = false;
+                }, 300000); // 5 minutos
+                
+                return false;
+            }
+            return true;
+        }
+        
+        console.log('🚀 Login Ultra-Optimizado v1.0');
+        console.log('⚡ Carga rápida • 🔐 Seguro • 🎨 Moderno');
+        console.log('🎯 Credenciales demo disponibles');
+    </script>
+</body>
+</html>
